@@ -1,0 +1,67 @@
+Objective:
+The goal of this assignment is to implement a buffer manager for a simple database management system.
+The buffer manager is responsible for loading pages from a flat file and managing them in memory.
+The system only supports inserting new rows, so there is no need to handle deletions.
+
+Overview:
+The buffer manager maintains a fixed number of frames in memory. When a page is requested, the buffer manager checks if
+it is already in memory; if not, it loads the page from disk. If the buffer is full,
+a replacement policy (e.g., Least Recently Used) must be used to evict a page.
+The buffer manager must also track which pages are dirty (modified) and ensure they are written back to disk
+before being evicted.
+
+Requirements:
+
+The buffer manager interacts with a flat file that contains fixed-size pages.
+
+Each page has a unique Page ID.
+
+The buffer manager should support a configurable number of frames.
+
+Pages that are modified will be marked as dirty by the caller.
+
+Pages that are currently in use by the caller are pinned by the caller.
+A simple replacement policy, such as Least Recently Used (LRU), should be implemented.
+
+The system only needs to support insertions; no deletions are required.
+
+The system only needs to support a single caller thread.
+
+Implementation Details:
+
+Pages are stored as serialized binary data in a flat file, which is a simplified version of the
+heap file implementation discussed in class.
+
+    Each page has a fixed size of 4 KB. >> this can check if the page is full or not
+
+`   We consider a simplified insert-only workload where new rows are appended to the last page.
+
+    A page with pageId x will be stored starting at the offset x * 4 KB.
+
+A simple page table maps page IDs to frame locations, using a hash table for efficiency.
+
+A priority queue or linked list can be used to track page access order for LRU eviction.
+
+All evicted pages that are dirty must be written to disk before their frame is freed.
+
+A pinned page cannot be evicted.
+
+Deliverables
+Implement the BufferManager class and the dependent classes.
+
+A script that demonstrates inserting rows and fetching pages.
+
+A brief report (1-2 pages) explaining design choices, assumptions, and any limitations.
+
+    The report should list the team members and describe in detail the contributions of each team member (e.g., which components they developed or tested).
+
+A link to a private GitHub repository containing the code. All TAs and UCAs must be given access to the repository.
+Include clear instructions for running the code, specifying dependencies and any required configurations.
+
+    NOTE: TAs will not engage in debugging your code. It is your responsibility to make sure that the code can be compiled and run correctly following your instructions. TAs will allocate a maximum of 10 minutes to compile and run a project on their laptop.  If the project does not run, they will come back to you for clarification and try one more time, for 10 minutes. After that, the project will be considered non functional.
+
+Provide test cases, including:
+
+Unit tests for individual methods (e.g., fetching, inserting, eviction policy, Page methods).
+
+End-to-end tests covering the full buffer manager component.

@@ -1,0 +1,86 @@
+1. Core Buffer Manager Implementation (Aarti)
+	•	Tasks:
+	◦	Implement the BufferManager class to manage frames.
+	◦	Implement functions to load pages, evict pages, and manage the in-memory pages.
+	◦	Implement a page table (hash map) to track pages in memory.
+	◦	Implement the eviction policy (LRU or another simple strategy).
+	◦	Ensure pages are written back to disk if they are dirty and need to be evicted.
+	•	Key Responsibilities:
+	◦	Page fetching: Implement page loading and page pinning logic.
+	◦	Page eviction: Implement the eviction strategy (e.g., LRU).
+	◦	Write-back logic: Implement the logic to write modified (dirty) pages to disk.
+	•	Deliverables: BufferManager class with page loading, eviction policy, and dirty page handling.
+
+
+2. Page Class and I/O Operations (Tristan)
+	•	Tasks:
+	◦	Implement the Page class to represent a single 4KB page.
+	◦	Implement methods to read and write page data (serialization, insertion, etc.).
+	◦	Implement logic for checking if the page is full and supporting row insertion into the last page.
+	◦	Handle interaction with disk by managing file I/O (e.g., reading and writing pages to/from a flat file).
+	◦	Manage Utility part i.e create 4kb files using movieFile.tsv
+	•	Key Responsibilities:
+	◦	Page Management: Handle the creation and management of pages.
+	◦	Row Insertion: Implement the insertion of rows into pages (append operation).
+	◦	Serialization: Ensure pages can be serialized to disk correctly.
+	•	Deliverables: Page class with methods for row insertion and file I/O.
+
+Testing Division (Rithika: Testing/Documentation)
+Duration: Ongoing throughout development (focused after core functionality is in place)
+Tasks:
+	1	Unit Testing:
+	◦	BufferManager class:
+	▪	Test page fetching: Ensure pages are loaded into memory correctly.
+	▪	Test eviction policies (e.g., LRU): Verify that the eviction works as expected when pages are full.
+	▪	Test dirty page handling: Ensure that dirty pages are written back to disk before eviction.
+	▪	Test handling of pinned pages: Ensure pinned pages are not evicted.
+	◦	Page class:
+	▪	Test row insertion: Ensure new rows are inserted correctly into pages.
+	▪	Test full page handling: Verify that a new row inserted into a full page triggers correct behavior (either appending to the next page or error handling).
+	▪	Test serialization and deserialization: Ensure pages are read and written properly from disk.
+	◦	Eviction Policy: Test different scenarios of page eviction using LRU, checking that the correct page is evicted under memory pressure.
+
+Documentation:
+
+Inline Documentation:
+	◦	Add docstrings and comments within the codebase to explain the functionality of key classes and methods:
+	▪	BufferManager: Document page loading, eviction policies, and dirty page management.
+	▪	Page class: Document row insertion logic, page handling (serialization), and full page behavior.
+	▪	Any utility/helper methods should be documented with a clear explanation of their purpose.
+	2	Functionality Documentation:
+	◦	Provide a detailed description of the BufferManager's public methods (e.g., loadPage(), evictPage(), pinPage(), etc.) with examples of how to use them.
+	◦	Describe the eviction policy used (e.g., LRU) and its behavior in different memory scenarios.
+	◦	Write clear explanations for any assumptions made in the design and functionality, such as fixed page size or insert-only workloads.
+
+
+Testing Division (Shreyaa: Testing/Documentation)
+
+	1	Core Component Integration Testing:
+	◦	BufferManager and Page interaction:
+	▪	Simulate a scenario where pages are frequently loaded and evicted.
+	▪	Ensure that rows can be inserted into a page and correctly fetched from memory.
+	▪	Ensure eviction works as expected when memory is full, and pages are evicted properly based on the policy.
+	◦	End-to-End Workflow:
+	▪	Insert multiple rows, verify that pages are evicted correctly, and ensure the system can handle multiple insertions and evictions in sequence.
+	2	Edge Case Testing:
+	◦	Test cases where:
+	▪	Pages are overfilled (how the system handles overflow or switching pages).
+	▪	There are no pages in memory and a new page needs to be loaded.
+	▪	Pages with dirty rows are evicted.
+Documentation:
+
+	1	Final Documentation:
+	◦	README:
+	▪	Provide clear instructions for setting up and running the project.
+	▪	Include dependencies (if any) and configuration steps for running the code.
+	▪	Add usage examples to show how to interact with the BufferManager (inserting rows, fetching pages, evicting pages).
+	◦	Design Report:
+	▪	Write a 1-2 page report explaining:
+	▪	The overall design of the system (e.g., the architecture of the buffer manager and page handling).
+	▪	Key decisions made during development (e.g., why LRU eviction was chosen, how memory management was implemented).
+	▪	Assumptions made (e.g., page size, insert-only workload, handling of dirty pages).
+	▪	Limitations of the system (e.g., scalability, edge cases).
+	▪	A contribution breakdown (who worked on which parts of the project).
+
+
+	Note: This is just an overview, make it more specific as per out work development.
