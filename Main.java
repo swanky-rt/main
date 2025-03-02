@@ -5,7 +5,7 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) {
         try {
-            String filePath = "/../../Users/amitkumar/Downloads/";
+            String filePath = "./DB files/";
             BufferManagerImpl bufferManager = new BufferManagerImpl(4 * 4096);
             Utilities utilities = new Utilities();
             utilities.loadDataset(bufferManager, filePath);

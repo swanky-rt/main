@@ -18,4 +18,16 @@ public interface Page {
      * @return true if the page is full, false otherwise
      */
     boolean isFull();
+
+    /**
+     *
+     * @return all rows in the "rowList" property of the page object
+     */
+    Row[] getAllRows();
+
+    /**
+     *
+     * @return the property representing the number of bytes to pad onto the end of the page
+     */
+    int getBytesToPad();
 }
