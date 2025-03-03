@@ -48,4 +48,16 @@ public interface Page {
      * @returns the number of rows in the page loaded from disk
      */
     int getRowCount();
+
+    /**
+     *
+     * deserializes the rows
+     */
+    void deserializeRows();
+
+    /**
+     *
+     * @returns the deserialized rows
+     */
+    String[][] getDeserializedRows();
 }

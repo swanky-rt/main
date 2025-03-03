@@ -12,16 +12,19 @@ public class Main {
 //            utilities.loadDataset(bufferManager, filePath);
 //            int testPageId = 2;
 //            bufferManager.getPage(testPageId);
-            utilities.populateDisk(500);
+            // utilities.populateDisk(500);
             Page testPage = utilities.loadPageFromDisk(4);
 
             System.out.println(testPage.getAllRows().length);
-
+            testPage.deserializeRows();
             for (int i = 0; i < testPage.getAllRows().length; ++i) {
                 String test1 = new String(testPage.getAllRows()[i].movieId, StandardCharsets.US_ASCII);
                 String test2 = new String(testPage.getAllRows()[i].title, StandardCharsets.US_ASCII);
 
-                System.out.println(test1 + ", " + test2);
+                String test3 = testPage.getDeserializedRows()[i][0];
+                String test4 = testPage.getDeserializedRows()[i][1];
+
+                System.out.println(test3 + ", " + test4);
             }
 
         } catch (Exception e) {

@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 
 public class PageImpl implements Page, Serializable {
     static final int PAGE_SIZE = 4096; // 4kb
@@ -7,6 +8,8 @@ public class PageImpl implements Page, Serializable {
     private Row[] rowList = new Row[MAX_TUPLES];
     static final int bytesToPad = PAGE_SIZE - (MAX_TUPLES * ROW_SIZE);
     private int curRowCount = 0;
+    private boolean isDirty = true;
+    private String[][] deserializedRows = new String[MAX_TUPLES][2];
 
     public PageImpl(){
 
@@ -23,6 +26,7 @@ public class PageImpl implements Page, Serializable {
         }
         rowList[curRowCount] = row;
         curRowCount += 1;
+        this.markDirty();
         return curRowCount - 1;
     }
 
@@ -55,4 +59,31 @@ public class PageImpl implements Page, Serializable {
     public int getRowCount() {
         return curRowCount;
     }
+
+    public void markDirty() {
+        this.isDirty = true;
+    }
+
+    public void markNotDirty() {
+        this.isDirty = false;
+    }
+
+    @Override
+    public void deserializeRows() {
+        for (int i = 0; i < getAllRows().length; ++i) {
+            Row curRow = getAllRows()[i];
+            if (curRow != null) {
+                String movieId = new String(curRow.movieId, StandardCharsets.US_ASCII);
+                String movieTitle = new String(curRow.title, StandardCharsets.US_ASCII);
+                deserializedRows[i][0] = movieId;
+                deserializedRows[i][1] = movieTitle;
+            }
+        }
+    }
+
+    @Override
+    public String[][] getDeserializedRows() {
+        return this.deserializedRows;
+    }
+
 }
