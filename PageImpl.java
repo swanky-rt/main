@@ -1,13 +1,11 @@
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PageImpl implements Page, Serializable {
-    private static final int PAGE_SIZE = 4096; // 4kb
-    private static final int ROW_SIZE = 39; //column 1 is 9 char, and column 2 is 30 char
-    private static final int MAX_TUPLES = PAGE_SIZE/ROW_SIZE;
+    static final int PAGE_SIZE = 4096; // 4kb
+    static final int ROW_SIZE = 39; //column 1 is 9 char, and column 2 is 30 char
+    static final int MAX_TUPLES = PAGE_SIZE/ROW_SIZE;
     private Row[] rowList = new Row[MAX_TUPLES];
-    private int bytesToPad = PAGE_SIZE - (MAX_TUPLES * ROW_SIZE);
+    static final int bytesToPad = PAGE_SIZE - (MAX_TUPLES * ROW_SIZE);
     private int curRowCount = 0;
 
     public PageImpl(){
@@ -41,5 +39,20 @@ public class PageImpl implements Page, Serializable {
     @Override
     public int getBytesToPad() {
         return bytesToPad;
+    }
+
+    @Override
+    public void setAllRows(Row[] rows) {
+        this.rowList = rows;
+    }
+
+    @Override
+    public void setRowCount(int rowCount) {
+        this.curRowCount = rowCount;
+    }
+
+    @Override
+    public int getRowCount() {
+        return curRowCount;
     }
 }

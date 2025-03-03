@@ -58,8 +58,9 @@ public class Utilities implements Serializable {
 
             long fileSize = Files.size(curPath);
             long numPages = fileSize / PAGE_SIZE;
-            if (numPages < pageId) {
-                throw new IOException("There are not sufficiently many pages for this pageId to be valid");
+            if (numPages < pageId || pageId < 0) {
+                throw new IOException("There are not sufficiently many pages for this pageId to be valid," +
+                        " or the pageID is invalid otherwise.");
             }
             int startByte = pageId * PAGE_SIZE;
 
@@ -74,7 +75,15 @@ public class Utilities implements Serializable {
                 curFile.write(row.title);
             }
 
-            curFile.write(new byte[page.getBytesToPad()]);
+
+
+            curFile.write(new byte[page.getBytesToPad() - 1]);
+
+            int test = page.getRowCount();
+
+            curFile.write((byte)page.getRowCount());
+
+            curFile.close();
 
         } catch (IOException e) {
             System.out.println("Writing to the disk is failing due to this error" + e.toString());
@@ -82,17 +91,58 @@ public class Utilities implements Serializable {
     }
 
     public Page loadPageFromDisk(int pageId) {
-        try {
-            ObjectInputStream inputStream = new ObjectInputStream(Files.newInputStream(Paths.get(String.valueOf(filepath + pageId + ".dat"))));
-            Page page = (Page) inputStream.readObject();
-            inputStream.close();
-            return page;
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+        Path curPath = Paths.get(filepath + filename);
+        Charset charset = StandardCharsets.US_ASCII;
+        Page pageToPopulate = new PageImpl();
+        try (BufferedInputStream reader = new BufferedInputStream(new FileInputStream(filepath + filename))) {
+//            ObjectInputStream inputStream = new ObjectInputStream(Files.newInputStream(Paths.get(String.valueOf(filepath + pageId + ".dat"))));
+//            Page page = (Page) inputStream.readObject();
+//            inputStream.close();
+//            return page;
+            long fileSize = Files.size(curPath);
+            long numPages = fileSize / PAGE_SIZE;
+            if (numPages - 1 < pageId || pageId < 0) {
+                throw new IOException("There are not sufficiently many pages for this pageId to be valid," +
+                        " or the pageId is otherwise invalid.");
+            }
+            int startByte = pageId * PAGE_SIZE;
+
+            reader.skip(startByte);
+
+            int curRowCount = 0;
+
+            Row[] curPageRows = new Row[PageImpl.MAX_TUPLES];
+
+            for (int i = 0; i < PageImpl.PAGE_SIZE / PageImpl.ROW_SIZE; ++i) {
+                byte[] curMovieId = new byte[Row.MOVIE_ID_SIZE];
+                byte[] curMovieTitle = new byte[Row.TITLE_SIZE];
+
+                reader.read(curMovieId, 0, curMovieId.length);
+
+                reader.read(curMovieTitle, 0, curMovieTitle.length);
+
+                for (byte b : curMovieId) {
+                    if (b != 0) {
+                        Row curRow = new Row(curMovieId, curMovieTitle);
+                        curPageRows[i] = curRow;
+                        break;
+                    }
+                }
+            }
+            reader.skip(pageToPopulate.getBytesToPad() - 1);
+            curRowCount = reader.read();
+            pageToPopulate.setAllRows(curPageRows);
+            pageToPopulate.setRowCount(curRowCount);
+
+            reader.close();
+
+//        } catch (ClassNotFoundException e) {
+//            throw new RuntimeException(e);
+//        }
         } catch (Exception e) {
             System.out.println("Writing to the disk is failing due to this error" + e.getMessage());
         }
-        return null;
+        return pageToPopulate;
     }
 
     public int getNextPageId() {
@@ -108,6 +158,29 @@ public class Utilities implements Serializable {
         protected void writeStreamHeader() throws IOException {
 
         }
+
+    }
+
+    public void populateDisk(int numRecords) throws IOException {
+        int curPageId = 0;
+        BufferedReader reader = new BufferedReader(new FileReader(this.filepath + "title.basics.tsv"));
+        reader.readLine();
+        boolean justFlushedPage = true;
+        PageImpl newPage = new PageImpl();
+        for (int i = 0; i < numRecords; ++i) {
+            if (newPage.isFull()) {
+                writePageToDisk(curPageId++, newPage);
+                newPage = new PageImpl();
+            }
+            String line = reader.readLine();
+
+            String[] columns = line.split("\t");
+            byte[] title = columns[2].getBytes();
+            byte[] movieId = columns[0].getBytes();
+            Row row = new Row(movieId, title);
+            newPage.insertRow(row);
+        }
+        writePageToDisk(curPageId, newPage);
 
     }
 }

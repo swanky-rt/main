@@ -6,6 +6,8 @@ import java.io.Serializable;
 public class Row implements Serializable {
     // Define primary data type fields, depending on the schema of the table
     // These fields are for the Movies table described below
+    static final int MOVIE_ID_SIZE = 9;
+    static final int TITLE_SIZE = 30;
     public byte[] movieId = new byte[9];
     public byte[] title = new byte[30];
 

@@ -30,4 +30,22 @@ public interface Page {
      * @return the property representing the number of bytes to pad onto the end of the page
      */
     int getBytesToPad();
+
+    /**
+     *
+     * @param rows the rows in the page loaded from disk
+     */
+    void setAllRows(Row[] rows);
+
+    /**
+     *
+     * @param rowCount the number of rows in the page loaded from disk
+     */
+    void setRowCount(int rowCount);
+
+    /**
+     *
+     * @returns the number of rows in the page loaded from disk
+     */
+    int getRowCount();
 }
