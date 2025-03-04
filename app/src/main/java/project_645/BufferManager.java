@@ -1,3 +1,5 @@
+package project_645;
+
 public abstract class BufferManager {
 
         // configurable size of buffer cache.
