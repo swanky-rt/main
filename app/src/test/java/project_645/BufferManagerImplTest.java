@@ -65,7 +65,7 @@ public class BufferManagerImplTest {
 
     @Test
     public void testLoadDataset() throws IOException {
-        utilities.loadDataset(bufferManager, "path/to/dataset/");
+        utilities.loadDataset(bufferManager, "main/app/src/main/java/project_645/DB files");
         assertFalse(bufferManager.bufferPool.isEmpty(), "Buffer pool should not be empty");
     }
 }
