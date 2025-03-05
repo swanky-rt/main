@@ -1,4 +1,5 @@
 package project_645;
+import java.io.IOException;
 import java.util.*;
 
 public class BufferManagerImpl extends BufferManager{
@@ -43,18 +44,24 @@ public class BufferManagerImpl extends BufferManager{
 
     }
 
-    public void evictPage(){
-        int pageId = lru.removeLast();
-        Page removedPage = bufferPool.get(pageId);
-        if(!pinnedPages.contains(pageId)){
-            if(isDirty(pageId)){
+    public void evictPage() {
+    int pageId = lru.removeLast();
+    Page removedPage = bufferPool.get(pageId);
+    if (!pinnedPages.contains(pageId)) {
+        try {
+            if (isDirty(pageId)) {
                 utilities.writePageToDisk(pageId, removedPage);
                 dirtyPages.remove(pageId);
             }
             bufferPool.remove(pageId);
             pageMap.remove(removedPage);
+        } catch (IOException e) {
+            // Handle the exception, e.g., log it or rethrow it
+            System.err.println("Failed to write page to disk: " + e.getMessage());
         }
     }
+}
+
 
     @Override
     public Page createPage() {

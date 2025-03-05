@@ -56,12 +56,17 @@ public class BufferManagerImplTest {
 
     @Test
     public void testWriteAndLoadPage() {
-        int pageId = 3;
-        Page page = bufferManager.getPage(pageId);
-        utilities.writePageToDisk(pageId, page);
-        Page loadedPage = utilities.loadPageFromDisk(pageId);
-        assertNotNull(loadedPage, "Loaded page should not be null");
+        try {
+            int pageId = 3;
+            Page page = bufferManager.getPage(pageId);
+            utilities.writePageToDisk(pageId, page);
+            Page loadedPage = utilities.loadPageFromDisk(pageId);
+            assertNotNull(loadedPage, "Loaded page should not be null");
+        } catch (IOException e) {
+            fail("IOException occurred during test: " + e.getMessage());
+        }
     }
+
 
     @Test
     public void testLoadDataset() throws IOException {
