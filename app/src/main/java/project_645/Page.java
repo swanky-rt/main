@@ -1,0 +1,64 @@
+package project_645;
+public interface Page {
+    /**
+     * Fetches a row from the page by its row ID.
+     * @param rowId The ID of the row to retrieve.
+     * @return The Row object containing the requested data.
+     */
+    Row getRow(int rowId);
+
+    /**
+     * Inserts a new row into the page.
+     * @param row The Row object containing the data to insert.
+     * @return The row ID of the inserted row, or -1 if the page is full
+     */
+    int insertRow(Row row);
+
+    /**
+     * Check if the page is full.
+     * @return true if the page is full, false otherwise
+     */
+    boolean isFull();
+
+    /**
+     *
+     * @return all rows in the "rowList" property of the page object
+     */
+    Row[] getAllRows();
+
+    /**
+     *
+     * @return the property representing the number of bytes to pad onto the end of the page
+     */
+    int getBytesToPad();
+
+    /**
+     *
+     * @param rows the rows in the page loaded from disk
+     */
+    void setAllRows(Row[] rows);
+
+    /**
+     *
+     * @param rowCount the number of rows in the page loaded from disk
+     */
+    void setRowCount(int rowCount);
+
+    /**
+     *
+     * @returns the number of rows in the page loaded from disk
+     */
+    int getRowCount();
+
+    /**
+     *
+     * deserializes the rows
+     */
+    void deserializeRows();
+
+    /**
+     *
+     * @returns the deserialized rows
+     */
+    String[][] getDeserializedRows();
+}
