@@ -112,4 +112,7 @@ public class BufferManagerImpl extends BufferManager{
     public Boolean isBufferPoolFull(){
         return bufferPool.size()==MAX_PAGE;
     }
+
+   
+    
 }

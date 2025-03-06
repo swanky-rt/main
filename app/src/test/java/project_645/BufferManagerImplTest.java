@@ -17,60 +17,89 @@ public class BufferManagerImplTest {
     }
 
     @Test
-    public void testGetPage() {
-        Page page = bufferManager.getPage(1);
-        assertNotNull(page, "Page should not be null");
+    public void testLoadDataset() throws IOException {
+        String datasetPath = "main/app/src/main/java/project_645/DB files/";
+        utilities.loadDataset(bufferManager, datasetPath);
+        assertTrue(bufferManager.bufferPool.size() > 0, "Buffer pool should not be empty after loading dataset");
     }
 
     @Test
-    public void testCreatePage() {
+    public void testCreateSinglePage() {
         Page page = bufferManager.createPage();
         assertNotNull(page, "Created page should not be null");
+        System.out.println("Created Page: " + page);
+    }
+
+    @Test
+    public void testCreateMultiplePages() {
+        for (int i = 0; i < 8; i++) {
+            Page page = bufferManager.createPage();
+            assertNotNull(page, "Page " + i + " should not be null");
+            System.out.println("Created Page " + i + ": " + page);
+        }
+    }
+
+    @Test
+    public void testGetSinglePage() {
+        int pageId = 0;
+
+        Page page = bufferManager.getPage(pageId);
+        assertNotNull(page, "Page should not be null");
+        System.out.println("Retrieved Page with ID: " + pageId + " -> " + page);
+    }
+
+    @Test
+    public void testGetMultiplePages() {
+        
+        for (int i = 0; i < 8; i++) {
+            Page page = bufferManager.getPage(i);
+            assertNotNull(page, "Page " + i + " should not be null");
+            System.out.println("Retrieved Page " + i + ": " + page);
+        }
     }
 
     @Test
     public void testMarkDirty() {
-        int pageId = 1;
+        int pageId = 0;
         bufferManager.getPage(pageId);
         bufferManager.markDirty(pageId);
         assertTrue(bufferManager.isDirty(pageId), "Page should be marked dirty");
+        System.out.println("Page " + pageId + " marked as dirty.");
     }
 
     @Test
     public void testUnpinPage() {
-        int pageId = 2;
+        int pageId = 0;
         bufferManager.getPage(pageId);
         bufferManager.unpinPage(pageId);
         assertFalse(bufferManager.pinnedPages.contains(pageId), "Page should not be pinned");
+        System.out.println("Page " + pageId + " unpinned.");
     }
 
     @Test
-    public void testEvictPage() {
-        for (int i = 0; i < bufferManager.MAX_PAGE; i++) {
-            bufferManager.getPage(i);
+    public void testEvictionPolicy() {
+        for (int i = 0; i < 16; i++) { 
+            bufferManager.createPage();
         }
-        int newPageId = bufferManager.MAX_PAGE + 1;
-        bufferManager.getPage(newPageId);
-        assertTrue(bufferManager.bufferPool.size() <= bufferManager.MAX_PAGE, "LRU should have evicted a page");
+        bufferManager.createPage(); // This should trigger eviction
+    
+        assertTrue(bufferManager.bufferPool.size() <= 16, "Buffer pool should not exceed max capacity after eviction.");
     }
+    
 
     @Test
     public void testWriteAndLoadPage() {
         try {
-            int pageId = 3;
+            int pageId = 0;
             Page page = bufferManager.getPage(pageId);
             utilities.writePageToDisk(pageId, page);
             Page loadedPage = utilities.loadPageFromDisk(pageId);
             assertNotNull(loadedPage, "Loaded page should not be null");
+            System.out.println("Page " + pageId + " successfully written and loaded from disk.");
         } catch (IOException e) {
             fail("IOException occurred during test: " + e.getMessage());
         }
     }
 
-
-    @Test
-    public void testLoadDataset() throws IOException {
-        utilities.loadDataset(bufferManager, "main/app/src/main/java/project_645/DB files");
-        assertFalse(bufferManager.bufferPool.isEmpty(), "Buffer pool should not be empty");
-    }
+    
 }
