@@ -80,9 +80,9 @@ public class Utilities implements Serializable {
 
             curFile.write(new byte[page.getBytesToPad() - 1]);
 
-            int test = page.getRowCount();
-
             curFile.write((byte)page.getRowCount());
+
+            page.markNotDirty();;
 
             curFile.close();
 
@@ -95,6 +95,7 @@ public class Utilities implements Serializable {
         Path curPath = Paths.get(filepath + filename);
         Charset charset = StandardCharsets.US_ASCII;
         Page pageToPopulate = new PageImpl();
+        pageToPopulate.markNotDirty();;
         try (BufferedInputStream reader = new BufferedInputStream(new FileInputStream(filepath + filename))) {
 //            ObjectInputStream inputStream = new ObjectInputStream(Files.newInputStream(Paths.get(String.valueOf(filepath + pageId + ".dat"))));
 //            Page page = (Page) inputStream.readObject();

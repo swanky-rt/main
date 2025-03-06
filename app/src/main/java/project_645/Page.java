@@ -61,4 +61,23 @@ public interface Page {
      * @returns the deserialized rows
      */
     String[][] getDeserializedRows();
+
+    /**
+     * 
+     * @returns the diry status of the page
+     */
+
+    boolean getDirtyStatus();
+
+     /**
+      * 
+      * marks the page as dirty
+      */
+    void markDirty();
+
+      /**
+       * 
+       * marks the mage as not dirty
+       */
+    void markNotDirty();
 }

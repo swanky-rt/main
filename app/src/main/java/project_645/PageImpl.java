@@ -26,9 +26,9 @@ public class PageImpl implements Page, Serializable {
         if(isFull()){
             return -1;
         }
+        this.markDirty();
         rowList[curRowCount] = row;
         curRowCount += 1;
-        this.markDirty();
         return curRowCount - 1;
     }
 
@@ -62,12 +62,19 @@ public class PageImpl implements Page, Serializable {
         return curRowCount;
     }
 
+    @Override
     public void markDirty() {
         this.isDirty = true;
     }
 
+    @Override
     public void markNotDirty() {
         this.isDirty = false;
+    }
+
+    @Override
+    public boolean getDirtyStatus() {
+        return this.isDirty;
     }
 
     @Override
