@@ -22,6 +22,12 @@ public interface Page {
 
     /**
      *
+     * @return the ID of the page
+     */
+    int getPid();
+
+    /**
+     *
      * @return all rows in the "rowList" property of the page object
      */
     Row[] getAllRows();

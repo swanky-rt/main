@@ -27,8 +27,10 @@ public class BufferManagerImpl extends BufferManager{
     @Override
     public Page getPage(int pageId) {
         if(bufferPool.containsKey(pageId)){
-            lru.remove(pageId);
-            lru.addFirst(pageId);
+            if (!pinnedPages.contains(pageId)) {
+                lru.remove(pageId);
+                lru.addFirst(pageId);
+            }
             return bufferPool.get(pageId);
         }
         if(bufferPool.size()>=MAX_PAGE){
@@ -37,7 +39,7 @@ public class BufferManagerImpl extends BufferManager{
         Page page =utilities.loadPageFromDisk(pageId);
         bufferPool.put(pageId, page);
         pageMap.put(page, pageId);
-        lru.addFirst(pageId);
+        // lru.addFirst(pageId);
         this.pinPage(pageId);
         System.out.println("the page " + pageId + " is pinned");
         return page;
@@ -68,11 +70,13 @@ public class BufferManagerImpl extends BufferManager{
     public Page createPage() {
         PageImpl page = null;
         int pageId = utilities.getNextPageId();
-        if(pageId<MAX_PAGE) {
-            page = new PageImpl();
-            pageMap.put(page, pageId);
-            this.pinPage(pageId);
+        if (this.bufferPool.size() >= this.MAX_PAGE) {
+            evictPage();
         }
+        page = new PageImpl(pageId);
+        bufferPool.put(pageId, page);
+        pageMap.put(page, pageId);
+        this.pinPage(pageId);
         return page;
     }
 
@@ -81,10 +85,15 @@ public class BufferManagerImpl extends BufferManager{
         if(isDirty(pageId).equals(Boolean.FALSE)){
             dirtyPages.add(pageId);
         }
+
+        if (bufferPool.containsKey(pageId)) {
+            Page page = bufferPool.get(pageId);
+            page.markDirty();
+        }
     }
 
     public Boolean isDirty(int pageId){
-        return dirtyPages.contains(pageId);
+        return bufferPool.containsKey(pageId) && bufferPool.get(pageId).getDirtyStatus();
     }
 
 
@@ -95,7 +104,7 @@ public class BufferManagerImpl extends BufferManager{
             if(lru.contains(pageId)){
                 lru.remove(pageId);
             }
-            lru.addLast(pageId);
+            lru.addFirst(pageId);
         }
     }
 
@@ -106,7 +115,7 @@ public class BufferManagerImpl extends BufferManager{
                 System.out.println("the page id is" + pageId + "the size is " + lru.size());
                 lru.remove(pageId);
             }
-            lru.addFirst(pageId);
+            // lru.addFirst(pageId);
         }
     }
 

@@ -12,9 +12,10 @@ public class PageImpl implements Page, Serializable {
     private int curRowCount = 0;
     private boolean isDirty = true;
     private String[][] deserializedRows = new String[MAX_TUPLES][2];
+    private int pageId;
 
-    public PageImpl(){
-
+    public PageImpl(int pageId){
+        this.pageId = pageId;
     }
     @Override
     public Row getRow(int rowId) {
@@ -35,6 +36,11 @@ public class PageImpl implements Page, Serializable {
     @Override
     public boolean isFull() {
         return curRowCount == MAX_TUPLES;
+    }
+
+    @Override
+    public int getPid() {
+        return this.pageId;
     }
 
     @Override

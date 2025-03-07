@@ -10,7 +10,7 @@ public class Utilities implements Serializable {
 
     private static final int BUFFER_SIZE = 4 * 4096;
     private static final int PAGE_SIZE = 4096;
-    public int currentPageID = 0;
+    public int currentPageID;
     private static String filepath = "./app/src/main/java/project_645/DB files/";
     private static String filename = "testdb.dat";
     private final Path dbFilePath = Paths.get(filepath + filename);
@@ -21,31 +21,54 @@ public class Utilities implements Serializable {
     }
 
     // Loads the buffer manager with the imdb dataset
-    public void loadDataset(BufferManager bf, String filepath) throws IOException {
-        BufferManagerImpl bufferManager = new BufferManagerImpl(BUFFER_SIZE);
-        Page currentPage = bufferManager.getPage(currentPageID) != null ? bufferManager.getPage(currentPageID) : bufferManager.createPage();
+    public void loadDataset(BufferManager bf, String filepath) throws Exception {
+        // create page
+        Page newPage = bf.createPage();
+        int pageId = newPage.getPid();
         BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
-        String line = reader.readLine();
-        while ((line = reader.readLine()) != null && bufferManager.isBufferPoolFull().equals(Boolean.FALSE)) {
-            if (bufferManager.pageMap.containsKey(currentPage)) {
-                currentPageID = bufferManager.pageMap.get(currentPage);
-            }
-            String[] columns = line.split("\t");
-            byte[] title = columns[2].getBytes();
+        reader.readLine();
+        // add rows using p.insertRow without filling p up
+        for (int i = 0; i < 80; ++i) {
+            String curLine = reader.readLine();
+            String[] columns = curLine.split("\t");
             byte[] movieId = columns[0].getBytes();
-            Row row = new Row(movieId, title);
-            if (currentPage.isFull()) {
-                writePageToDisk(currentPageID, currentPage);
-                bufferManager.bufferPool.put(currentPageID, currentPage);
-                currentPage = bufferManager.createPage();
-            }
-
-            if (currentPage != null) {
-                currentPage.insertRow(row);
-                bufferManager.markDirty(currentPageID);
-            }
+            byte[] titleId = columns[2].getBytes();
+            Row row = new Row(movieId, titleId);
+            newPage.insertRow(row);
         }
-        reader.close();
+        bf.unpinPage(pageId);
+        // sequence of getPage calls that causes P to be evicted
+
+        int bufferManagerSize = bf.bufferSize;
+        if (currentPageID < bf.bufferSize / 4096) {
+            throw new Exception("Disk does not have sufficiently many unique pages to fill up the buffer manager");
+        }
+        for (int i = 0; i < pageId; ++i) {
+            Page loopPage = bf.getPage(i);
+            if (i >= 5) {
+                String curLine = reader.readLine();
+                String[] columns = curLine.split("\t");
+                byte[] movieId = columns[0].getBytes();
+                byte[] titleId = columns[2].getBytes();
+                Row row = new Row(movieId, titleId);
+                loopPage.insertRow(row);
+            }
+            bf.unpinPage(i);
+        }
+        //get page back
+        newPage = bf.getPage(pageId);
+        bf.markDirty(pageId);
+
+        // add some more pages using p.insertRow();
+        for (int i = 0; i < 20; ++i) {
+            String curLine = reader.readLine();
+            String[] columns = curLine.split("\t");
+            byte[] movieId = columns[0].getBytes();
+            byte[] titleId = columns[2].getBytes();
+            Row row = new Row(movieId, titleId);
+            newPage.insertRow(row);
+        }
+        bf.unpinPage(pageId);
     }
 
     public void writePageToDisk(int pageId, Page page) throws IOException {
@@ -100,7 +123,7 @@ public class Utilities implements Serializable {
     public Page loadPageFromDisk(int pageId) {
         Path curPath = Paths.get(filepath + filename);
         Charset charset = StandardCharsets.US_ASCII;
-        Page pageToPopulate = new PageImpl();
+        Page pageToPopulate = new PageImpl(pageId);
         pageToPopulate.markNotDirty();
         try (BufferedInputStream reader = new BufferedInputStream(new FileInputStream(filepath + filename))) {
 //            ObjectInputStream inputStream = new ObjectInputStream(Files.newInputStream(Paths.get(String.valueOf(filepath + pageId + ".dat"))));
@@ -169,16 +192,17 @@ public class Utilities implements Serializable {
 
     }
 
+    // meant to be run separately from the buffer manager, helper utility to initially populate the disk.
     public void populateDisk(int numRecords) throws IOException {
         int curPageId = 0;
         BufferedReader reader = new BufferedReader(new FileReader(this.filepath + "title.basics.tsv"));
         reader.readLine();
         boolean justFlushedPage = true;
-        PageImpl newPage = new PageImpl();
+        PageImpl newPage = new PageImpl(curPageId);
         for (int i = 0; i < numRecords; ++i) {
             if (newPage.isFull()) {
                 writePageToDisk(curPageId++, newPage);
-                newPage = new PageImpl();
+                newPage = new PageImpl(curPageId);
             }
             String line = reader.readLine();
 
