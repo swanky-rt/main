@@ -11,7 +11,7 @@ public class BufferManagerImplTest {
     private Utilities utilities;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws IOException {
         bufferManager = new BufferManagerImpl(16 * 4096); // 16 pages buffer pool
         utilities = new Utilities();
     }

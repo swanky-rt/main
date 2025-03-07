@@ -11,7 +11,7 @@ public class BufferManagerImpl extends BufferManager{
     public LinkedList<Integer> lru;
     public Set<Integer> pinnedPages;
 
-    public BufferManagerImpl(int bufferSize){
+    public BufferManagerImpl(int bufferSize) throws IOException {
         super(bufferSize);
         this.PAGE_SIZE = 4096;
         this.MAX_PAGE = bufferSize/PAGE_SIZE;
