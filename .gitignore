@@ -1,8 +1,6 @@
-<<<<<<< HEAD
 DB files/title.basics.tsv
 Excel Files/title.basics.tsv
 out
-=======
 /BufferManager.class
 /BufferManagerImpl.class
 /Main.class
@@ -12,4 +10,7 @@ out
 /Utilities$AppendableObjectOutputStream.class
 /Utilities.class
 /BufferManagerImplTest.class
->>>>>>> main
+.idea
+build
+.gradle
+app/build
