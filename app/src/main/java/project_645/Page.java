@@ -61,4 +61,23 @@ public interface Page {
      * @returns the deserialized rows
      */
     String[][] getDeserializedRows();
+
+    /**
+     *
+     * Marks the page object as dirty
+     */
+    void markDirty();
+
+    /**
+     *
+     * Marks the page as not dirty
+     */
+    void markNotDirty();
+
+    /**
+     *
+     * gets the firty status
+     */
+    boolean getDirtyStatus();
+
 }

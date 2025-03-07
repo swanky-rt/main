@@ -62,12 +62,19 @@ public class PageImpl implements Page, Serializable {
         return curRowCount;
     }
 
+    @Override
     public void markDirty() {
         this.isDirty = true;
     }
 
+    @Override
     public void markNotDirty() {
         this.isDirty = false;
+    }
+
+    @Override
+    public boolean getDirtyStatus() {
+        return this.isDirty;
     }
 
     @Override
@@ -75,8 +82,8 @@ public class PageImpl implements Page, Serializable {
         for (int i = 0; i < getAllRows().length; ++i) {
             Row curRow = getAllRows()[i];
             if (curRow != null) {
-                String movieId = new String(curRow.movieId, StandardCharsets.US_ASCII);
-                String movieTitle = new String(curRow.title, StandardCharsets.US_ASCII);
+                String movieId = new String(curRow.movieId, StandardCharsets.US_ASCII).replaceAll("\u0000", "");
+                String movieTitle = new String(curRow.title, StandardCharsets.US_ASCII).replaceAll("\u0000", "");;
                 deserializedRows[i][0] = movieId;
                 deserializedRows[i][1] = movieTitle;
             }
@@ -87,5 +94,7 @@ public class PageImpl implements Page, Serializable {
     public String[][] getDeserializedRows() {
         return this.deserializedRows;
     }
+
+
 
 }

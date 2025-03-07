@@ -49,9 +49,10 @@ public class BufferManagerImpl extends BufferManager{
     Page removedPage = bufferPool.get(pageId);
     if (!pinnedPages.contains(pageId)) {
         try {
-            if (isDirty(pageId)) {
+            if (removedPage.getDirtyStatus()) {
                 utilities.writePageToDisk(pageId, removedPage);
                 dirtyPages.remove(pageId);
+                removedPage.markNotDirty();
             }
             bufferPool.remove(pageId);
             pageMap.remove(removedPage);

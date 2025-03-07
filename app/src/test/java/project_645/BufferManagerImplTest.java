@@ -19,7 +19,7 @@ public class BufferManagerImplTest {
 //    @Test
 //    public void testGetPage() {
 //        Page page = bufferManager.getPage(1);
-//        assertNotNull(page, "Page should not be null");
+//        assertNull(page, "Page should be null");
 //    }
 //
 //    @Test
