@@ -9,7 +9,7 @@ public class Main {
         try {
 
             System.out.println(" Ya!!!!!!!!!!!");
-            String filePath = "./DB files/";
+            String filePath = "./DB_files/";
            BufferManagerImpl bufferManager = new BufferManagerImpl(4 * 4096);
             Utilities utilities = new Utilities();
             
@@ -17,7 +17,7 @@ public class Main {
           
            int testPageId = 2;
                        bufferManager.getPage(testPageId);
-            utilities.populateDisk(500);
+            utilities.populateDisk(1000);
             
             Page testPage = utilities.loadPageFromDisk(4);
             System.out.println("   checking : " + bufferManager.bufferPool.isEmpty());

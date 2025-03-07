@@ -26,6 +26,7 @@ public class BufferManagerImpl extends BufferManager{
 
     @Override
     public Page getPage(int pageId) {
+
         if(bufferPool.containsKey(pageId)){
             lru.remove(pageId);
             lru.addFirst(pageId);
@@ -45,6 +46,7 @@ public class BufferManagerImpl extends BufferManager{
     }
 
     public void evictPage() {
+
     int pageId = lru.removeLast();
     Page removedPage = bufferPool.get(pageId);
     if (!pinnedPages.contains(pageId)) {
@@ -77,6 +79,7 @@ public class BufferManagerImpl extends BufferManager{
 
     @Override
     public void markDirty(int pageId) {
+        
         if(isDirty(pageId).equals(Boolean.FALSE)){
             dirtyPages.add(pageId);
         }
