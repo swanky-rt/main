@@ -45,14 +45,14 @@ public class Utilities implements Serializable {
         }
         for (int i = 0; i < pageId; ++i) {
             Page loopPage = bf.getPage(i);
-            if (i >= 5) {
-                String curLine = reader.readLine();
-                String[] columns = curLine.split("\t");
-                byte[] movieId = columns[0].getBytes();
-                byte[] titleId = columns[2].getBytes();
-                Row row = new Row(movieId, titleId);
-                loopPage.insertRow(row);
-            }
+//            if (i >= 5) {
+//                String curLine = reader.readLine();
+//                String[] columns = curLine.split("\t");
+//                byte[] movieId = columns[0].getBytes();
+//                byte[] titleId = columns[2].getBytes();
+//                Row row = new Row(movieId, titleId);
+//                loopPage.insertRow(row);
+//            }
             bf.unpinPage(i);
         }
         //get page back
