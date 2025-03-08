@@ -22,6 +22,18 @@ public interface Page {
 
     /**
      *
+     * @return the ID of the page
+     */
+    int getPid();
+
+    /**
+     *
+     * @param pageId, the ID to update the page to
+     */
+    void reassignPageId(int pageId);
+
+    /**
+     *
      * @return all rows in the "rowList" property of the page object
      */
     Row[] getAllRows();
@@ -61,4 +73,41 @@ public interface Page {
      * @returns the deserialized rows
      */
     String[][] getDeserializedRows();
+
+    /**
+     *
+     * Marks the page object as dirty
+     */
+    void markDirty();
+
+    /**
+     *
+     * Marks the page as not dirty
+     */
+    void markNotDirty();
+
+    /**
+     *
+     * gets the firty status
+     */
+    boolean getDirtyStatus();
+
+    /**
+     *
+     * increments the pin count for the page
+     */
+    void incrementPinCount();
+
+    /**
+     *
+     * decrements the pin count for the page
+     */
+    void decrementPinCount();
+
+    /**
+     *
+     * @returns the pin count of the page
+     */
+    int getPinCount();
+
 }

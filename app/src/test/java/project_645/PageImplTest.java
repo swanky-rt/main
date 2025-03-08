@@ -14,7 +14,7 @@ public class PageImplTest {
 
     @BeforeEach
     public void setUp() {
-        pageImpl = new PageImpl();
+        pageImpl = new PageImpl(0);
 
         // Convert String to byte[] for the movieId and title
         row1 = new Row("tt0000499".getBytes(), "An Impossible Voyage".getBytes());
@@ -93,8 +93,8 @@ public class PageImplTest {
 
     @Test
     public void testEvictionPolicy_ShouldEvictOldestPageOnMemoryPressure() {
-        PageImpl pageImpl = new PageImpl();
-        PageImpl page2 = new PageImpl();
+        PageImpl pageImpl = new PageImpl(0);
+        PageImpl page2 = new PageImpl(1);
 
         // Insert rows into pageImpl until it reaches the max capacity
         for (int i = 0; i < PageImpl.MAX_TUPLES; i++) {
@@ -102,7 +102,7 @@ public class PageImplTest {
         }
 
         // Insert rows into page2, simulating that page2 is the next page
-        for (int i = 0; i < PageImpl.MAX_TUPLES; i++) {
+        for (int i = 0; i < PageImpl.MAX_TUPLES - 1; i++) {
             page2.insertRow(new Row(String.format("tt%07d", i + PageImpl.MAX_TUPLES).getBytes(), ("Movie " + (i + PageImpl.MAX_TUPLES)).getBytes()));
         }
 

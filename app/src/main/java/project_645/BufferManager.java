@@ -13,7 +13,7 @@ public abstract class BufferManager {
         * @param pageId The ID of the page to fetch.
                 * @return The Page object whose content is stored in a frame of the buffer pool manager.
      */
-        abstract Page getPage(int pageId);
+        abstract Page getPage(int pageId) throws Exception;
 
 
         /**
@@ -21,7 +21,7 @@ public abstract class BufferManager {
          * The page is immediately pinned.
          * @return The Page object whose content is stored in a frame of the buffer pool manager.
          */
-        abstract Page createPage();
+        abstract Page createPage() throws Exception;
 
         /**
          * Marks a page as dirty, indicating it needs to be written to disk before eviction.
