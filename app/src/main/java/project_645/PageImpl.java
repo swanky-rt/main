@@ -52,7 +52,7 @@ public class PageImpl implements Page, Serializable {
     @Override
     public void decrementPinCount() {
         --this.pinCount;
-        this.pinCount -= Math.max(this.pinCount, 0);
+        this.pinCount = Math.max(this.pinCount, 0);
     }
 
     @Override

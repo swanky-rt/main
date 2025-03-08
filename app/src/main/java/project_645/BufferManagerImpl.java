@@ -27,8 +27,9 @@ public class BufferManagerImpl extends BufferManager{
     @Override
     public Page getPage(int pageId) throws Exception {
         if(bufferPool.containsKey(pageId)){
-            lru.remove(pageId);
+            lru.remove((Integer)pageId);
             lru.addFirst(pageId);
+            this.pinPage(pageId);
             return bufferPool.get(pageId);
         }
         if(bufferPool.size()>=MAX_PAGE){

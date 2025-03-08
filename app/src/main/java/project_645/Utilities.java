@@ -25,6 +25,7 @@ public class Utilities implements Serializable {
         // create page
         Page newPage = bf.createPage();
         int pageId = newPage.getPid();
+        bf.getPage(pageId);
         BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
         reader.readLine();
         // add rows using p.insertRow without filling p up
@@ -45,6 +46,9 @@ public class Utilities implements Serializable {
         }
         for (int i = 0; i < pageId; ++i) {
             Page loopPage = bf.getPage(i);
+            if (i >= 5) {
+                bf.unpinPage(pageId);
+            }
 //            if (i >= 5) {
 //                String curLine = reader.readLine();
 //                String[] columns = curLine.split("\t");
