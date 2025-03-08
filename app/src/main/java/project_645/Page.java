@@ -28,6 +28,12 @@ public interface Page {
 
     /**
      *
+     * @param pageId, the ID to update the page to
+     */
+    void reassignPageId(int pageId);
+
+    /**
+     *
      * @return all rows in the "rowList" property of the page object
      */
     Row[] getAllRows();

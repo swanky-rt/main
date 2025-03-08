@@ -18,11 +18,13 @@ public class PageImpl implements Page, Serializable {
     public PageImpl(int pageId){
         this.pageId = pageId;
     }
+    //This method gets the row based on the row id (index)
     @Override
     public Row getRow(int rowId) {
         return (rowId >=0 && rowId < curRowCount) ? rowList[rowId] : null;
     }
 
+    //This method inserts a row into the next available entry
     @Override
     public int insertRow(Row row) {
         if(isFull()){
@@ -34,72 +36,92 @@ public class PageImpl implements Page, Serializable {
         return curRowCount - 1;
     }
 
+    //This method checks if the page is full
     @Override
     public boolean isFull() {
         return curRowCount == MAX_TUPLES;
     }
 
+    //This method returns the id of the page
     @Override
     public int getPid() {
         return this.pageId;
     }
 
+    //This method updates the current id of the page
+    @Override
+    public void reassignPageId(int pageId) {
+        this.pageId = pageId;
+    }
+
+    //This method increments the pin count
     @Override
     public void incrementPinCount() {
         this.pinCount += 1;
     }
 
+    //This method decrements the pin count
     @Override
     public void decrementPinCount() {
         --this.pinCount;
         this.pinCount = Math.max(this.pinCount, 0);
     }
 
+    //This method gets the pin count
     @Override
     public int getPinCount() {
         return this.pinCount;
     }
 
+    //This method gets all rows
     @Override
     public Row[] getAllRows() {
         return rowList;
     }
 
+    //This method gets bytes to pad
     @Override
     public int getBytesToPad() {
         return bytesToPad;
     }
 
+    //This method sets all rows
     @Override
     public void setAllRows(Row[] rows) {
         this.rowList = rows;
     }
 
+    //This method sets single row count
     @Override
     public void setRowCount(int rowCount) {
         this.curRowCount = rowCount;
     }
 
+    //This method gets row count
     @Override
     public int getRowCount() {
         return curRowCount;
     }
 
+    //This method sets boolean as true
     @Override
     public void markDirty() {
         this.isDirty = true;
     }
 
+    //This method sets boolean as false
     @Override
     public void markNotDirty() {
         this.isDirty = false;
     }
 
+    //This method gets page status in terms of dirty/notDirty
     @Override
     public boolean getDirtyStatus() {
         return this.isDirty;
     }
 
+    //This method deserialize rows
     @Override
     public void deserializeRows() {
         for (int i = 0; i < getAllRows().length; ++i) {
@@ -113,11 +135,10 @@ public class PageImpl implements Page, Serializable {
         }
     }
 
+    //This method returns the deserialized rows
     @Override
     public String[][] getDeserializedRows() {
         return this.deserializedRows;
     }
-
-
 
 }
