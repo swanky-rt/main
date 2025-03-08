@@ -24,4 +24,4 @@ public class Row implements Serializable {
     public byte[] getTitle() {
         return title;
 }
-
+}

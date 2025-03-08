@@ -21,7 +21,7 @@ public class Main {
             
             Page testPage = utilities.loadPageFromDisk(4);
             System.out.println("   checking : " + bufferManager.bufferPool.isEmpty());
-            /* 
+            
             System.out.println(testPage.getAllRows().length);
             testPage.deserializeRows();
             for (int i = 0; i < testPage.getAllRows().length; ++i) {
@@ -32,7 +32,7 @@ public class Main {
                 String test4 = testPage.getDeserializedRows()[i][1];
 
                 System.out.println(test3 + ", " + test4);
-            }*/
+            }
 
         } catch (Exception e) {
 

@@ -14,6 +14,7 @@ import static org.mockito.Mockito.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -101,14 +102,36 @@ public class PageImplTest {
     
     @Test
     public void testDeserializeRows() {
-        doReturn(new Row[]{row1, row2}).when(pageImpl).getAllRows();
-        pageImpl.deserializeRows();
-        String[][] deserializedRows = pageImpl.getDeserializedRows();
-        assertEquals("tt0000499", deserializedRows[0][0]);
-        assertEquals("An Impossible Voyage", deserializedRows[0][1]);
-        assertEquals("tt0000500", deserializedRows[1][0]);
-        assertEquals("The Abductors", deserializedRows[1][1]);
-    }
+    // Mock the behavior of getAllRows to return an array of row1 and row2
+    Row[] rowsArray = new Row[]{row1, row2};
+    doReturn(rowsArray).when(pageImpl).getAllRows();
+
+    // Call the method under test
+    pageImpl.deserializeRows();
+
+    // Retrieve the deserialized rows from the method's output
+    String[][] deserializedRows = pageImpl.getDeserializedRows();
+
+    // Debugging: Output deserializedRows to help identify the issue
+    System.out.println("Deserialized Rows: " + Arrays.deepToString(deserializedRows));
+
+    // Assert that deserializedRows is not null
+    assertNotNull(deserializedRows, "Deserialized rows should not be null");
+
+    // Assert that the deserializedRows array is populated correctly
+    assertEquals("tt0000499", deserializedRows[0][0], "Movie ID for row 1 should match");
+    assertEquals("An Impossible Voyage", deserializedRows[0][1], "Movie Title for row 1 should match");
+    assertEquals("tt0000500", deserializedRows[1][0], "Movie ID for row 2 should match");
+    assertEquals("The Abductors", deserializedRows[1][1], "Movie Title for row 2 should match");
+
+    // Verify that getAllRows() and deserializeRows() were called
+    verify(pageImpl).getAllRows(); // Ensure getAllRows was called
+    verify(pageImpl).deserializeRows(); // Ensure deserializeRows was called
+}
+
+
+
+    
     
     @Test
     public void testPageFullStatus() {
