@@ -11,9 +11,9 @@ public class Utilities implements Serializable {
     private static final int BUFFER_SIZE = 4 * 4096;
     private static final int PAGE_SIZE = 4096;
     public int currentPageID;
-    private static String filepath = "./app/src/main/java/project_645/DB files/";
+    private static String filepath = System.getProperty("user.dir") + "/src/main/java/project_645/DB files/";
     private static String filename = "testdb.dat";
-    private final Path dbFilePath = Paths.get(filepath + filename);
+    private final Path dbFilePath = Paths.get( filepath + filename).toAbsolutePath();
 
 
     public Utilities() throws IOException {

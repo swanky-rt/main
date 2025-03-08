@@ -86,4 +86,22 @@ public interface Page {
      */
     boolean getDirtyStatus();
 
+    /**
+     *
+     * increments the pin count for the page
+     */
+    void incrementPinCount();
+
+    /**
+     *
+     * decrements the pin count for the page
+     */
+    void decrementPinCount();
+
+    /**
+     *
+     * @returns the pin count of the page
+     */
+    int getPinCount();
+
 }

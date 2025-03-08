@@ -7,13 +7,14 @@ import java.nio.charset.StandardCharsets;
 public class Main {
     public static void main(String[] args) {
         try {
-            String filePath = "./DB files/";
+            String filePath = System.getProperty("user.dir") + "/src/main/java/project_645/DB files/";
             BufferManagerImpl bufferManager = new BufferManagerImpl(4 * 4096);
             Utilities utilities = new Utilities();
             utilities.loadDataset(bufferManager, filePath);
+            System.out.println("Hello World!");
 
         } catch (Exception e) {
-            int test = 2;
+            System.out.println(e.toString());
         }
 //        } catch (IOException e){
 //            System.out.println(e.getMessage());

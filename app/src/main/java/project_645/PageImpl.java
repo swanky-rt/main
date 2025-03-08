@@ -13,6 +13,7 @@ public class PageImpl implements Page, Serializable {
     private boolean isDirty = true;
     private String[][] deserializedRows = new String[MAX_TUPLES][2];
     private int pageId;
+    private int pinCount = 0;
 
     public PageImpl(int pageId){
         this.pageId = pageId;
@@ -41,6 +42,22 @@ public class PageImpl implements Page, Serializable {
     @Override
     public int getPid() {
         return this.pageId;
+    }
+
+    @Override
+    public void incrementPinCount() {
+        this.pinCount += 1;
+    }
+
+    @Override
+    public void decrementPinCount() {
+        --this.pinCount;
+        this.pinCount -= Math.max(this.pinCount, 0);
+    }
+
+    @Override
+    public int getPinCount() {
+        return this.pinCount;
     }
 
     @Override
