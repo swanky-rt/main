@@ -11,7 +11,6 @@ public class BufferManagerImpl extends BufferManager{
     public int MAX_PAGE;
     private int PAGE_SIZE;
     public Map<Integer, Page> bufferPool;
-    //public Set<Integer> dirtyPages;
     public Map<Page, Integer> pageMap;
     public LinkedList<Integer> lru;
     public Map<Integer, Integer> pinnedPages;
@@ -75,7 +74,6 @@ public class BufferManagerImpl extends BufferManager{
                 try {
                     if (removedPage.getDirtyStatus()) {
                         writePageToDisk(curPageId, removedPage);
-                        //dirtyPages.remove(curPageId);
                         removedPage.markNotDirty();
                     }
                     bufferPool.remove(curPageId);
@@ -152,10 +150,8 @@ public class BufferManagerImpl extends BufferManager{
 
     public void pinPage(int pageId) {
         if(bufferPool.containsKey(pageId)){
-           //pinnedPages.add(pageId);
             Page pageToPin = bufferPool.get(pageId);
             pageToPin.incrementPinCount();
-            //int pageCount = bufferPool.get
             if(!pinnedPages.containsKey(pageId)){
                 pinnedPages.put(pageId, pageToPin.getPinCount());
             }
