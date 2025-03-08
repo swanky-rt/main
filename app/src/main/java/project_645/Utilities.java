@@ -8,28 +8,26 @@ import java.nio.file.Paths;
 
 public class Utilities implements Serializable {
 
-    //private static final int BUFFER_SIZE = 4 * 4096;
     private static final int PAGE_SIZE = 4096;
-    public int currentPageIDToWrite;
-    public int currentPageID = -1;
-    public int currentUnwrittenPageId = -1;
-    private String filepath;
-    private String filename = "testdb.dat";
+    private final String filename;
+    private final String diskFileName;
 
 
 
-    public Utilities() {
+    public Utilities(String filename, String diskFileName) {
+        this.filename = filename;
+        this.diskFileName = diskFileName;
     }
 
     // Loads the buffer manager with the imdb dataset
     public void loadDataset(BufferManager bf, String filepath) throws Exception {
-         Path dbFilePath = Paths.get( filepath + filename).toAbsolutePath();
+         Path dbFilePath = Paths.get( filepath + diskFileName).toAbsolutePath();
         // create page
         Page newPage = bf.createPage();
         int pageId = newPage.getPid();
         System.out.print(pageId+ "the page number");
         newPage = bf.getPage(pageId);
-        BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
+        BufferedReader reader = new BufferedReader(new FileReader(filepath + this.filename));
         reader.readLine();
         // add rows using p.insertRow without filling p up
         for (int i = 0; i < 80; ++i) {
@@ -70,4 +68,6 @@ public class Utilities implements Serializable {
         }
         bf.unpinPage(pageId);
     }
+
+
 }

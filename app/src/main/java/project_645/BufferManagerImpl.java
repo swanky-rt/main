@@ -18,24 +18,20 @@ public class BufferManagerImpl extends BufferManager{
     private int currentPageID = -1;
     private String filepath;
     private String diskFileName;
-    private String csvName;
 
 
-    public BufferManagerImpl(int bufferSize, String filepath, String diskFileName, String csvName) throws IOException {
+    public BufferManagerImpl(int bufferSize, String filepath, String diskFileName) throws IOException {
         super(bufferSize);
         this.PAGE_SIZE = 4096;
         this.MAX_PAGE = bufferSize/PAGE_SIZE;
         this.bufferPool = new HashMap<>();
         this.lru = new LinkedList<>();
-       // this.dirtyPages = new HashSet<>();
         this.pageMap = new HashMap<>();
         this.pinnedPages = new HashMap<>();
         this.filepath = filepath;
         this.diskFileName = diskFileName;
-        this.csvName = csvName;
 
     }
-    Utilities utilities = new Utilities();
 
 //This method gets the page from buffer pool and disk(if not present in buffer pool)
 
@@ -125,18 +121,11 @@ public class BufferManagerImpl extends BufferManager{
 
     @Override
     public void markDirty(int pageId) {
-//        if(isDirty(pageId).equals(Boolean.FALSE)){
-//            dirtyPages.add(pageId);
-//        }
 
         if (bufferPool.containsKey(pageId)) {
             Page page = bufferPool.get(pageId);
             page.markDirty();
         }
-    }
-
-    public Boolean isDirty(int pageId){
-        return bufferPool.containsKey(pageId) && bufferPool.get(pageId).getDirtyStatus();
     }
 
 //This method pins the page using pageID
@@ -264,10 +253,14 @@ public class BufferManagerImpl extends BufferManager{
         return pageToPopulate;
     }
 
+    public int getNextPageId() {
+        return currentPageID--;
+    }
+
     // meant to be run separately from the buffer manager, helper utility to initially populate the disk.
-    public void populateDisk(int numRecords) throws IOException {
+    public void populateDisk(int numRecords, String filepath) throws IOException {
         int curPageId = 0;
-        BufferedReader reader = new BufferedReader(new FileReader(this.filepath + "title.basics.tsv"));
+        BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
         reader.readLine();
         boolean justFlushedPage = true;
         PageImpl newPage = new PageImpl(curPageId);
@@ -285,9 +278,5 @@ public class BufferManagerImpl extends BufferManager{
             newPage.insertRow(row);
         }
         writePageToDisk(curPageId, newPage);
-    }
-
-    public int getNextPageId() {
-        return currentPageID--;
     }
 }
