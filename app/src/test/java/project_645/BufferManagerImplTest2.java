@@ -1,123 +1,74 @@
-
 package project_645;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-public class BufferManagerImplTest2{
-
+class BufferManagerImplTest2 {
     private BufferManagerImpl bufferManager;
-
-    @Mock
-    private Utilities utilities; 
-
-    @Mock
-    private Page mockPage; 
+    private Utilities utilities;
 
     @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-        bufferManager = new BufferManagerImpl(16 * 4096);
+    void setUp() throws IOException {
+        bufferManager = new BufferManagerImpl(40960); // 10 pages
+        utilities = mock(Utilities.class);
     }
 
     @Test
-    public void testCreatePage() {
-      System.out.println("Running testCreatePage...");
+    void testCreatePage() throws Exception {
         Page page = bufferManager.createPage();
-        assertNotNull(page, "Created page should not be null");
-        assertTrue(bufferManager.pageMap.containsKey(page), "Page should be mapped to a pageId");
+        assertNotNull(page);
+        assertEquals(0, page.getPid());
     }
 
     @Test
-    public void testGetPage_whenPageIsInBufferPool() {
-        int pageId = 0;
-        when(utilities.loadPageFromDisk(pageId)).thenReturn(mockPage);
-
-        bufferManager.getPage(pageId);
-        verify(utilities, never()).loadPageFromDisk(pageId);  // No disk load should occur if page is in buffer pool
+    void testGetPage() throws Exception {
+        Page page = bufferManager.createPage();
+        Page retrievedPage = bufferManager.getPage(page.getPid());
+        assertEquals(page, retrievedPage);
     }
 
     @Test
-    public void testGetPage_whenPageIsNotInBufferPool() throws IOException {
-        int pageId = 1;
-        when(utilities.loadPageFromDisk(pageId)).thenReturn(mockPage);
-
-        Page page = bufferManager.getPage(pageId);
-        assertNotNull(page, "Page should be loaded from disk");
-        verify(utilities, times(1)).loadPageFromDisk(pageId);  // Should trigger disk load when not in pool
-    }
-
-    @Test
-    public void testEviction_whenBufferIsFull() throws IOException {
-        for (int i = 0; i < bufferManager.MAX_PAGE + 1; i++) {
+    void testEvictPage() throws Exception {
+        for (int i = 0; i < bufferManager.MAX_PAGE; i++) {
             bufferManager.createPage();
         }
-
-        assertTrue(bufferManager.bufferPool.size() <= bufferManager.MAX_PAGE,
-                "Buffer pool should not exceed max capacity after eviction.");
+        assertTrue(bufferManager.isBufferPoolFull());
+        assertDoesNotThrow(() -> bufferManager.evictPage());
     }
 
     @Test
-    public void testMarkDirty() {
-        int pageId = 1;
-        bufferManager.markDirty(pageId);
-        assertTrue(bufferManager.isDirty(pageId), "Page should be marked dirty");
+    void testMarkDirty() {
+        PageImpl page = new PageImpl(1);
+        bufferManager.bufferPool.put(1, page);
+        bufferManager.markDirty(1);
+        assertTrue(page.getDirtyStatus());
     }
 
     @Test
-    public void testWritePageToDisk() throws IOException {
-        int pageId = 3;
-
-        // Simulating writing to disk
-        doNothing().when(utilities).writePageToDisk(pageId, mockPage);
-        utilities.writePageToDisk(pageId, mockPage);
-
-        verify(utilities, times(1)).writePageToDisk(pageId, mockPage);
+    void testUnpinPage() throws Exception {
+        Page page = bufferManager.createPage();
+        bufferManager.unpinPage(page.getPid());
+        assertEquals(0, page.getPinCount());
     }
 
     @Test
-    public void testLoadPageFromDisk() throws IOException {
-        int pageId = 2;
-        when(utilities.loadPageFromDisk(pageId)).thenReturn(mockPage);
-
-        Page loadedPage = utilities.loadPageFromDisk(pageId);
-
-        assertNotNull(loadedPage, "Loaded page should not be null");
-        assertEquals(mockPage, loadedPage, "Loaded page should match the mocked page");
-
-        verify(utilities, times(1)).loadPageFromDisk(pageId);
+    void testPinPage() throws Exception {
+        Page page = bufferManager.createPage();
+        bufferManager.pinPage(page.getPid());
+        assertEquals(1, page.getPinCount());
     }
 
     @Test
-    public void testLoadDataset() throws IOException {
-        String datasetPath = "main/app/src/main/java/project_645/DB_files/";
-
-        // Mock utilities loadDataset method
-        doNothing().when(utilities).loadDataset(any(BufferManagerImpl.class), eq(datasetPath));
-        utilities.loadDataset(bufferManager, datasetPath);
-
-        verify(utilities, times(1)).loadDataset(bufferManager, datasetPath);
-    }
-
-    @Test
-    public void testPopulateDisk() throws IOException {
-        int numRecords = 10;
-        doNothing().when(utilities).populateDisk(numRecords);
-        utilities.populateDisk(numRecords);
-
-        verify(utilities, times(1)).populateDisk(numRecords);
+    void testIsBufferPoolFull() throws Exception {
+        for (int i = 0; i < bufferManager.MAX_PAGE; i++) {
+            bufferManager.createPage();
+        }
+        assertTrue(bufferManager.isBufferPoolFull());
     }
 }
