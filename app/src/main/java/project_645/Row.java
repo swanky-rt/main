@@ -16,5 +16,16 @@ public class Row implements Serializable {
         System.arraycopy(movieId, 0, this.movieId, 0, Math.min(this.movieId.length, movieId.length));
         System.arraycopy(title, 0, this.title, 0, Math.min(this.title.length, title.length));
     }
+
+    public byte[] getMovieId()
+    {
+        return movieId;
+    }
+
+    public byte[] getTitle()
+    {
+        return title;
+    }
+
 }
 

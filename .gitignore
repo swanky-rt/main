@@ -14,3 +14,4 @@ out
 build
 .gradle
 app/build
+app/src/test/java/project_645/DB files/title.basics.tsv
