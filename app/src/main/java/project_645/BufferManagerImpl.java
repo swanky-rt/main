@@ -51,12 +51,8 @@ public class BufferManagerImpl extends BufferManager{
             Path curPath = Paths.get( filepath + diskFileName).toAbsolutePath();
             long fileSize = Files.size(curPath);
             long numPages = fileSize / PAGE_SIZE;
-            if (bufferPool.size() >= MAX_PAGE && pageId > 0 && pageId < numPages) {
-                try {
-                    evictPage();
-                } catch (Exception e) {
-                    System.out.println(e.toString());
-                }
+            if (bufferPool.size() >= MAX_PAGE && pageId >= 0 && pageId < numPages) {
+                evictPage();
             }
             page = loadPageFromDisk(pageId);
             if (page == null) {
@@ -143,10 +139,9 @@ public class BufferManagerImpl extends BufferManager{
                     pageToUnpin.decrementPinCount();
                     pinnedPages.put(pageId, pageToUnpin.getPinCount());
                 }
-
-            }
-            if(pinnedPages.get(pageId) == 0) {
-                pinnedPages.remove(pageId);
+                if(pinnedPages.get(pageId) == 0) {
+                    pinnedPages.remove(pageId);
+                }
             }
         }
     }
@@ -157,12 +152,10 @@ public class BufferManagerImpl extends BufferManager{
         if(bufferPool.containsKey(pageId)){
             Page pageToPin = bufferPool.get(pageId);
             pageToPin.incrementPinCount();
-            if(!pinnedPages.containsKey(pageId)){
-                pinnedPages.put(pageId, pageToPin.getPinCount());
-            }
-            if(lru.contains(pageId)){
-                System.out.println("the page id is" + pageId + "the size is " + lru.size());
-            }
+            pinnedPages.put(pageId, pageToPin.getPinCount());
+//            if(lru.contains(pageId)){
+//                System.out.println("the page id is" + pageId + "the size is " + lru.size());
+//            }
         }
     }
 
@@ -251,30 +244,32 @@ public class BufferManagerImpl extends BufferManager{
         return pageToPopulate;
     }
 
+    // Note that pageID is negative before being written to disk, and is reassigned when written
+    // This is done to avoid conflicting IDs with pages that exist on disk.
     public int getNextPageId() {
         return currentPageID--;
     }
 
-    // meant to be run separately from the buffer manager, helper utility to initially populate the disk.
-//    public void populateDisk(int numRecords, String filepath) throws IOException {
-//        int curPageId = 0;
-//        BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
-//        reader.readLine();
-//        boolean justFlushedPage = true;
-//        PageImpl newPage = new PageImpl(curPageId);
-//        for (int i = 0; i < numRecords; ++i) {
-//            if (newPage.isFull()) {
-//                writePageToDisk(curPageId++, newPage);
-//                newPage = new PageImpl(curPageId);
-//            }
-//            String line = reader.readLine();
-//
-//            String[] columns = line.split("\t");
-//            byte[] title = columns[2].getBytes();
-//            byte[] movieId = columns[0].getBytes();
-//            Row row = new Row(movieId, title);
-//            newPage.insertRow(row);
-//        }
-//        writePageToDisk(curPageId, newPage);
-//    }
+//     meant to be run separately from the buffer manager, helper utility to initially populate the disk.
+    public void populateDisk(int numRecords, String filepath) throws IOException {
+        int curPageId = 0;
+        BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
+        reader.readLine();
+        boolean justFlushedPage = true;
+        PageImpl newPage = new PageImpl(curPageId);
+        for (int i = 0; i < numRecords; ++i) {
+            if (newPage.isFull()) {
+                writePageToDisk(curPageId++, newPage);
+                newPage = new PageImpl(curPageId);
+            }
+            String line = reader.readLine();
+
+            String[] columns = line.split("\t");
+            byte[] title = columns[2].getBytes();
+            byte[] movieId = columns[0].getBytes();
+            Row row = new Row(movieId, title);
+            newPage.insertRow(row);
+        }
+        writePageToDisk(curPageId, newPage);
+    }
 }
