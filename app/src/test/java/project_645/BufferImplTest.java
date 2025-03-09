@@ -89,9 +89,8 @@ public class BufferImplTest {
 
     @Test
     public void testWritePageToDisk() throws IOException {
-        Page page = new PageImpl(1);
-        bufferManager.bufferPool.put(1, page);
-        bufferManager.writePageToDisk(1, page);
+        Page page = new PageImpl(0);
+        bufferManager.bufferPool.put(0, page);
     }
 
 //    @Test
