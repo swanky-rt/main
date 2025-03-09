@@ -111,6 +111,7 @@ public class BufferImplUnitTests {
 
         // now, create a page in the buffer manager.
         Page page1 = bf.createPage();
+        int page1Id = page1.getPid();
         // check that the page is returned by getPage()
         Page retreivedPage = bf.getPage(page1.getPid());
         // at this point should be the same reference since it was never evicted from the buffer pool
@@ -158,9 +159,11 @@ public class BufferImplUnitTests {
         bf.getPage(page2.getPid());
         bf.getPage(page3.getPid());
         bf.getPage(page4.getPid());
+        bf.unpinPage(page2.getPid());
+        bf.unpinPage(page2.getPid());
         // creating page should evict
-        int page1Id = page1.getPid();
         bf.createPage();
+        bf.unpinPage(page3.getPid());
         // since evicted, saved pid and retrieved pid should be different
         Page page1FromDisk = bf.getPage(page1.getPid());
         assertNotEquals(page1Id, page1FromDisk.getPid());

@@ -51,7 +51,7 @@ public class BufferManagerImpl extends BufferManager{
             Path curPath = Paths.get( filepath + diskFileName).toAbsolutePath();
             long fileSize = Files.size(curPath);
             long numPages = fileSize / PAGE_SIZE;
-            if (bufferPool.size() >= MAX_PAGE && pageId > 0 && pageId < numPages) {
+            if (bufferPool.size() >= MAX_PAGE && pageId >= 0 && pageId < numPages) {
                 try {
                     evictPage();
                 } catch (Exception e) {
@@ -143,10 +143,9 @@ public class BufferManagerImpl extends BufferManager{
                     pageToUnpin.decrementPinCount();
                     pinnedPages.put(pageId, pageToUnpin.getPinCount());
                 }
-
-            }
-            if(pinnedPages.get(pageId) == 0) {
-                pinnedPages.remove(pageId);
+                if(pinnedPages.get(pageId) == 0) {
+                    pinnedPages.remove(pageId);
+                }
             }
         }
     }
@@ -157,12 +156,10 @@ public class BufferManagerImpl extends BufferManager{
         if(bufferPool.containsKey(pageId)){
             Page pageToPin = bufferPool.get(pageId);
             pageToPin.incrementPinCount();
-            if(!pinnedPages.containsKey(pageId)){
-                pinnedPages.put(pageId, pageToPin.getPinCount());
-            }
-            if(lru.contains(pageId)){
-                System.out.println("the page id is" + pageId + "the size is " + lru.size());
-            }
+            pinnedPages.put(pageId, pageToPin.getPinCount());
+//            if(lru.contains(pageId)){
+//                System.out.println("the page id is" + pageId + "the size is " + lru.size());
+//            }
         }
     }
 
@@ -251,6 +248,8 @@ public class BufferManagerImpl extends BufferManager{
         return pageToPopulate;
     }
 
+    // Note that pageID is negative before being written to disk, and is reassigned when written
+    // This is done to avoid conflicting IDs with pages that exist on disk.
     public int getNextPageId() {
         return currentPageID--;
     }
