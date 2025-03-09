@@ -8,6 +8,8 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import static org.mockito.Mockito.*;
 
 public class BufferImplTest {
@@ -45,20 +47,23 @@ public class BufferImplTest {
         bufferManager.getPage(1);
     }
 
-//    @Test
-//    public void testEvict() throws Exception {
-//        Page page1 = new PageImpl(1);
-//        Page page2 = new PageImpl(2);
-//        Page page3 = new PageImpl(3);
-//        bufferManager.bufferPool.put(1, page1);
-//        bufferManager.bufferPool.put(2, page2);
-//        bufferManager.bufferPool.put(3, page3);
-//
-//        bufferManger.bufferPool.getPid()
-//
-//       // doNothing().when(bufferManager).unpinPage(anyInt());
-//        bufferManager.getPage(1);
-//    }
+    @Test
+    public void testEvict() throws Exception {
+
+        Page page1 = new PageImpl(1);
+        Page page2 = new PageImpl(2);
+        Page page3 = new PageImpl(3);
+        bufferManager.bufferPool.put(1, page1);
+        bufferManager.bufferPool.put(2, page2);
+        bufferManager.unpinPage(1);
+        bufferManager.bufferPool.put(3, page3);
+
+        bufferManager.evictPage(); // Assuming page 1 should be evicted
+        assertFalse(bufferManager.bufferPool.containsKey(1), "Page 1 should be evicted");
+
+        verify(bufferManager).evictPage();
+
+    }
 
     @Test
     public void testUnpinPage(){
