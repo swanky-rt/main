@@ -52,11 +52,7 @@ public class BufferManagerImpl extends BufferManager{
             long fileSize = Files.size(curPath);
             long numPages = fileSize / PAGE_SIZE;
             if (bufferPool.size() >= MAX_PAGE && pageId >= 0 && pageId < numPages) {
-                try {
-                    evictPage();
-                } catch (Exception e) {
-                    System.out.println(e.toString());
-                }
+                evictPage();
             }
             page = loadPageFromDisk(pageId);
             if (page == null) {

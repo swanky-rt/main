@@ -210,7 +210,8 @@ public class BufferImplUnitTests {
         Page page1 = bf.createPage();
         bf.unpinPage(page1.getPid());
         Page page2 = bf.createPage();
+        bf.unpinPage(page2.getPid());
+        Page page3 = bf.getPage(0);
 
     }
-
 }
