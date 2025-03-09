@@ -8,6 +8,8 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import static org.mockito.Mockito.*;
 
 public class BufferImplTest {
@@ -30,35 +32,26 @@ public class BufferImplTest {
     }
     @Test
     public void testCreatePage(){
-        bufferManager.createPage();
+        bufferManager.bufferPool.clear();
+        Page page1 = bufferManager.createPage();
+
+        assertNull(bufferManager.createPage());
+
     }
 
     @Test
     public void testGetPageTest() throws Exception {
         Page page = new PageImpl(1);
         bufferManager.bufferPool.put(1, page);
-        bufferManager.getPage(1);
+        Page fetchedPage = bufferManager.getPage(1);
+        assertNotNull(fetchedPage);
+        assertEquals(page, fetchedPage);
+
     }
 
-    @Test
-    public void testGetPageFromDisk() throws Exception {
-        bufferManager.getPage(1);
-    }
 
-//    @Test
-//    public void testEvict() throws Exception {
-//        Page page1 = new PageImpl(1);
-//        Page page2 = new PageImpl(2);
-//        Page page3 = new PageImpl(3);
-//        bufferManager.bufferPool.put(1, page1);
-//        bufferManager.bufferPool.put(2, page2);
-//        bufferManager.bufferPool.put(3, page3);
-//
-//        bufferManger.bufferPool.getPid()
-//
-//       // doNothing().when(bufferManager).unpinPage(anyInt());
-//        bufferManager.getPage(1);
-//    }
+
+
 
     @Test
     public void testUnpinPage(){
@@ -68,16 +61,17 @@ public class BufferImplTest {
         bufferManager.bufferPool.put(2, page2);
         bufferManager.pinnedPages.put(1, 1);
         bufferManager.unpinPage(1);
+        assertFalse(bufferManager.pinnedPages.containsKey(1));
+
     }
 
     @Test
     public void testUnpinPageifNoPinPage(){
         Page page1 = new PageImpl(1);
-        Page page2 = new PageImpl(2);
         bufferManager.bufferPool.put(1, page1);
-        bufferManager.bufferPool.put(2, page2);
         bufferManager.pinnedPages.put(1, 1);
-        bufferManager.unpinPage(3);
+        bufferManager.unpinPage(1);
+        assertEquals(0, bufferManager.pinnedPages.size());
     }
 
     @Test
@@ -85,13 +79,11 @@ public class BufferImplTest {
         Page page = new PageImpl(1);
         bufferManager.bufferPool.put(1, page);
         bufferManager.pinPage(1);
+        assertTrue(bufferManager.pinnedPages.containsKey(1));
+        assertEquals(1, page.getPinCount());
     }
 
-    @Test
-    public void testWritePageToDisk() throws IOException {
-        Page page = new PageImpl(0);
-        bufferManager.bufferPool.put(0, page);
-    }
+
 
 //    @Test
 //    public void testWritePageToDisk_ValidPage() throws IOException {
@@ -113,14 +105,24 @@ public class BufferImplTest {
 
     @Test
     public void testgetNextPageId(){
-        bufferManager.getNextPageId();
+        int nextPageId = bufferManager.getNextPageId();
+        assertEquals(-1, nextPageId);
 
     }
-
     @Test
-     public void testsomething(){
+    public void testMarkDirty(){
+
+        bufferManager.bufferPool.put(1, page);
+        bufferManager.markDirty(1);
+        verify(page).markDirty();
+
 
     }
+
+
+
+
+
 
 
 }
