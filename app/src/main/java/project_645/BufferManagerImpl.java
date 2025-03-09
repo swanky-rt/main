@@ -250,26 +250,26 @@ public class BufferManagerImpl extends BufferManager{
         return currentPageID--;
     }
 
-    // meant to be run separately from the buffer manager, helper utility to initially populate the disk.
-//    public void populateDisk(int numRecords, String filepath) throws IOException {
-//        int curPageId = 0;
-//        BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
-//        reader.readLine();
-//        boolean justFlushedPage = true;
-//        PageImpl newPage = new PageImpl(curPageId);
-//        for (int i = 0; i < numRecords; ++i) {
-//            if (newPage.isFull()) {
-//                writePageToDisk(curPageId++, newPage);
-//                newPage = new PageImpl(curPageId);
-//            }
-//            String line = reader.readLine();
-//
-//            String[] columns = line.split("\t");
-//            byte[] title = columns[2].getBytes();
-//            byte[] movieId = columns[0].getBytes();
-//            Row row = new Row(movieId, title);
-//            newPage.insertRow(row);
-//        }
-//        writePageToDisk(curPageId, newPage);
-//    }
+//     meant to be run separately from the buffer manager, helper utility to initially populate the disk.
+    public void populateDisk(int numRecords, String filepath) throws IOException {
+        int curPageId = 0;
+        BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
+        reader.readLine();
+        boolean justFlushedPage = true;
+        PageImpl newPage = new PageImpl(curPageId);
+        for (int i = 0; i < numRecords; ++i) {
+            if (newPage.isFull()) {
+                writePageToDisk(curPageId++, newPage);
+                newPage = new PageImpl(curPageId);
+            }
+            String line = reader.readLine();
+
+            String[] columns = line.split("\t");
+            byte[] title = columns[2].getBytes();
+            byte[] movieId = columns[0].getBytes();
+            Row row = new Row(movieId, title);
+            newPage.insertRow(row);
+        }
+        writePageToDisk(curPageId, newPage);
+    }
 }
