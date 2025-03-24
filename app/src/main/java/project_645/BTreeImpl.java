@@ -1,314 +1,510 @@
 package project_645;
 
-import java.io.Serializable;
 import java.util.*;
 
-public class BTreeImpl<K extends Comparable<K>> implements BTree<K, Rid> {
-    private BufferManager bufferManager;  // the buffer manager to access index pages
-    private int rootPageId;               // page id of the root node
-    private final int order;                    // maximum number of entries per node (defines node capacity)
 
-    // ---------------------------
-    // Node classes used in the B+ tree
-    // ---------------------------
-    abstract class Node implements Serializable {
-        List<K> keys;
-        boolean isLeaf;
-        Node(boolean isLeaf) {
-            this.keys = new ArrayList<>();
-            this.isLeaf = isLeaf;
-        }
+public class BTreeImpl implements BTree<String, Rid> {
+
+
+
+    private enum NodeType {
+        LEAF, INTERNAL
     }
 
 
-
-    // Internal node: contains keys and pointers to child pages.
-    class InternalNode extends Node {
-        List<Integer> childrenPageIds;  // pointers to child node pages
-        InternalNode() {
-            super(false);
-            childrenPageIds = new ArrayList<>();
-        }
+    private static class BTreeMetadata {
+        int rootPageId;   // page id of the root node
+        boolean isRootLeaf;
+        int order;        // approximate fanout
     }
 
-    // Leaf node: contains key-value pairs and a pointer to the next leaf.
-    class LeafNode extends Node {
-        List<Rid> values;   // one value (record id) per key
-        int nextLeafPageId; // pointer to the next leaf page (-1 if none)
-        LeafNode() {
-            super(true);
-            values = new ArrayList<>();
-            nextLeafPageId = -1;
-        }
-    }
 
-    // A helper class to capture node-split information.
-    private static class SplitResult<K> {
-        K newKey;        // key to be pushed up to the parent
-        int newPageId;   // page id of the newly created node
-    }
+    private final int maxKeysLeaf;
+    private final int maxKeysInternal;
 
-    // ---------------------------
-    // Constructor
-    // ---------------------------
-    /**
-     * Constructs a B+ tree index.
-     * @param bufferManager The buffer manager instance to read/write index pages.
-     * @param order Maximum number of entries a node can hold.
-     */
-    public BTreeImpl(BufferManager bufferManager, int order) throws Exception {
-        this.bufferManager = bufferManager;
-        this.order = order;
-        // Create an initial empty leaf node as the root.
-        LeafNode root = new LeafNode();
-        Page rootPage = bufferManager.createPage();
-        rootPageId = rootPage.getPid();
-        writeNodeToPage(root, rootPage);
-        bufferManager.unpinPage(rootPageId);
-    }
 
-    // ---------------------------
-    // Insertion
-    // ---------------------------
-    /**
-     * Inserts a key-value pair into the B+ tree.
-     * @param key The movieId to insert.
-     * @param r   The Rid (representing a page id) associated with the movieId.
-     */
-    @Override
-    public void insert(K key, Rid r) {
-        try {
-            SplitResult<K> result = insertRecursive(rootPageId, key, r);
-            if (result != null) {
-                // Root split occurred. Create a new root.
-                InternalNode newRoot = new InternalNode();
-                newRoot.keys.add(result.newKey);
-                newRoot.childrenPageIds.add(rootPageId);
-                newRoot.childrenPageIds.add(result.newPageId);
-                Page newRootPage = bufferManager.createPage();
-                int newRootPageId = newRootPage.getPid();
-                writeNodeToPage(newRoot, newRootPage);
-                bufferManager.unpinPage(newRootPageId);
-                rootPageId = newRootPageId;
-            }
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
+    private final BufferManager bufferMgr;
+    private final BTreeMetadata metadata;
 
-    /**
-     * Recursively inserts a key into the subtree rooted at pageId.
-     * Returns a SplitResult if a split occurs; otherwise, returns null.
-     */
-    private SplitResult<K> insertRecursive(int pageId, K key, Rid r) throws Exception {
-        Page page = bufferManager.getPage(pageId);
-        Node node = readNodeFromPage(page);
-        SplitResult<K> splitResult = null;
 
-        if (node.isLeaf) {
-            // Leaf node insertion
-            LeafNode leaf = (LeafNode) node;
-            int pos = Collections.binarySearch(leaf.keys, key);
-            if (pos < 0) {
-                pos = -pos - 1;
-            }
-            leaf.keys.add(pos, key);
-            leaf.values.add(pos, r);
-            if (leaf.keys.size() < order) {
-                writeNodeToPage(leaf, page);
-                bufferManager.unpinPage(pageId);
-                return null;
-            } else {
-                // Split the leaf node.
-                LeafNode newLeaf = new LeafNode();
-                int mid = leaf.keys.size() / 2;
-                newLeaf.keys.addAll(leaf.keys.subList(mid, leaf.keys.size()));
-                newLeaf.values.addAll(leaf.values.subList(mid, leaf.values.size()));
-                // Remove the moved keys/values from the original leaf.
-                leaf.keys.subList(mid, leaf.keys.size()).clear();
-                leaf.values.subList(mid, leaf.values.size()).clear();
-                newLeaf.nextLeafPageId = leaf.nextLeafPageId;
-                // Allocate a new page for the new leaf.
-                int newLeafPageId = allocateNewPage();
-                leaf.nextLeafPageId = newLeafPageId;
-                // Write changes.
-                writeNodeToPage(leaf, page);
-                bufferManager.unpinPage(pageId);
-                Page newLeafPage = bufferManager.getPage(newLeafPageId);
-                writeNodeToPage(newLeaf, newLeafPage);
-                bufferManager.unpinPage(newLeafPageId);
-                // Prepare split result.
-                SplitResult<K> result = new SplitResult<>();
-                result.newKey = newLeaf.keys.get(0);  // push up the first key of new leaf.
-                result.newPageId = newLeafPageId;
-                return result;
-            }
+    public BTreeImpl(BufferManager bufferMgr, int order, boolean createNew) throws Exception {
+        this.bufferMgr = bufferMgr;
+        this.metadata = new BTreeMetadata();
+        this.metadata.order = order;
+        this.maxKeysLeaf = 2 * order;
+        this.maxKeysInternal = 2 * order;
+
+        if (createNew) {
+            // Create a new root page as a leaf node.
+            Page rootPage = bufferMgr.createPage();
+            int rootPid = rootPage.getPid();
+            this.metadata.rootPageId = rootPid;
+            this.metadata.isRootLeaf = true;
+            initLeafPage(rootPage, -1, -1, 0);
+            bufferMgr.markDirty(rootPid);
+            bufferMgr.unpinPage(rootPid);
         } else {
-            // Internal node insertion.
-            InternalNode internal = (InternalNode) node;
-            int pos = Collections.binarySearch(internal.keys, key);
-            if (pos < 0) {
-                pos = -pos - 1;
-            } else {
-                pos++; // if key equals an internal key, go to the right child.
-            }
-            int childPageId = internal.childrenPageIds.get(pos);
-            splitResult = insertRecursive(childPageId, key, r);
-            if (splitResult != null) {
-                int insertPos = Collections.binarySearch(internal.keys, splitResult.newKey);
-                if (insertPos < 0) {
-                    insertPos = -insertPos - 1;
-                } else {
-                    insertPos++;
-                }
-                internal.keys.add(insertPos, splitResult.newKey);
-                internal.childrenPageIds.add(insertPos + 1, splitResult.newPageId);
-                if (internal.keys.size() < order) {
-                    writeNodeToPage(internal, page);
-                    bufferManager.unpinPage(pageId);
-                    return null;
-                } else {
-                    // Split the internal node.
-                    InternalNode newInternal = new InternalNode();
-                    int mid = internal.keys.size() / 2;
-                    K midKey = internal.keys.get(mid);
-                    newInternal.keys.addAll(internal.keys.subList(mid + 1, internal.keys.size()));
-                    newInternal.childrenPageIds.addAll(internal.childrenPageIds.subList(mid + 1, internal.childrenPageIds.size()));
-                    internal.keys.subList(mid, internal.keys.size()).clear();
-                    internal.childrenPageIds.subList(mid + 1, internal.childrenPageIds.size()).clear();
-                    int newInternalPageId = allocateNewPage();
-                    writeNodeToPage(internal, page);
-                    bufferManager.unpinPage(pageId);
-                    Page newInternalPage = bufferManager.getPage(newInternalPageId);
-                    writeNodeToPage(newInternal, newInternalPage);
-                    bufferManager.unpinPage(newInternalPageId);
-                    SplitResult<K> res = new SplitResult<>();
-                    res.newKey = midKey;
-                    res.newPageId = newInternalPageId;
-                    return res;
-                }
-            } else {
-                writeNodeToPage(internal, page);
-                bufferManager.unpinPage(pageId);
-                return null;
-            }
+            // For simplicity, assume root is page 0.
+            this.metadata.rootPageId = 0;
+            this.metadata.isRootLeaf = true;
         }
     }
 
-    // ---------------------------
-    // Search (Point Query)
-    // ---------------------------
-    /**
-     * Searches for all record ids (Rids) associated with the specified movieId.
-     */
+
+
     @Override
-    public Iterator<Rid> search(K key) {
-        List<Rid> results = new ArrayList<>();
-        try {
-            int leafPageId = findLeafPage(rootPageId, key);
-            Page page = bufferManager.getPage(leafPageId);
-            LeafNode leaf = (LeafNode) readNodeFromPage(page);
-            for (int i = 0; i < leaf.keys.size(); i++) {
-                if (leaf.keys.get(i).compareTo(key) == 0) {
-                    results.add(leaf.values.get(i));
-                }
-            }
-            bufferManager.unpinPage(leafPageId);
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
+    public void insert(String key, Rid rid) {
+        int leafPid = findLeafPageId(key);
+        insertIntoLeaf(leafPid, key, rid);
+    }
+
+    @Override
+    public Iterator<Rid> search(String key) {
+        int leafPid = findLeafPageId(key);
+        List<Rid> results = searchInLeaf(leafPid, key);
         return results.iterator();
     }
 
-    // ---------------------------
-    // Range Query
-    // ---------------------------
-    /**
-     * Performs a range query over movieIds from startKey to endKey (inclusive).
-     */
     @Override
-    public Iterator<Rid> rangeSearch(K startKey, K endKey) {
+    public Iterator<Rid> rangeSearch(String startKey, String endKey) {
         List<Rid> results = new ArrayList<>();
-        try {
-            int leafPageId = findLeafPage(rootPageId, startKey);
-            boolean continueSearch = true;
-            while (continueSearch) {
-                Page page = bufferManager.getPage(leafPageId);
-                LeafNode leaf = (LeafNode) readNodeFromPage(page);
-                for (int i = 0; i < leaf.keys.size(); i++) {
-                    K key = leaf.keys.get(i);
-                    if (key.compareTo(startKey) >= 0 && key.compareTo(endKey) <= 0) {
-                        results.add(leaf.values.get(i));
-                    } else if (key.compareTo(endKey) > 0) {
-                        continueSearch = false;
-                        break;
-                    }
-                }
-                int nextPageId = leaf.nextLeafPageId;
-                bufferManager.unpinPage(leafPageId);
-                if (nextPageId == -1 || !continueSearch) {
+        int leafPid = findLeafPageId(startKey);
+        int currentPid = leafPid;
+        while (currentPid != -1) {
+            List<String> leafKeys = new ArrayList<>();
+            List<Rid> leafRids = new ArrayList<>();
+            readLeafNode(currentPid, leafKeys, leafRids);
+            for (int i = 0; i < leafKeys.size(); i++) {
+                String k = leafKeys.get(i);
+                if (k.compareTo(startKey) >= 0 && k.compareTo(endKey) <= 0) {
+                    results.add(leafRids.get(i));
+                } else if (k.compareTo(endKey) > 0) {
                     break;
                 }
-                leafPageId = nextPageId;
             }
-        } catch(Exception e) {
-            e.printStackTrace();
+            int nextLeaf = getNextLeafId(currentPid);
+            bufferMgr.unpinPage(currentPid);
+            if (!leafKeys.isEmpty() && leafKeys.get(leafKeys.size()-1).compareTo(endKey) > 0) {
+                break;
+            }
+            currentPid = nextLeaf;
         }
         return results.iterator();
     }
 
-    // ---------------------------
-    // Helper Methods
-    // ---------------------------
-    /**
-     * Traverses the tree to find the leaf page that should contain the given key.
-     */
-    private int findLeafPage(int currentPageId, K key) throws Exception {
-        Page page = bufferManager.getPage(currentPageId);
-        Node node = readNodeFromPage(page);
-        if (node.isLeaf) {
-            bufferManager.unpinPage(currentPageId);
-            return currentPageId;
-        } else {
-            InternalNode internal = (InternalNode) node;
-            int pos = Collections.binarySearch(internal.keys, key);
-            if (pos < 0) {
-                pos = -pos - 1;
-            } else {
+
+    private void insertIntoLeaf(int leafPid, String key, Rid rid) {
+        try {
+            List<String> keys = new ArrayList<>();
+            List<Rid> rids = new ArrayList<>();
+            readLeafNode(leafPid, keys, rids);
+            int pos = 0;
+            while (pos < keys.size() && key.compareTo(keys.get(pos)) > 0) {
                 pos++;
             }
-            int childPageId = internal.childrenPageIds.get(pos);
-            bufferManager.unpinPage(currentPageId);
-            return findLeafPage(childPageId, key);
+            keys.add(pos, key);
+            rids.add(pos, rid);
+            if (keys.size() > maxKeysLeaf) {
+                int mid = keys.size() / 2;
+                Page siblingPage = bufferMgr.createPage();
+                int siblingPid = siblingPage.getPid();
+                List<String> siblingKeys = new ArrayList<>();
+                List<Rid> siblingRids = new ArrayList<>();
+                for (int i = mid; i < keys.size(); i++) {
+                    siblingKeys.add(keys.get(i));
+                    siblingRids.add(rids.get(i));
+                }
+                for (int i = keys.size() - 1; i >= mid; i--) {
+                    keys.remove(i);
+                    rids.remove(i);
+                }
+                int oldNext = getNextLeafId(leafPid);
+                initLeafPage(siblingPage, getParentId(leafPid), oldNext, siblingKeys.size());
+                writeLeafKeysAndRids(siblingPid, siblingKeys, siblingRids);
+                setNextLeafId(leafPid, siblingPid);
+                writeLeafKeysAndRids(leafPid, keys, rids);
+                if (leafPid == metadata.rootPageId && metadata.isRootLeaf) {
+                    createNewRoot(leafPid, siblingPid, siblingKeys.get(0));
+                } else {
+                    insertInParent(leafPid, siblingPid, siblingKeys.get(0));
+                }
+                bufferMgr.markDirty(siblingPid);
+                bufferMgr.unpinPage(siblingPid);
+            } else {
+                writeLeafKeysAndRids(leafPid, keys, rids);
+            }
+            bufferMgr.markDirty(leafPid);
+            bufferMgr.unpinPage(leafPid);
+        } catch (Exception e) {
+            System.err.println("Error in insertIntoLeaf: " + e.getMessage());
         }
     }
 
-    /**
-     * Allocates a new page (for a split) using the BufferManager.
-     */
-    private int allocateNewPage() throws Exception {
-        Page newPage = bufferManager.createPage();
-        int newPageId = newPage.getPid();
-        bufferManager.unpinPage(newPageId);
-        return newPageId;
+    private void createNewRoot(int oldRootPid, int siblingPid, String splitKey) throws Exception {
+        Page newRootPage = bufferMgr.createPage();
+        int newRootPid = newRootPage.getPid();
+        initInternalPage(newRootPage, -1, 1);
+        List<String> keys = new ArrayList<>();
+        List<Integer> children = new ArrayList<>();
+        keys.add(splitKey);
+        children.add(oldRootPid);
+        children.add(siblingPid);
+        writeInternalKeysAndChildren(newRootPid, keys, children);
+        metadata.rootPageId = newRootPid;
+        metadata.isRootLeaf = false;
+        setParentId(oldRootPid, newRootPid);
+        setParentId(siblingPid, newRootPid);
+        bufferMgr.markDirty(newRootPid);
+        bufferMgr.unpinPage(newRootPid);
     }
 
-    /**
-     * Writes the given Node object to the provided Page.
-     * (Placeholder: you would serialize the Node into the binary format used in your index file.)
-     */
-    private void writeNodeToPage(Node node, Page page) {
-        // TODO: Serialize 'node' and store its bytes in the page.
-        // For example, you might convert the node's keys and pointers to a byte array and write it to the page.
+    private void insertInParent(int leftPid, int rightPid, String splitKey) throws Exception {
+        int parentPid = getParentId(leftPid);
+        if (parentPid == -1) {
+            createNewRoot(leftPid, rightPid, splitKey);
+            return;
+        }
+        List<String> keys = new ArrayList<>();
+        List<Integer> children = new ArrayList<>();
+        readInternalNode(parentPid, keys, children);
+        int pos = children.indexOf(leftPid);
+        keys.add(pos, splitKey);
+        children.add(pos + 1, rightPid);
+        if (keys.size() > maxKeysInternal) {
+            int mid = keys.size() / 2;
+            Page newPage = bufferMgr.createPage();
+            int newPid = newPage.getPid();
+            initInternalPage(newPage, getParentId(parentPid), 0);
+            List<String> siblingKeys = new ArrayList<>();
+            List<Integer> siblingChildren = new ArrayList<>();
+            String upKey = keys.get(mid);
+            for (int i = mid + 1; i < keys.size(); i++) {
+                siblingKeys.add(keys.get(i));
+            }
+            for (int i = mid + 1; i < children.size(); i++) {
+                siblingChildren.add(children.get(i));
+            }
+            for (int i = keys.size() - 1; i >= mid; i--) {
+                keys.remove(i);
+            }
+            for (int i = children.size() - 1; i > mid; i--) {
+                children.remove(i);
+            }
+            writeInternalKeysAndChildren(newPid, siblingKeys, siblingChildren);
+            setNumKeys(newPid, siblingKeys.size());
+            for (int c : siblingChildren) {
+                setParentId(c, newPid);
+            }
+            writeInternalKeysAndChildren(parentPid, keys, children);
+            setNumKeys(parentPid, keys.size());
+            if (parentPid == metadata.rootPageId) {
+                createNewRoot(parentPid, newPid, upKey);
+            } else {
+                insertInParent(parentPid, newPid, upKey);
+            }
+            bufferMgr.markDirty(newPid);
+            bufferMgr.unpinPage(newPid);
+        } else {
+            writeInternalKeysAndChildren(parentPid, keys, children);
+        }
+        bufferMgr.markDirty(parentPid);
+        bufferMgr.unpinPage(parentPid);
+        setParentId(rightPid, parentPid);
     }
 
-    /**
-     * Reads and deserializes a Node object from the provided Page.
-     * (Placeholder: you would deserialize the page's byte content into a Node object.)
-     */
-    private Node readNodeFromPage(Page page) {
-        // TODO: Deserialize the page's bytes into a Node (InternalNode or LeafNode).
-        // For demonstration purposes, we return a new LeafNode. Replace with real deserialization.
-        return new LeafNode();
+
+
+    private int findLeafPageId(String key) {
+        int currentPid = metadata.rootPageId;
+        while (true) {
+            if (currentPid == metadata.rootPageId && metadata.isRootLeaf) {
+                return currentPid;
+            }
+            if (isLeafNode(currentPid)) {
+                return currentPid;
+            } else {
+                List<String> keys = new ArrayList<>();
+                List<Integer> children = new ArrayList<>();
+                readInternalNode(currentPid, keys, children);
+                int i = 0;
+                while (i < keys.size() && key.compareTo(keys.get(i)) >= 0) {
+                    i++;
+                }
+                int childPid = children.get(i);
+                bufferMgr.unpinPage(currentPid);
+                currentPid = childPid;
+            }
+        }
+    }
+
+    private List<Rid> searchInLeaf(int leafPid, String key) {
+        List<String> keys = new ArrayList<>();
+        List<Rid> rids = new ArrayList<>();
+        readLeafNode(leafPid, keys, rids);
+        List<Rid> result = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i++) {
+            if (keys.get(i).equals(key)) {
+                result.add(rids.get(i));
+            }
+        }
+        bufferMgr.unpinPage(leafPid);
+        return result;
+    }
+
+
+
+    private void initLeafPage(Page page, int parentId, int nextLeafId, int numKeys) {
+        PageImpl p = (PageImpl) page;
+        p.setAllRows(new Row[PageImpl.MAX_TUPLES]);
+        p.setRowCount(0);
+        Row metaRow = new Row(new byte[9], new byte[30]);
+        metaRow.movieId[0] = 'L';
+        storeIntInByteArray(parentId, metaRow.title, 0);
+        storeIntInByteArray(nextLeafId, metaRow.title, 4);
+        storeIntInByteArray(numKeys, metaRow.title, 8);
+        p.insertRow(metaRow); // row 0 stores metadata
+    }
+
+    private void readLeafNode(int pageId, List<String> keysOut, List<Rid> ridsOut) {
+        try {
+            Page page = bufferMgr.getPage(pageId);
+            PageImpl p = (PageImpl) page;
+            Row meta = p.getRow(0);
+            if (meta.movieId[0] != 'L') {
+                throw new RuntimeException("Page " + pageId + " is not a leaf node!");
+            }
+            int numKeys = parseIntFromByteArray(meta.title, 8);
+            keysOut.clear();
+            ridsOut.clear();
+            for (int i = 1; i <= numKeys; i++) {
+                Row r = p.getRow(i);
+                if (r == null) break;
+                String k = parseStringFromByteArray(r.movieId, 0, r.movieId.length);
+                int pid = parseIntFromByteArray(r.title, 0);
+                int slot = parseIntFromByteArray(r.title, 4);
+                keysOut.add(k.trim());
+                ridsOut.add(new Rid(pid, slot));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error in readLeafNode: " + e.getMessage());
+        }
+    }
+
+    private void writeLeafKeysAndRids(int pageId, List<String> keys, List<Rid> rids) {
+        try {
+            Page page = bufferMgr.getPage(pageId);
+            PageImpl p = (PageImpl) page;
+            Row meta = p.getRow(0);
+            storeIntInByteArray(keys.size(), meta.title, 8);
+            // Write each key and RID starting at row 1.
+            for (int i = 0; i < keys.size(); i++) {
+                Row row = new Row(new byte[9], new byte[30]);
+                storeStringInByteArray(keys.get(i), row.movieId, 0, row.movieId.length);
+                storeIntInByteArray(rids.get(i).getPageId(), row.title, 0);
+                storeIntInByteArray(rids.get(i).getSlotId(), row.title, 4);
+                setRowAtIndex(p, i + 1, row);
+            }
+            // Update row count (1 meta row + one row per key)
+            p.setRowCount(keys.size() + 1);
+        } catch (Exception e) {
+            throw new RuntimeException("Error in writeLeafKeysAndRids: " + e.getMessage());
+        }
+    }
+
+
+
+    private void initInternalPage(Page page, int parentId, int numKeys) {
+        PageImpl p = (PageImpl) page;
+        p.setAllRows(new Row[PageImpl.MAX_TUPLES]);
+        p.setRowCount(0);
+        Row metaRow = new Row(new byte[9], new byte[30]);
+        metaRow.movieId[0] = 'I';
+        storeIntInByteArray(parentId, metaRow.title, 0);
+        storeIntInByteArray(-1, metaRow.title, 4);
+        storeIntInByteArray(numKeys, metaRow.title, 8);
+        p.insertRow(metaRow);
+    }
+
+    private void readInternalNode(int pageId, List<String> keysOut, List<Integer> childrenOut) {
+        try {
+            Page page = bufferMgr.getPage(pageId);
+            PageImpl p = (PageImpl) page;
+            Row meta = p.getRow(0);
+            if (meta.movieId[0] != 'I') {
+                throw new RuntimeException("Page " + pageId + " is not an internal node!");
+            }
+            int numKeys = parseIntFromByteArray(meta.title, 8);
+            keysOut.clear();
+            childrenOut.clear();
+            // Rows 1..numKeys store child-pointer and key.
+            for (int i = 1; i <= numKeys; i++) {
+                Row row = p.getRow(i);
+                if (row == null) break;
+                int childPid = parseIntFromByteArray(row.movieId, 0);
+                String k = parseStringFromByteArray(row.title, 0, row.title.length);
+                childrenOut.add(childPid);
+                keysOut.add(k.trim());
+            }
+            // Row numKeys+1 holds the final child pointer.
+            Row lastRow = p.getRow(numKeys + 1);
+            if (lastRow != null) {
+                int lastChild = parseIntFromByteArray(lastRow.movieId, 0);
+                childrenOut.add(lastChild);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error in readInternalNode: " + e.getMessage());
+        }
+    }
+
+    private void writeInternalKeysAndChildren(int pageId, List<String> keys, List<Integer> children) {
+        try {
+            Page page = bufferMgr.getPage(pageId);
+            PageImpl p = (PageImpl) page;
+            Row meta = p.getRow(0);
+            storeIntInByteArray(keys.size(), meta.title, 8);
+            int rowCountNeeded = keys.size() + 1;
+            for (int i = 1; i <= keys.size(); i++) {
+                Row row = new Row(new byte[9], new byte[30]);
+                storeIntInByteArray(children.get(i - 1), row.movieId, 0);
+                storeStringInByteArray(keys.get(i - 1), row.title, 0, row.title.length);
+                setRowAtIndex(p, i, row);
+            }
+            // Final child pointer at row keys.size() + 1.
+            Row lastRow = new Row(new byte[9], new byte[30]);
+            storeIntInByteArray(children.get(keys.size()), lastRow.movieId, 0);
+            setRowAtIndex(p, keys.size() + 1, lastRow);
+            p.setRowCount(rowCountNeeded + 1);
+        } catch (Exception e) {
+            throw new RuntimeException("Error in writeInternalKeysAndChildren: " + e.getMessage());
+        }
+    }
+
+
+
+    private boolean isLeafNode(int pageId) {
+        try {
+            Page page = bufferMgr.getPage(pageId);
+            PageImpl p = (PageImpl) page;
+            Row meta = p.getRow(0);
+            char c = (char) meta.movieId[0];
+            bufferMgr.unpinPage(pageId);
+            return (c == 'L');
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private int getParentId(int pageId) {
+        try {
+            Page page = bufferMgr.getPage(pageId);
+            PageImpl p = (PageImpl) page;
+            Row meta = p.getRow(0);
+            int pid = parseIntFromByteArray(meta.title, 0);
+            bufferMgr.unpinPage(pageId);
+            return pid;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void setParentId(int pageId, int parentId) {
+        try {
+            Page page = bufferMgr.getPage(pageId);
+            bufferMgr.markDirty(pageId);
+            PageImpl p = (PageImpl) page;
+            Row meta = p.getRow(0);
+            storeIntInByteArray(parentId, meta.title, 0);
+            bufferMgr.unpinPage(pageId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private int getNextLeafId(int pageId) {
+        try {
+            Page page = bufferMgr.getPage(pageId);
+            PageImpl p = (PageImpl) page;
+            Row meta = p.getRow(0);
+            int nxt = parseIntFromByteArray(meta.title, 4);
+            return nxt;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void setNextLeafId(int pageId, int nxtLeafId) {
+        try {
+            Page page = bufferMgr.getPage(pageId);
+            bufferMgr.markDirty(pageId);
+            PageImpl p = (PageImpl) page;
+            Row meta = p.getRow(0);
+            storeIntInByteArray(nxtLeafId, meta.title, 4);
+            bufferMgr.unpinPage(pageId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void setNumKeys(int pageId, int numKeys) {
+        try {
+            Page page = bufferMgr.getPage(pageId);
+            bufferMgr.markDirty(pageId);
+            PageImpl p = (PageImpl) page;
+            Row meta = p.getRow(0);
+            storeIntInByteArray(numKeys, meta.title, 8);
+            bufferMgr.unpinPage(pageId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+
+    private void storeIntInByteArray(int val, byte[] arr, int offset) {
+        arr[offset]   = (byte) (val >>> 24);
+        arr[offset+1] = (byte) (val >>> 16);
+        arr[offset+2] = (byte) (val >>> 8);
+        arr[offset+3] = (byte) (val);
+    }
+
+    private int parseIntFromByteArray(byte[] arr, int offset) {
+        int b1 = (arr[offset]   & 0xFF) << 24;
+        int b2 = (arr[offset+1] & 0xFF) << 16;
+        int b3 = (arr[offset+2] & 0xFF) << 8;
+        int b4 = (arr[offset+3] & 0xFF);
+        return (b1 | b2 | b3 | b4);
+    }
+
+
+    private void storeStringInByteArray(String str, byte[] arr, int offset, int length) {
+        byte[] bytes = str.getBytes();
+        // Truncate if necessary.
+        int len = Math.min(bytes.length, length);
+        System.arraycopy(bytes, 0, arr, offset, len);
+        // Pad with 0 if necessary.
+        for (int i = len; i < length; i++) {
+            arr[offset + i] = 0;
+        }
+    }
+
+
+    private String parseStringFromByteArray(byte[] arr, int offset, int length) {
+        byte[] bytes = new byte[length];
+        System.arraycopy(arr, offset, bytes, 0, length);
+        return new String(bytes).trim();
+    }
+
+
+    private void setRowAtIndex(PageImpl p, int index, Row row) {
+        Row[] rows = p.getAllRows();
+        if (rows == null || rows.length < index + 1) {
+            Row[] newRows = new Row[PageImpl.MAX_TUPLES];
+            if (rows != null) {
+                System.arraycopy(rows, 0, newRows, 0, rows.length);
+            }
+            rows = newRows;
+        }
+        rows[index] = row;
+        p.setAllRows(rows);
     }
 }
