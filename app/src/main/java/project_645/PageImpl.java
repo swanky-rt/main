@@ -18,6 +18,7 @@ public class PageImpl implements Page, Serializable {
     public PageImpl(int pageId){
         this.pageId = pageId;
     }
+
     //This method gets the row based on the row id (index)
     @Override
     public Row getRow(int rowId) {

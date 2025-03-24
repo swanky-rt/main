@@ -34,4 +34,12 @@ public abstract class BufferManager {
          * @param pageId The ID of the page to unpin.
          */
         abstract void unpinPage(int pageId);
+
+    /**
+     *
+     * @returns the configured size of the buffer pool in bytes
+     */
+    public int getBufferSize() {
+        return this.bufferSize;
+    }
 } 

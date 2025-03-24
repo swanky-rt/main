@@ -42,7 +42,7 @@ public class Utilities implements Serializable {
         // sequence of getPage calls that causes P to be evicted
 
         int diskSizeInPages = (int)Files.size(dbFilePath) / PAGE_SIZE;
-        if (diskSizeInPages < bf.bufferSize / 4096) {
+        if (diskSizeInPages < bf.getBufferSize() / 4096) {
             throw new Exception("Disk does not have sufficiently many unique pages to fill up the buffer manager");
         }
         for (int i = 0; i < diskSizeInPages; ++i) {
