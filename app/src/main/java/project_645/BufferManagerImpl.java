@@ -10,16 +10,21 @@ import java.util.*;
 public class BufferManagerImpl extends BufferManager{
     public int MAX_PAGE;
     private int PAGE_SIZE;
-    public Map<Integer, Page> bufferPool;
+    public Map<String, Page> bufferPool;
     public Map<Page, Integer> pageMap;
-    public LinkedList<Integer> lru;
-    public Map<Integer, Integer> pinnedPages;
-    private int currentPageID = -1;
+    public LinkedList<String> lru;
+    public Map<String, Integer> pinnedPages;
+    private int currentPageID;
+    private int currentMovieIdPage;
+    private int currentMovieTitlePageId;
     private String filepath;
     private String diskFileName;
+    private String movieIdIndexFileName;
+    private String movieTitleIndexFileName;
 
 
-    public BufferManagerImpl(int bufferSize, String filepath, String diskFileName) throws IOException {
+    public BufferManagerImpl(int bufferSize, String filepath, String diskFileName, String movieIdIndexFileName,
+                             String movieTitleIndexFileName) throws IOException {
         super(bufferSize);
         this.PAGE_SIZE = 4096;
         this.MAX_PAGE = bufferSize/PAGE_SIZE;
@@ -29,20 +34,23 @@ public class BufferManagerImpl extends BufferManager{
         this.pinnedPages = new HashMap<>();
         this.filepath = filepath;
         this.diskFileName = diskFileName;
-
+        this.currentPageID = (int)Files.size(Paths.get( filepath + diskFileName).toAbsolutePath()) / this.PAGE_SIZE;
+        this.currentMovieIdPage = (int)Files.size(Paths.get( filepath + movieIdIndexFileName).toAbsolutePath()) / this.PAGE_SIZE;
+        this.currentMovieTitlePageId = (int)(int)Files.size(Paths.get( filepath + movieTitleIndexFileName).toAbsolutePath()) / this.PAGE_SIZE;
     }
 
 //This method gets the page from buffer pool and disk(if not present in buffer pool)
 
     @Override
-    public Page getPage(int pageId) throws Exception {
+    public Page getPage(int pageId, File dataFile) throws Exception {
+        String pageIdentifier = dataFile.toString() + Integer.toString(pageId);
         Page page= null;
         try {
-            if (bufferPool.containsKey(pageId)) {
-                lru.remove((Integer) pageId);
-                lru.addFirst(pageId);
-                this.pinPage(pageId);
-                return bufferPool.get(pageId);
+            if (bufferPool.containsKey(Integer.toString(pageId))) {
+                lru.remove(pageIdentifier);
+                lru.addFirst(pageIdentifier);
+                this.pinPage(pageIdentifier);
+                return bufferPool.get(pageIdentifier);
             }
             if (this.pinnedPages.size() == MAX_PAGE) {
                 // return null in the case that that all pages are pinned
@@ -54,14 +62,14 @@ public class BufferManagerImpl extends BufferManager{
             if (bufferPool.size() >= MAX_PAGE && pageId >= 0 && pageId < numPages) {
                 evictPage();
             }
-            page = loadPageFromDisk(pageId);
+            page = loadPageFromDisk(pageId, dataFile);
             if (page == null) {
                 throw new Exception("page does not exist on disk");
             }
-            bufferPool.put(pageId, page);
-            lru.addFirst(pageId);
+            bufferPool.put(pageIdentifier, page);
+            lru.addFirst(pageIdentifier);
             pageMap.put(page, pageId);
-            this.pinPage(pageId);
+            this.pinPage(pageIdentifier);
             System.out.println("the page " + pageId + " is pinned");
 
         } catch (Exception e) {
@@ -73,16 +81,19 @@ public class BufferManagerImpl extends BufferManager{
 //This method evicts the page when buffer pool is full
 
     public void evictPage() throws Exception {
-        for (Integer curPageId : lru.reversed()) {
-            Page removedPage = bufferPool.get(curPageId);
-            if (!pinnedPages.containsKey(curPageId)) {
-                lru.remove(curPageId);
+        for (String currentPageId : lru.reversed()) {
+            Page curPage = bufferPool.get(currentPageId);
+            int curPageId = curPage.getPid();
+            File dataFile = curPage.getDataFile();
+            Page removedPage = bufferPool.get(currentPageId);
+            if (!pinnedPages.containsKey(currentPageId)) {
+                lru.remove(currentPageId);
                 try {
                     if (removedPage.getDirtyStatus()) {
-                        writePageToDisk(curPageId, removedPage);
+                        writePageToDisk(removedPage, dataFile);
                         removedPage.markNotDirty();
                     }
-                    bufferPool.remove(curPageId);
+                    bufferPool.remove(currentPageId);
                     pageMap.remove(removedPage);
                 } catch (IOException e) {
                     // Handle the exception, e.g., log it or rethrow it
@@ -97,19 +108,20 @@ public class BufferManagerImpl extends BufferManager{
 //This method creates the new page
 
     @Override
-    public Page createPage(){
+    public Page createPage(File dataFile){
         Page page = null;
         try {
             int pageId = getNextPageId();
+            String pageIdentifier = constructPageIdentifier(pageId, dataFile);
             if (this.bufferPool.size() >= this.MAX_PAGE) {
                 evictPage();
             }
-            page = new PageImpl(pageId);
-            lru.addFirst(pageId);
-            bufferPool.put(pageId, page);
+            page = new PageImpl(pageId, dataFile);
+            lru.addFirst(pageIdentifier);
+            bufferPool.put(pageIdentifier, page);
             pageMap.put(page, pageId);
-            this.pinPage(pageId);
-            this.markDirty(pageId);
+            this.pinPage(pageIdentifier);
+            this.markDirty(pageId, dataFile);
         } catch (Exception e) {
             System.out.println("buffer pool is full, eviction is not happening as all pages are pinned");
         }
@@ -119,10 +131,10 @@ public class BufferManagerImpl extends BufferManager{
 //This method marks the page dirty
 
     @Override
-    public void markDirty(int pageId) {
-
-        if (bufferPool.containsKey(pageId)) {
-            Page page = bufferPool.get(pageId);
+    public void markDirty(int pageId, File dataFile) {
+        String pageIdentifier = constructPageIdentifier(pageId, dataFile);
+        if (bufferPool.containsKey(pageIdentifier)) {
+            Page page = bufferPool.get(pageIdentifier);
             page.markDirty();
         }
     }
@@ -130,17 +142,18 @@ public class BufferManagerImpl extends BufferManager{
 //This method pins the page using pageID
 
     @Override
-    public void unpinPage(int pageId) {
-        if(bufferPool.containsKey(pageId)){
-            if(pinnedPages.containsKey(pageId)){
-                int count = pinnedPages.get(pageId);
+    public void unpinPage(int pageId, File dataFile) {
+        String pageIdentifier = constructPageIdentifier(pageId, dataFile);
+        if(bufferPool.containsKey(pageIdentifier)){
+            if(pinnedPages.containsKey(pageIdentifier)){
+                int count = pinnedPages.get(pageIdentifier);
                 if(count >0){
-                    Page pageToUnpin = bufferPool.get(pageId);
+                    Page pageToUnpin = bufferPool.get(pageIdentifier);
                     pageToUnpin.decrementPinCount();
-                    pinnedPages.put(pageId, pageToUnpin.getPinCount());
+                    pinnedPages.put(pageIdentifier, pageToUnpin.getPinCount());
                 }
-                if(pinnedPages.get(pageId) == 0) {
-                    pinnedPages.remove(pageId);
+                if(pinnedPages.get(pageIdentifier) == 0) {
+                    pinnedPages.remove(pageIdentifier);
                 }
             }
         }
@@ -148,11 +161,11 @@ public class BufferManagerImpl extends BufferManager{
 
 // This method unpins the page using pageID
 
-    public void pinPage(int pageId) {
-        if(bufferPool.containsKey(pageId)){
-            Page pageToPin = bufferPool.get(pageId);
+    public void pinPage(String pageIdentifier) {
+        if(bufferPool.containsKey(pageIdentifier)){
+            Page pageToPin = bufferPool.get(pageIdentifier);
             pageToPin.incrementPinCount();
-            pinnedPages.put(pageId, pageToPin.getPinCount());
+            pinnedPages.put(pageIdentifier, pageToPin.getPinCount());
 //            if(lru.contains(pageId)){
 //                System.out.println("the page id is" + pageId + "the size is " + lru.size());
 //            }
@@ -161,23 +174,26 @@ public class BufferManagerImpl extends BufferManager{
 
     // This method writes pages to disk
 
-    public void writePageToDisk(int pageId, Page page) throws IOException {
+    public void writePageToDisk(Page page, File dataFile) throws IOException {
+        int pageId = page.getPid();
         Path curPath = Paths.get( filepath + diskFileName).toAbsolutePath();
         long fileSize = Files.size(curPath);
         long numPages = fileSize / PAGE_SIZE;
+        byte[] bytesToWrite = new byte[0];
+
         if (pageId < 0) {
             pageId = (int)Files.size(curPath) / PAGE_SIZE;
         }
         if (numPages < pageId) {
-            throw new IOException("There are not sufficiently many pages for this pageId to be valid," +
-                    " or the pageID is invalid otherwise.");
+            // pad entries with bytes of value 0.
+            bytesToWrite = new byte[4096 * (int)(pageId - numPages)];
         }
-        int startByte = pageId * PAGE_SIZE;
-
-        page.reassignPageId(pageId);
+        long startByte = numPages >= pageId ? (long)pageId * PAGE_SIZE : numPages * PAGE_SIZE;
 
         RandomAccessFile curFile = new RandomAccessFile(filepath + diskFileName,"rw");
         curFile.seek(startByte);
+
+        curFile.write(bytesToWrite);
 
         for (Row row : page.getAllRows()) {
             if (row == null) {
@@ -197,10 +213,11 @@ public class BufferManagerImpl extends BufferManager{
 
     // This method loads pages from disk
 
-    public Page loadPageFromDisk(int pageId) {
+    public Page loadPageFromDisk(int pageId, File dataFile) {
+        String curDiskFileName = dataFile == File.DISK ? diskFileName : dataFile == File.MOVIE_ID_IDX ? this.movieIdIndexFileName : this.movieTitleIndexFileName;
         Path curPath = Paths.get(filepath + diskFileName);
         Charset charset = StandardCharsets.US_ASCII;
-        Page pageToPopulate = new PageImpl(pageId);
+        Page pageToPopulate = new PageImpl(pageId, File.DISK);
         pageToPopulate.markNotDirty();
         try (BufferedInputStream reader = new BufferedInputStream(new FileInputStream(filepath + diskFileName))) {
             long fileSize = Files.size(curPath);
@@ -244,10 +261,19 @@ public class BufferManagerImpl extends BufferManager{
         return pageToPopulate;
     }
 
-    // Note that pageID is negative before being written to disk, and is reassigned when written
-    // This is done to avoid conflicting IDs with pages that exist on disk.
+    // IDs are now sequentially assigned starting from the most recent page on disk
     public int getNextPageId() {
-        return currentPageID--;
+        return currentPageID++;
+    }
+
+    // Method to access next ID for movie ID index page on disk.
+    public int getNextMovieIdIndexPage() {
+        return currentMovieIdPage++;
+    }
+
+    // Method to access next ID for movie title ID index page on disk
+    public int getNextMovieTitleIndexPage() {
+        return currentMovieTitlePageId++;
     }
 
 //     meant to be run separately from the buffer manager, helper utility to initially populate the disk.
@@ -256,11 +282,11 @@ public class BufferManagerImpl extends BufferManager{
         BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
         reader.readLine();
         boolean justFlushedPage = true;
-        PageImpl newPage = new PageImpl(curPageId);
+        PageImpl newPage = new PageImpl(curPageId, File.DISK);
         for (int i = 0; i < numRecords; ++i) {
             if (newPage.isFull()) {
                 writePageToDisk(curPageId++, newPage);
-                newPage = new PageImpl(curPageId);
+                newPage = new PageImpl(curPageId, File.DISK);
             }
             String line = reader.readLine();
 
@@ -271,5 +297,10 @@ public class BufferManagerImpl extends BufferManager{
             newPage.insertRow(row);
         }
         writePageToDisk(curPageId, newPage);
+    }
+
+    // creates bufferpool map descriptors based on the data file containing the page
+    public String constructPageIdentifier(int pageId, File dataFile) {
+        return dataFile.toString() + "-" + Integer.toString(pageId);
     }
 }

@@ -16,7 +16,7 @@ public class PageImplTest {
     public void setUp() {
         page = mock(PageImpl.class);
         row = mock(Row.class);
-        page = new PageImpl(1);
+        page = new PageImpl(1, File.DISK);
     }
 
     @Test
@@ -149,7 +149,7 @@ public class PageImplTest {
 
     @Test
     void TestGetRow() {
-        Page page = new PageImpl(0);
+        Page page = new PageImpl(0, File.DISK);
 
         // current row count of the page is 0, attempting to get a row should return null
         Row testRowOne = page.getRow(3);
@@ -201,7 +201,7 @@ public class PageImplTest {
 
     @Test
     void testInsertRow() {
-        Page testPage = new PageImpl(0);
+        Page testPage = new PageImpl(0, File.DISK);
 
         // make sure the row count is 0
         assertEquals(testPage.getRowCount(), 0);
@@ -229,7 +229,7 @@ public class PageImplTest {
 
     @Test
     void testPinMethods() {
-        Page page = new PageImpl(0);
+        Page page = new PageImpl(0, File.DISK);
 
         // When explicitly creating a page object, the pin count should start at 0
         // Only when "CreatePage" in the buffer manager is called should the pinned count not be 0

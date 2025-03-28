@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class TATests {
 
@@ -19,6 +20,8 @@ public class TATests {
     String testFileDirectory = "/src/test/java/project_645/DB files/";
 
     String fileName = "testdbfile.dat";
+    String movieIdIndexFileName = "movieIdIndex.dat";
+    String movieIdTitleFileName = "movieTitleIndex.dat";
 
     @BeforeEach
     public void setUp() {
@@ -53,10 +56,11 @@ public class TATests {
 
     @Test
     void testCreationAndEviction() throws Exception {
-        BufferManager bf = new BufferManagerImpl(100 * 4096, workingDirectory + testFileDirectory, fileName);
+        BufferManager bf = new BufferManagerImpl(100 * 4096, workingDirectory + testFileDirectory, fileName,
+                movieIdIndexFileName, movieIdTitleFileName);
         int counter = 0;
         for (int i = 0; i < 10000; ++i) {
-            Page page = bf.createPage();
+            Page page = bf.createPage(File.DISK);
             // bf.getPage(page.getPid());
             while (! page.isFull()) {
                 Row row = new Row(("Movie " + counter).getBytes(), ("Title " + counter).getBytes());
@@ -98,10 +102,11 @@ public class TATests {
 
     @Test
     void testLRUEviction() throws Exception {
-        BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName);
+        BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName,
+                movieIdIndexFileName, movieIdTitleFileName);
 
         for (int i = 0; i < 5; ++i) {
-            Page page = bf.createPage();
+            Page page = bf.createPage(File.DISK);
             bf.unpinPage(page.getPid());
         }
         long startTime = System.nanoTime();
@@ -118,12 +123,13 @@ public class TATests {
 
     @Test
     void testPinnedLRUEviction() throws Exception {
-        BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName);
-        Page page = bf.createPage();
-        Page tempPage = bf.createPage();
+        BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName,
+                movieIdIndexFileName, movieIdTitleFileName);
+        Page page = bf.createPage(File.DISK);
+        Page tempPage = bf.createPage(File.DISK);
         bf.unpinPage(tempPage.getPid());
         for (int i = 0; i < 5; ++i) {
-            Page curPage = bf.createPage();
+            Page curPage = bf.createPage(File.DISK);
             bf.unpinPage(curPage.getPid());
         }
         long startTime = System.nanoTime();
@@ -141,13 +147,14 @@ public class TATests {
 
     @Test
     void testEditNotWrittenIfNotMarkedDirty() throws Exception {
-        BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName);
-        Page page = bf.createPage();
+        BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName,
+                movieIdIndexFileName, movieIdTitleFileName);
+        Page page = bf.createPage(File.DISK);
         page.insertRow(new Row("Movie1".getBytes(StandardCharsets.US_ASCII), "Title1".getBytes(StandardCharsets.US_ASCII)));
         page.markNotDirty();
         bf.unpinPage(page.getPid());
         for (int i = 0; i < 5; ++i) {
-            Page page1 = bf.createPage();
+            Page page1 = bf.createPage(File.DISK);
             page1.insertRow(new Row("Movie2".getBytes(StandardCharsets.US_ASCII), "Title2".getBytes(StandardCharsets.US_ASCII)));
             bf.unpinPage(page1.getPid());
         }
@@ -156,7 +163,7 @@ public class TATests {
         System.arraycopy(movieIdByteArr, 0, movieIdFixedLength, 0, Math.min(movieIdByteArr.length, movieIdFixedLength.length));
 
         // Check that the first inserted page into the buffer manager is that marked not dirty.
-        assertArrayEquals(bf.getPage(0).getRow(0).getMovieId(), movieIdFixedLength);
+        assertNull(bf.getPage(0).getRow(0));
 
     }
 

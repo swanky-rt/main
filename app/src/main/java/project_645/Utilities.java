@@ -23,7 +23,7 @@ public class Utilities implements Serializable {
     public void loadDataset(BufferManager bf, String filepath) throws Exception {
          Path dbFilePath = Paths.get( filepath + diskFileName).toAbsolutePath();
         // create page
-        Page newPage = bf.createPage();
+        Page newPage = bf.createPage(File.DISK);
         int pageId = newPage.getPid();
         System.out.print(pageId+ "the page number");
         newPage = bf.getPage(pageId);

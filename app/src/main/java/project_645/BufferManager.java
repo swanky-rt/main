@@ -16,12 +16,14 @@ public abstract class BufferManager {
         abstract Page getPage(int pageId) throws Exception;
 
 
-        /**
+    public abstract Page getPage(int pageId, File dataFile) throws Exception;
+
+    /**
          * Creates a new page.
          * The page is immediately pinned.
          * @return The Page object whose content is stored in a frame of the buffer pool manager.
          */
-        abstract Page createPage() throws Exception;
+        abstract Page createPage(File dataFile) throws Exception;
 
         /**
          * Marks a page as dirty, indicating it needs to be written to disk before eviction.
@@ -29,7 +31,9 @@ public abstract class BufferManager {
          */
         abstract void markDirty(int pageId);
 
-        /**
+    public abstract void markDirty(int pageId, File dataFile);
+
+    /**
          * Unpins a page in the buffer pool, allowing it to be evicted if necessary.
          * @param pageId The ID of the page to unpin.
          */
@@ -42,4 +46,6 @@ public abstract class BufferManager {
     public int getBufferSize() {
         return this.bufferSize;
     }
-} 
+
+    public abstract void unpinPage(int pageId, File dataFile);
+}

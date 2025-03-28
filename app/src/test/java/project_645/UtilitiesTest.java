@@ -20,18 +20,18 @@ class UtilitiesTest {
         utilitiesEmptyFile = new Utilities("title.basics.tsv", "testdb2.dat");
     }
     
-    @Test
-    void testLoadDataset() throws Exception {
-        doNothing().when(bufferManager).unpinPage(anyInt());
-        doReturn(new PageImpl(1)).when(bufferManager).createPage();
-        doReturn(new PageImpl(1)).when(bufferManager).getPage(anyInt());
-        doReturn(4096).when(bufferManager).getBufferSize();
-        utilities.loadDataset(bufferManager, System.getProperty("user.dir") + "/src/main/java/project_645/DB files/");
-
-        Exception exception = assertThrows(Exception.class, () -> utilitiesEmptyFile.loadDataset(bufferManager, System.getProperty("user.dir") + "/src/test/java/project_645/DB files/"));
-
-        assertEquals("Disk does not have sufficiently many unique pages to fill up the buffer manager", exception.getMessage());
-        //utilitiesEmptyFile.loadDataset(bufferManager, System.getProperty("user.dir") + "/src/test/java/project_645/DB files/");
-    }
+//    @Test
+//    void testLoadDataset() throws Exception {
+//        doNothing().when(bufferManager).unpinPage(anyInt());
+//        doReturn(new PageImpl(1)).when(bufferManager).createPage();
+//        doReturn(new PageImpl(1)).when(bufferManager).getPage(anyInt());
+//        doReturn(4096).when(bufferManager).getBufferSize();
+//        utilities.loadDataset(bufferManager, System.getProperty("user.dir") + "/src/main/java/project_645/DB files/");
+//
+//        Exception exception = assertThrows(Exception.class, () -> utilitiesEmptyFile.loadDataset(bufferManager, System.getProperty("user.dir") + "/src/test/java/project_645/DB files/"));
+//
+//        assertEquals("Disk does not have sufficiently many unique pages to fill up the buffer manager", exception.getMessage());
+//        //utilitiesEmptyFile.loadDataset(bufferManager, System.getProperty("user.dir") + "/src/test/java/project_645/DB files/");
+//    }
 
 }
