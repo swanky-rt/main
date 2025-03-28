@@ -8,6 +8,7 @@ repositories {
 
 dependencies {
     testImplementation 'junit:junit:4.13.2'
+    implementation 'org.apache.commons:commons-lang3:3.14.0' // Use the latest version
 }
 
 jar {
