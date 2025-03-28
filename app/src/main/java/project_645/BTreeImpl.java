@@ -41,8 +41,8 @@ public class BTreeImpl implements BTree<String, Rid> {
             this.metadata.rootPageId = rootPid;
             this.metadata.isRootLeaf = true;
             initLeafPage(rootPage, -1, -1, 0);
-            bufferMgr.markDirty(rootPid);
-            bufferMgr.unpinPage(rootPid);
+            bufferMgr.markDirty(rootPid, File.DISK);
+            bufferMgr.unpinPage(rootPid, File.DISK);
         } else {
             // For simplicity, assume root is page 0.
             this.metadata.rootPageId = 0;
@@ -83,7 +83,7 @@ public class BTreeImpl implements BTree<String, Rid> {
                 }
             }
             int nextLeaf = getNextLeafId(currentPid);
-            bufferMgr.unpinPage(currentPid);
+            bufferMgr.unpinPage(currentPid, File.DISK);
             if (!leafKeys.isEmpty() && leafKeys.get(leafKeys.size()-1).compareTo(endKey) > 0) {
                 break;
             }
@@ -128,13 +128,13 @@ public class BTreeImpl implements BTree<String, Rid> {
                 } else {
                     insertInParent(leafPid, siblingPid, siblingKeys.get(0));
                 }
-                bufferMgr.markDirty(siblingPid);
-                bufferMgr.unpinPage(siblingPid);
+                bufferMgr.markDirty(siblingPid, File.DISK);
+                bufferMgr.unpinPage(siblingPid, File.DISK);
             } else {
                 writeLeafKeysAndRids(leafPid, keys, rids);
             }
-            bufferMgr.markDirty(leafPid);
-            bufferMgr.unpinPage(leafPid);
+            bufferMgr.markDirty(leafPid, File.DISK);
+            bufferMgr.unpinPage(leafPid, File.DISK);
         } catch (Exception e) {
             System.err.println("Error in insertIntoLeaf: " + e.getMessage());
         }
@@ -154,8 +154,8 @@ public class BTreeImpl implements BTree<String, Rid> {
         metadata.isRootLeaf = false;
         setParentId(oldRootPid, newRootPid);
         setParentId(siblingPid, newRootPid);
-        bufferMgr.markDirty(newRootPid);
-        bufferMgr.unpinPage(newRootPid);
+        bufferMgr.markDirty(newRootPid, File.DISK);
+        bufferMgr.unpinPage(newRootPid, File.DISK);
     }
 
     private void insertInParent(int leftPid, int rightPid, String splitKey) throws Exception {
@@ -202,13 +202,13 @@ public class BTreeImpl implements BTree<String, Rid> {
             } else {
                 insertInParent(parentPid, newPid, upKey);
             }
-            bufferMgr.markDirty(newPid);
-            bufferMgr.unpinPage(newPid);
+            bufferMgr.markDirty(newPid, File.DISK);
+            bufferMgr.unpinPage(newPid, File.DISK);
         } else {
             writeInternalKeysAndChildren(parentPid, keys, children);
         }
-        bufferMgr.markDirty(parentPid);
-        bufferMgr.unpinPage(parentPid);
+        bufferMgr.markDirty(parentPid, File.DISK);
+        bufferMgr.unpinPage(parentPid, File.DISK);
         setParentId(rightPid, parentPid);
     }
 
@@ -231,7 +231,7 @@ public class BTreeImpl implements BTree<String, Rid> {
                     i++;
                 }
                 int childPid = children.get(i);
-                bufferMgr.unpinPage(currentPid);
+                bufferMgr.unpinPage(currentPid, File.DISK);
                 currentPid = childPid;
             }
         }
@@ -247,7 +247,7 @@ public class BTreeImpl implements BTree<String, Rid> {
                 result.add(rids.get(i));
             }
         }
-        bufferMgr.unpinPage(leafPid);
+        bufferMgr.unpinPage(leafPid, File.DISK);
         return result;
     }
 
@@ -267,7 +267,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void readLeafNode(int pageId, List<String> keysOut, List<Rid> ridsOut) {
         try {
-            Page page = bufferMgr.getPage(pageId);
+            Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             if (meta.movieId[0] != 'L') {
@@ -292,7 +292,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void writeLeafKeysAndRids(int pageId, List<String> keys, List<Rid> rids) {
         try {
-            Page page = bufferMgr.getPage(pageId);
+            Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             storeIntInByteArray(keys.size(), meta.title, 8);
@@ -327,7 +327,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void readInternalNode(int pageId, List<String> keysOut, List<Integer> childrenOut) {
         try {
-            Page page = bufferMgr.getPage(pageId);
+            Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             if (meta.movieId[0] != 'I') {
@@ -358,7 +358,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void writeInternalKeysAndChildren(int pageId, List<String> keys, List<Integer> children) {
         try {
-            Page page = bufferMgr.getPage(pageId);
+            Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             storeIntInByteArray(keys.size(), meta.title, 8);
@@ -383,11 +383,11 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private boolean isLeafNode(int pageId) {
         try {
-            Page page = bufferMgr.getPage(pageId);
+            Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             char c = (char) meta.movieId[0];
-            bufferMgr.unpinPage(pageId);
+            bufferMgr.unpinPage(pageId, File.DISK);
             return (c == 'L');
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -396,11 +396,11 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private int getParentId(int pageId) {
         try {
-            Page page = bufferMgr.getPage(pageId);
+            Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             int pid = parseIntFromByteArray(meta.title, 0);
-            bufferMgr.unpinPage(pageId);
+            bufferMgr.unpinPage(pageId, File.DISK);
             return pid;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -409,12 +409,12 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void setParentId(int pageId, int parentId) {
         try {
-            Page page = bufferMgr.getPage(pageId);
-            bufferMgr.markDirty(pageId);
+            Page page = bufferMgr.getPage(pageId, File.DISK);
+            bufferMgr.markDirty(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             storeIntInByteArray(parentId, meta.title, 0);
-            bufferMgr.unpinPage(pageId);
+            bufferMgr.unpinPage(pageId, File.DISK);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -422,7 +422,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private int getNextLeafId(int pageId) {
         try {
-            Page page = bufferMgr.getPage(pageId);
+            Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             int nxt = parseIntFromByteArray(meta.title, 4);
@@ -434,12 +434,12 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void setNextLeafId(int pageId, int nxtLeafId) {
         try {
-            Page page = bufferMgr.getPage(pageId);
-            bufferMgr.markDirty(pageId);
+            Page page = bufferMgr.getPage(pageId, File.DISK);
+            bufferMgr.markDirty(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             storeIntInByteArray(nxtLeafId, meta.title, 4);
-            bufferMgr.unpinPage(pageId);
+            bufferMgr.unpinPage(pageId, File.DISK);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -447,12 +447,12 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void setNumKeys(int pageId, int numKeys) {
         try {
-            Page page = bufferMgr.getPage(pageId);
-            bufferMgr.markDirty(pageId);
+            Page page = bufferMgr.getPage(pageId, File.DISK);
+            bufferMgr.markDirty(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             storeIntInByteArray(numKeys, meta.title, 8);
-            bufferMgr.unpinPage(pageId);
+            bufferMgr.unpinPage(pageId, File.DISK);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

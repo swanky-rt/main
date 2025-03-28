@@ -79,8 +79,8 @@ public class BufferImplTest {
     @Test
     public void testGetPageTest() throws Exception {
         Page page = new PageImpl(1, File.DISK);
-        bufferManager.bufferPool.put(Integer.toString(1), page);
-        Page fetchedPage = bufferManager.getPage(1);
+        bufferManager.bufferPool.put(bufferManager.constructPageIdentifier(page.getPid(), File.DISK), page);
+        Page fetchedPage = bufferManager.getPage(1, File.DISK);
         assertNotNull(fetchedPage);
         assertEquals(page, fetchedPage);
     }
@@ -89,28 +89,28 @@ public class BufferImplTest {
     public void testUnpinPage(){
         Page page1 = new PageImpl(1, File.DISK);
         Page page2 = new PageImpl(2, File.DISK);
-        bufferManager.bufferPool.put(Integer.toString(1), page1);
-        bufferManager.bufferPool.put(Integer.toString(2), page2);
-        bufferManager.pinnedPages.put(Integer.toString(1), 1);
-        bufferManager.unpinPage(1);
+        bufferManager.bufferPool.put(bufferManager.constructPageIdentifier(page1.getPid(), File.DISK), page1);
+        bufferManager.bufferPool.put(bufferManager.constructPageIdentifier(page2.getPid(), File.DISK), page2);
+        bufferManager.pinnedPages.put(bufferManager.constructPageIdentifier(page1.getPid(), File.DISK), 1);
+        bufferManager.unpinPage(1, File.DISK);
         assertFalse(bufferManager.pinnedPages.containsKey(Integer.toString(1)));
     }
 
     @Test
     public void testUnpinPageifNoPinPage(){
         Page page1 = new PageImpl(1, File.DISK);
-        bufferManager.bufferPool.put(Integer.toString(1), page1);
-        bufferManager.pinnedPages.put(Integer.toString(1), 1);
-        bufferManager.unpinPage(1);
+        bufferManager.bufferPool.put(bufferManager.constructPageIdentifier(page1.getPid(), File.DISK), page1);
+        bufferManager.pinnedPages.put(bufferManager.constructPageIdentifier(page1.getPid(), File.DISK), 1);
+        bufferManager.unpinPage(1, File.DISK);
         assertEquals(0, bufferManager.pinnedPages.size());
     }
 
     @Test
     public void testPinPage(){
         Page page = new PageImpl(1, File.DISK);
-        bufferManager.bufferPool.put(Integer.toString(1), page);
+        bufferManager.bufferPool.put(bufferManager.constructPageIdentifier(page.getPid(), File.DISK), page);
         bufferManager.pinPage(bufferManager.constructPageIdentifier(page.getPid(), File.DISK));
-        assertTrue(bufferManager.pinnedPages.containsKey(Integer.toString(1)));
+        assertTrue(bufferManager.pinnedPages.containsKey(bufferManager.constructPageIdentifier(page.getPid(), File.DISK)));
         assertEquals(1, page.getPinCount());
     }
 
@@ -124,8 +124,8 @@ public class BufferImplTest {
     }
     @Test
     public void testMarkDirty(){
-        bufferManager.bufferPool.put(Integer.toString(1), page);
-        bufferManager.markDirty(1);
+        bufferManager.bufferPool.put(bufferManager.constructPageIdentifier(1, File.DISK), page);
+        bufferManager.markDirty(1, File.DISK);
         verify(page).markDirty();
     }
 
@@ -188,17 +188,17 @@ public class BufferImplTest {
                 movieIdIndexFileName, movieTitleIndexFileName);
         Path path = Paths.get(workingDirectory + testFileDirectory + fileName);
         // First, attempt to get a page with ID that does not appear on disk or in the buffer manager
-        assertNull(bf.getPage(0));
+        assertNull(bf.getPage(0, File.DISK));
 
         // now, create a page in the buffer manager.
         Page page1 = bf.createPage(File.DISK);
         int page1Id = page1.getPid();
         // check that the page is returned by getPage()
-        Page retreivedPage = bf.getPage(page1.getPid());
+        Page retreivedPage = bf.getPage(page1.getPid(), File.DISK);
         // at this point should be the same reference since it was never evicted from the buffer pool
         assertEquals(page1, retreivedPage);
         // at this point, the pin count should be 2, decrement the pin count by one
-        bf.unpinPage(page1.getPid());
+        bf.unpinPage(page1.getPid(), File.DISK);
         // fill the buffer pool with only pinned pages
         Page page2 = bf.createPage(File.DISK);
         int page2Id = page2.getPid();
@@ -209,44 +209,44 @@ public class BufferImplTest {
         // created
         assertNull(bf.createPage(File.DISK));
         // Verify that all previously created pages are in the buffer pool
-        assertEquals(page1, bf.getPage(page1.getPid()));
-        assertEquals(page2, bf.getPage(page2.getPid()));
-        assertEquals(page3, bf.getPage(page3.getPid()));
-        assertEquals(page4, bf.getPage(page4.getPid()));
+        assertEquals(page1, bf.getPage(page1.getPid(), File.DISK));
+        assertEquals(page2, bf.getPage(page2.getPid(), File.DISK));
+        assertEquals(page3, bf.getPage(page3.getPid(), File.DISK));
+        assertEquals(page4, bf.getPage(page4.getPid(), File.DISK));
 
         // All pin counts should be 2, decrement pin count to 0 for every page except page 1
-        bf.unpinPage(page2.getPid());
-        bf.unpinPage(page2.getPid());
-        bf.unpinPage(page3.getPid());
-        bf.unpinPage(page3.getPid());
-        bf.unpinPage(page4.getPid());
-        bf.unpinPage(page4.getPid());
+        bf.unpinPage(page2.getPid(), File.DISK);
+        bf.unpinPage(page2.getPid(), File.DISK);
+        bf.unpinPage(page3.getPid(), File.DISK);
+        bf.unpinPage(page3.getPid(), File.DISK);
+        bf.unpinPage(page4.getPid(), File.DISK);
+        bf.unpinPage(page4.getPid(), File.DISK);
         //unpin page 1 once
-        bf.unpinPage(page1.getPid());
+        bf.unpinPage(page1.getPid(), File.DISK);
 
         // page 1 is LRU, but is pinned, so attempting to add a new page should evict page 2.
 
         Page page5 = bf.createPage(File.DISK);
         //check that page 1 is in the buffer pool and page 2 is not.
-        assertEquals(page1.getPid(), bf.getPage(page1.getPid()).getPid());
+        assertEquals(page1.getPid(), bf.getPage(page1.getPid(), File.DISK).getPid());
 
         // page 2 should have disk ID now and not temporary ID
 //        Page page2FromDisk = bf.getPage(page2.getPid());
 //        assertNull(bf.getPage(page2Id));
         // unpin page1 completely and ready it for eviction
-        bf.unpinPage(page1.getPid());
-        bf.unpinPage(page1.getPid());
+        bf.unpinPage(page1.getPid(), File.DISK);
+        bf.unpinPage(page1.getPid(), File.DISK);
 
-        bf.getPage(page2.getPid());
-        bf.getPage(page3.getPid());
-        bf.getPage(page4.getPid());
-        bf.unpinPage(page2.getPid());
-        bf.unpinPage(page2.getPid());
+        bf.getPage(page2.getPid(), File.DISK);
+        bf.getPage(page3.getPid(), File.DISK);
+        bf.getPage(page4.getPid(), File.DISK);
+        bf.unpinPage(page2.getPid(), File.DISK);
+        bf.unpinPage(page2.getPid(), File.DISK);
         // creating page should evict
         bf.createPage(File.DISK);
-        bf.unpinPage(page3.getPid());
+        bf.unpinPage(page3.getPid(), File.DISK);
         // Returned ID and stored ID should be the same
-        Page page1FromDisk = bf.getPage(page1.getPid());
+        Page page1FromDisk = bf.getPage(page1.getPid(), File.DISK);
         assertEquals(page1Id, page1FromDisk.getPid());
     }
 
@@ -266,8 +266,8 @@ public class BufferImplTest {
         assertFalse(page1.getDirtyStatus());
 
         // manually mark dirty and unpin page1
-        bf.markDirty(page1.getPid());
-        bf.unpinPage(page1.getPid());
+        bf.markDirty(page1.getPid(), File.DISK);
+        bf.unpinPage(page1.getPid(), File.DISK);
 
         // check if page1 is marked dirty
         assertTrue(page1.getDirtyStatus());
@@ -275,11 +275,11 @@ public class BufferImplTest {
         // create a page, forcing a write to disk
         Page page2 = bf.createPage(File.DISK);
         // Another check that attempting to get a page when all are pinned shouldn't change the buffer pool
-        Page page3 = bf.getPage(page1.getPid());
+        Page page3 = bf.getPage(page1.getPid(), File.DISK);
         // unpin it and load page1 back from disk
-        bf.unpinPage(page2.getPid());
+        bf.unpinPage(page2.getPid(), File.DISK);
         // load page1 from disk
-        Page page1FromDisk = bf.getPage(page1.getPid());
+        Page page1FromDisk = bf.getPage(page1.getPid(), File.DISK);
         assertFalse(page1FromDisk.getDirtyStatus());
 
     }

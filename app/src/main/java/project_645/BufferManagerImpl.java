@@ -43,10 +43,10 @@ public class BufferManagerImpl extends BufferManager{
 
     @Override
     public Page getPage(int pageId, File dataFile) throws Exception {
-        String pageIdentifier = dataFile.toString() + Integer.toString(pageId);
+        String pageIdentifier = constructPageIdentifier(pageId, dataFile);
         Page page= null;
         try {
-            if (bufferPool.containsKey(Integer.toString(pageId))) {
+            if (bufferPool.containsKey(pageIdentifier)) {
                 lru.remove(pageIdentifier);
                 lru.addFirst(pageIdentifier);
                 this.pinPage(pageIdentifier);
@@ -175,8 +175,9 @@ public class BufferManagerImpl extends BufferManager{
     // This method writes pages to disk
 
     public void writePageToDisk(Page page, File dataFile) throws IOException {
+        String curDiskFileName = dataFile == File.DISK ? diskFileName : dataFile == File.MOVIE_ID_IDX ? this.movieIdIndexFileName : this.movieTitleIndexFileName;
         int pageId = page.getPid();
-        Path curPath = Paths.get( filepath + diskFileName).toAbsolutePath();
+        Path curPath = Paths.get( filepath + curDiskFileName).toAbsolutePath();
         long fileSize = Files.size(curPath);
         long numPages = fileSize / PAGE_SIZE;
         byte[] bytesToWrite = new byte[0];
@@ -190,7 +191,7 @@ public class BufferManagerImpl extends BufferManager{
         }
         long startByte = numPages >= pageId ? (long)pageId * PAGE_SIZE : numPages * PAGE_SIZE;
 
-        RandomAccessFile curFile = new RandomAccessFile(filepath + diskFileName,"rw");
+        RandomAccessFile curFile = new RandomAccessFile(filepath + curDiskFileName,"rw");
         curFile.seek(startByte);
 
         curFile.write(bytesToWrite);
@@ -215,11 +216,11 @@ public class BufferManagerImpl extends BufferManager{
 
     public Page loadPageFromDisk(int pageId, File dataFile) {
         String curDiskFileName = dataFile == File.DISK ? diskFileName : dataFile == File.MOVIE_ID_IDX ? this.movieIdIndexFileName : this.movieTitleIndexFileName;
-        Path curPath = Paths.get(filepath + diskFileName);
+        Path curPath = Paths.get(filepath + curDiskFileName);
         Charset charset = StandardCharsets.US_ASCII;
         Page pageToPopulate = new PageImpl(pageId, File.DISK);
         pageToPopulate.markNotDirty();
-        try (BufferedInputStream reader = new BufferedInputStream(new FileInputStream(filepath + diskFileName))) {
+        try (BufferedInputStream reader = new BufferedInputStream(new FileInputStream(filepath + curDiskFileName))) {
             long fileSize = Files.size(curPath);
             long numPages = fileSize / PAGE_SIZE;
             if (numPages - 1 < pageId || pageId < 0) {
@@ -277,27 +278,27 @@ public class BufferManagerImpl extends BufferManager{
     }
 
 //     meant to be run separately from the buffer manager, helper utility to initially populate the disk.
-    public void populateDisk(int numRecords, String filepath) throws IOException {
-        int curPageId = 0;
-        BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
-        reader.readLine();
-        boolean justFlushedPage = true;
-        PageImpl newPage = new PageImpl(curPageId, File.DISK);
-        for (int i = 0; i < numRecords; ++i) {
-            if (newPage.isFull()) {
-                writePageToDisk(curPageId++, newPage);
-                newPage = new PageImpl(curPageId, File.DISK);
-            }
-            String line = reader.readLine();
-
-            String[] columns = line.split("\t");
-            byte[] title = columns[2].getBytes();
-            byte[] movieId = columns[0].getBytes();
-            Row row = new Row(movieId, title);
-            newPage.insertRow(row);
-        }
-        writePageToDisk(curPageId, newPage);
-    }
+//    public void populateDisk(int numRecords, String filepath) throws IOException {
+//        int curPageId = 0;
+//        BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
+//        reader.readLine();
+//        boolean justFlushedPage = true;
+//        PageImpl newPage = new PageImpl(curPageId, File.DISK);
+//        for (int i = 0; i < numRecords; ++i) {
+//            if (newPage.isFull()) {
+//                writePageToDisk(curPageId++, newPage);
+//                newPage = new PageImpl(curPageId, File.DISK);
+//            }
+//            String line = reader.readLine();
+//
+//            String[] columns = line.split("\t");
+//            byte[] title = columns[2].getBytes();
+//            byte[] movieId = columns[0].getBytes();
+//            Row row = new Row(movieId, title);
+//            newPage.insertRow(row);
+//        }
+//        writePageToDisk(curPageId, newPage);
+//    }
 
     // creates bufferpool map descriptors based on the data file containing the page
     public String constructPageIdentifier(int pageId, File dataFile) {

@@ -74,13 +74,13 @@ public class TATests {
             // which indicates that the caller does not need the page any longer.
             // Therefore, since both createPage and getPage is called on this page, we need to decrement
             // the pin count twice for each page to be elegible for eviction
-            bf.markDirty(i);
-            bf.unpinPage(page.getPid());
-            bf.unpinPage(page.getPid());
+            bf.markDirty(i, File.DISK);
+            bf.unpinPage(page.getPid(), File.DISK);
+            bf.unpinPage(page.getPid(), File.DISK);
         }
         counter = 0;
         for (int i = 0; i < 10000; ++i) {
-            Page page = bf.getPage(i);
+            Page page = bf.getPage(i, File.DISK);
             try {
                 int j = 0;
                 byte[] movieIdByteArr = ("Movie " + counter).getBytes(StandardCharsets.US_ASCII);
@@ -91,7 +91,7 @@ public class TATests {
                 System.arraycopy(movieTitleByteArr, 0, movieTitleFixedLength, 0, Math.min(movieTitleByteArr.length, movieTitleFixedLength.length));
                 assertArrayEquals(movieIdFixedLength, page.getRow(j).getMovieId());
                 assertArrayEquals(movieTitleFixedLength, page.getRow(j).getTitle());
-                bf.unpinPage(page.getPid());
+                bf.unpinPage(page.getPid(), File.DISK);
                 counter += 105;
             }
             catch (Exception e) {
@@ -107,14 +107,14 @@ public class TATests {
 
         for (int i = 0; i < 5; ++i) {
             Page page = bf.createPage(File.DISK);
-            bf.unpinPage(page.getPid());
+            bf.unpinPage(page.getPid(), File.DISK);
         }
         long startTime = System.nanoTime();
-        bf.getPage(0);
+        bf.getPage(0, File.DISK);
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
         long startTime1 = System.nanoTime();
-        bf.getPage(-5);
+        bf.getPage(-5, File.DISK);
         long endtime1 = System.nanoTime();
         long duration1 = endtime1 - startTime1;
 
@@ -127,19 +127,19 @@ public class TATests {
                 movieIdIndexFileName, movieIdTitleFileName);
         Page page = bf.createPage(File.DISK);
         Page tempPage = bf.createPage(File.DISK);
-        bf.unpinPage(tempPage.getPid());
+        bf.unpinPage(tempPage.getPid(), File.DISK);
         for (int i = 0; i < 5; ++i) {
             Page curPage = bf.createPage(File.DISK);
-            bf.unpinPage(curPage.getPid());
+            bf.unpinPage(curPage.getPid(), File.DISK);
         }
         long startTime = System.nanoTime();
         // get time of first evicted page, assigned id 0 at write time
-        bf.getPage(0);
+        bf.getPage(0, File.DISK);
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
 
         long startTime1 = System.nanoTime();
-        bf.getPage(page.getPid());
+        bf.getPage(page.getPid(), File.DISK);
         long endTime1 = System.nanoTime();
         long duration1 = endTime1 - startTime1;
         assert(duration1 < duration);
@@ -152,18 +152,18 @@ public class TATests {
         Page page = bf.createPage(File.DISK);
         page.insertRow(new Row("Movie1".getBytes(StandardCharsets.US_ASCII), "Title1".getBytes(StandardCharsets.US_ASCII)));
         page.markNotDirty();
-        bf.unpinPage(page.getPid());
+        bf.unpinPage(page.getPid(), File.DISK);
         for (int i = 0; i < 5; ++i) {
             Page page1 = bf.createPage(File.DISK);
             page1.insertRow(new Row("Movie2".getBytes(StandardCharsets.US_ASCII), "Title2".getBytes(StandardCharsets.US_ASCII)));
-            bf.unpinPage(page1.getPid());
+            bf.unpinPage(page1.getPid(), File.DISK);
         }
         byte[] movieIdByteArr = ("Movie2").getBytes(StandardCharsets.US_ASCII);
         byte[] movieIdFixedLength = new byte[9];
         System.arraycopy(movieIdByteArr, 0, movieIdFixedLength, 0, Math.min(movieIdByteArr.length, movieIdFixedLength.length));
 
         // Check that the first inserted page into the buffer manager is that marked not dirty.
-        assertNull(bf.getPage(0).getRow(0));
+        assertNull(bf.getPage(0, File.DISK).getRow(0));
 
     }
 

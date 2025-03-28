@@ -26,7 +26,7 @@ public class Utilities implements Serializable {
         Page newPage = bf.createPage(File.DISK);
         int pageId = newPage.getPid();
         System.out.print(pageId+ "the page number");
-        newPage = bf.getPage(pageId);
+        newPage = bf.getPage(pageId, File.DISK);
         BufferedReader reader = new BufferedReader(new FileReader(filepath + this.filename));
         reader.readLine();
         // add rows using p.insertRow without filling p up
@@ -38,7 +38,7 @@ public class Utilities implements Serializable {
             Row row = new Row(movieId, titleId);
             newPage.insertRow(row);
         }
-        bf.unpinPage(pageId);
+        bf.unpinPage(pageId, File.DISK);
         // sequence of getPage calls that causes P to be evicted
 
         int diskSizeInPages = (int)Files.size(dbFilePath) / PAGE_SIZE;
@@ -46,16 +46,16 @@ public class Utilities implements Serializable {
             throw new Exception("Disk does not have sufficiently many unique pages to fill up the buffer manager");
         }
         for (int i = 0; i < diskSizeInPages; ++i) {
-            bf.getPage(i);
+            bf.getPage(i, File.DISK);
             if (i >= 5) {
-                bf.unpinPage(pageId);
+                bf.unpinPage(pageId, File.DISK);
             }
-            bf.unpinPage(i);
+            bf.unpinPage(i, File.DISK);
         }
         //get page back
         pageId = newPage.getPid();
-        newPage = bf.getPage(pageId);
-        bf.markDirty(pageId);
+        newPage = bf.getPage(pageId, File.DISK);
+        bf.markDirty(pageId, File.DISK);
 
         // add some more pages using p.insertRow();
         for (int i = 0; i < 20; ++i) {
@@ -66,7 +66,7 @@ public class Utilities implements Serializable {
             Row row = new Row(movieId, titleId);
             newPage.insertRow(row);
         }
-        bf.unpinPage(pageId);
+        bf.unpinPage(pageId, File.DISK);
     }
 
 
