@@ -18,10 +18,10 @@ public class Main {
 
             testBTreeIndex.insert("00000002", new Rid(2, 6));
             testBTreeIndex.insert("00000001", new Rid(2, 5));
-            testBTreeIndex.insert("00000003", new Rid(2, 7));
             testBTreeIndex.insert("00000002", new Rid(2, 6));
+            testBTreeIndex.insert("00000003", new Rid(2, 7));
 
-            testBTreeIndex.search("00000002");
+            testBTreeIndex.search("00000003");
 
 
             // bufferManager.populateDisk(700, filePath);
