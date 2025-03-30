@@ -54,37 +54,42 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     @Override
     public void insert(String key, Rid rid) {
-        int leafPid = findLeafPageId(key);
-        insertIntoLeaf(leafPid, key, rid);
+        int leafPid = findLeafPageId(key.getBytes());
+        byte[] arrRid = new byte[30];
+        storeIntInByteArray(rid.getPageId(), arrRid, 0);
+        storeIntInByteArray(rid.getSlotId(), arrRid, 4);
+        insertIntoLeaf(leafPid, padByteArrayToLength(key.getBytes(), 9), arrRid);
     }
 
     @Override
     public Iterator<Rid> search(String key) {
-        int leafPid = findLeafPageId(key);
-        List<Rid> results = searchInLeaf(leafPid, key);
+        int leafPid = findLeafPageId(key.getBytes());
+        List<Rid> results = searchInLeaf(leafPid, padByteArrayToLength(key.getBytes(), 9));
         return results.iterator();
     }
 
     @Override
     public Iterator<Rid> rangeSearch(String startKey, String endKey) {
         List<Rid> results = new ArrayList<>();
-        int leafPid = findLeafPageId(startKey);
+        int leafPid = findLeafPageId(startKey.getBytes());
         int currentPid = leafPid;
         while (currentPid != -1) {
-            List<String> leafKeys = new ArrayList<>();
-            List<Rid> leafRids = new ArrayList<>();
+            List<byte[]> leafKeys = new ArrayList<>();
+            List<byte[]> leafRids = new ArrayList<>();
             readLeafNode(currentPid, leafKeys, leafRids);
             for (int i = 0; i < leafKeys.size(); i++) {
-                String k = leafKeys.get(i);
-                if (k.compareTo(startKey) >= 0 && k.compareTo(endKey) <= 0) {
-                    results.add(leafRids.get(i));
-                } else if (k.compareTo(endKey) > 0) {
+                byte[] k = leafKeys.get(i);
+                if (Arrays.compare(k, padByteArrayToLength(startKey.getBytes(), 9)) >= 0 && Arrays.compare(k,
+                        padByteArrayToLength(endKey.getBytes(), 9)) <= 0) {
+
+                    results.add(new Rid(parseIntFromByteArray(leafRids.get(i), 0), parseIntFromByteArray(leafRids.get(i), 4)));
+                } else if (Arrays.compare(k, padByteArrayToLength(endKey.getBytes(), 9)) > 0) {
                     break;
                 }
             }
             int nextLeaf = getNextLeafId(currentPid);
             bufferMgr.unpinPage(currentPid, File.DISK);
-            if (!leafKeys.isEmpty() && leafKeys.get(leafKeys.size()-1).compareTo(endKey) > 0) {
+            if (!leafKeys.isEmpty() && Arrays.compare(leafKeys.get(leafKeys.size()-1), padByteArrayToLength(endKey.getBytes(), 9)) > 0) {
                 break;
             }
             currentPid = nextLeaf;
@@ -93,13 +98,14 @@ public class BTreeImpl implements BTree<String, Rid> {
     }
 
 
-    private void insertIntoLeaf(int leafPid, String key, Rid rid) {
+    private void insertIntoLeaf(int leafPid, byte[] key, byte[] rid) {
         try {
-            List<String> keys = new ArrayList<>();
-            List<Rid> rids = new ArrayList<>();
+
+            List<byte[]> keys = new ArrayList<>();
+            List<byte[]> rids = new ArrayList<>();
             readLeafNode(leafPid, keys, rids);
             int pos = 0;
-            while (pos < keys.size() && key.compareTo(keys.get(pos)) > 0) {
+            while (pos < keys.size() && Arrays.compare(key, keys.get(pos)) > 0) {
                 pos++;
             }
             keys.add(pos, key);
@@ -108,8 +114,9 @@ public class BTreeImpl implements BTree<String, Rid> {
                 int mid = keys.size() / 2;
                 Page siblingPage = bufferMgr.createPage(File.DISK);
                 int siblingPid = siblingPage.getPid();
-                List<String> siblingKeys = new ArrayList<>();
-                List<Rid> siblingRids = new ArrayList<>();
+                bufferMgr.unpinPage(siblingPid, File.DISK);
+                List<byte[]> siblingKeys = new ArrayList<>();
+                List<byte[]> siblingRids = new ArrayList<>();
                 for (int i = mid; i < keys.size(); i++) {
                     siblingKeys.add(keys.get(i));
                     siblingRids.add(rids.get(i));
@@ -140,11 +147,11 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
     }
 
-    private void createNewRoot(int oldRootPid, int siblingPid, String splitKey) throws Exception {
+    private void createNewRoot(int oldRootPid, int siblingPid, byte[] splitKey) throws Exception {
         Page newRootPage = bufferMgr.createPage(File.DISK);
         int newRootPid = newRootPage.getPid();
         initInternalPage(newRootPage, -1, 1);
-        List<String> keys = new ArrayList<>();
+        List<byte[]> keys = new ArrayList<>();
         List<Integer> children = new ArrayList<>();
         keys.add(splitKey);
         children.add(oldRootPid);
@@ -158,13 +165,13 @@ public class BTreeImpl implements BTree<String, Rid> {
         bufferMgr.unpinPage(newRootPid, File.DISK);
     }
 
-    private void insertInParent(int leftPid, int rightPid, String splitKey) throws Exception {
+    private void insertInParent(int leftPid, int rightPid, byte[] splitKey) throws Exception {
         int parentPid = getParentId(leftPid);
         if (parentPid == -1) {
             createNewRoot(leftPid, rightPid, splitKey);
             return;
         }
-        List<String> keys = new ArrayList<>();
+        List<byte[]> keys = new ArrayList<>();
         List<Integer> children = new ArrayList<>();
         readInternalNode(parentPid, keys, children);
         int pos = children.indexOf(leftPid);
@@ -175,9 +182,9 @@ public class BTreeImpl implements BTree<String, Rid> {
             Page newPage = bufferMgr.createPage(File.DISK);
             int newPid = newPage.getPid();
             initInternalPage(newPage, getParentId(parentPid), 0);
-            List<String> siblingKeys = new ArrayList<>();
+            List<byte[]> siblingKeys = new ArrayList<>();
             List<Integer> siblingChildren = new ArrayList<>();
-            String upKey = keys.get(mid);
+            byte[] upKey = keys.get(mid);
             for (int i = mid + 1; i < keys.size(); i++) {
                 siblingKeys.add(keys.get(i));
             }
@@ -214,7 +221,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
 
 
-    private int findLeafPageId(String key) {
+    private int findLeafPageId(byte[] key) {
         int currentPid = metadata.rootPageId;
         while (true) {
             if (currentPid == metadata.rootPageId && metadata.isRootLeaf) {
@@ -223,11 +230,11 @@ public class BTreeImpl implements BTree<String, Rid> {
             if (isLeafNode(currentPid)) {
                 return currentPid;
             } else {
-                List<String> keys = new ArrayList<>();
+                List<byte[]> keys = new ArrayList<>();
                 List<Integer> children = new ArrayList<>();
                 readInternalNode(currentPid, keys, children);
                 int i = 0;
-                while (i < keys.size() && key.compareTo(keys.get(i)) >= 0) {
+                while (i < keys.size() && Arrays.compare(key, keys.get(i)) >= 0) {
                     i++;
                 }
                 int childPid = children.get(i);
@@ -237,14 +244,14 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
     }
 
-    private List<Rid> searchInLeaf(int leafPid, String key) {
-        List<String> keys = new ArrayList<>();
-        List<Rid> rids = new ArrayList<>();
+    private List<Rid> searchInLeaf(int leafPid, byte[] key) {
+        List<byte[]> keys = new ArrayList<>();
+        List<byte[]> rids = new ArrayList<>();
         readLeafNode(leafPid, keys, rids);
         List<Rid> result = new ArrayList<>();
         for (int i = 0; i < keys.size(); i++) {
-            if (keys.get(i).equals(key)) {
-                result.add(rids.get(i));
+            if (Arrays.compare(keys.get(i), key) == 0) {
+                result.add(new Rid(parseIntFromByteArray(rids.get(i), 0), parseIntFromByteArray(rids.get(i), 4)));
             }
         }
         bufferMgr.unpinPage(leafPid, File.DISK);
@@ -265,9 +272,10 @@ public class BTreeImpl implements BTree<String, Rid> {
         p.insertRow(metaRow); // row 0 stores metadata
     }
 
-    private void readLeafNode(int pageId, List<String> keysOut, List<Rid> ridsOut) {
+    private void readLeafNode(int pageId, List<byte[]> keysOut, List<byte[]> ridsOut) {
         try {
             Page page = bufferMgr.getPage(pageId, File.DISK);
+            bufferMgr.unpinPage(page.getPid(), File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             if (meta.movieId[0] != 'L') {
@@ -282,15 +290,20 @@ public class BTreeImpl implements BTree<String, Rid> {
                 String k = parseStringFromByteArray(r.movieId, 0, r.movieId.length);
                 int pid = parseIntFromByteArray(r.title, 0);
                 int slot = parseIntFromByteArray(r.title, 4);
-                keysOut.add(k.trim());
-                ridsOut.add(new Rid(pid, slot));
+                // Currently changing the readLeafNode function definition to instead take byte arrays as input.
+                // This is done so that data stays serialized the entire time, which is a requirement for the lab description.
+//                keysOut.add(k.trim());
+//                ridsOut.add(new Rid(pid, slot));
+
+                keysOut.add(r.movieId);
+                ridsOut.add(r.title);
             }
         } catch (Exception e) {
             throw new RuntimeException("Error in readLeafNode: " + e.getMessage());
         }
     }
 
-    private void writeLeafKeysAndRids(int pageId, List<String> keys, List<Rid> rids) {
+    private void writeLeafKeysAndRids(int pageId, List<byte[]> keys, List<byte[]> rids) {
         try {
             Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
@@ -298,10 +311,10 @@ public class BTreeImpl implements BTree<String, Rid> {
             storeIntInByteArray(keys.size(), meta.title, 8);
             // Write each key and RID starting at row 1.
             for (int i = 0; i < keys.size(); i++) {
-                Row row = new Row(new byte[9], new byte[30]);
-                storeStringInByteArray(keys.get(i), row.movieId, 0, row.movieId.length);
-                storeIntInByteArray(rids.get(i).getPageId(), row.title, 0);
-                storeIntInByteArray(rids.get(i).getSlotId(), row.title, 4);
+                Row row = new Row(keys.get(i), rids.get(i));
+//                storeStringInByteArray(keys.get(i), row.movieId, 0, row.movieId.length);
+//                storeIntInByteArray(rids.get(i).getPageId(), row.title, 0);
+//                storeIntInByteArray(rids.get(i).getSlotId(), row.title, 4);
                 setRowAtIndex(p, i + 1, row);
             }
             // Update row count (1 meta row + one row per key)
@@ -325,7 +338,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         p.insertRow(metaRow);
     }
 
-    private void readInternalNode(int pageId, List<String> keysOut, List<Integer> childrenOut) {
+    private void readInternalNode(int pageId, List<byte[]> keysOut, List<Integer> childrenOut) {
         try {
             Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
@@ -341,9 +354,9 @@ public class BTreeImpl implements BTree<String, Rid> {
                 Row row = p.getRow(i);
                 if (row == null) break;
                 int childPid = parseIntFromByteArray(row.movieId, 0);
-                String k = parseStringFromByteArray(row.title, 0, row.title.length);
+//                String k = parseStringFromByteArray(row.title, 0, row.title.length);
                 childrenOut.add(childPid);
-                keysOut.add(k.trim());
+                keysOut.add(row.title);
             }
             // Row numKeys+1 holds the final child pointer.
             Row lastRow = p.getRow(numKeys + 1);
@@ -356,7 +369,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
     }
 
-    private void writeInternalKeysAndChildren(int pageId, List<String> keys, List<Integer> children) {
+    private void writeInternalKeysAndChildren(int pageId, List<byte[]> keys, List<Integer> children) {
         try {
             Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
@@ -364,9 +377,9 @@ public class BTreeImpl implements BTree<String, Rid> {
             storeIntInByteArray(keys.size(), meta.title, 8);
             int rowCountNeeded = keys.size() + 1;
             for (int i = 1; i <= keys.size(); i++) {
-                Row row = new Row(new byte[9], new byte[30]);
+                Row row = new Row(new byte[9], keys.get(i - 1));
                 storeIntInByteArray(children.get(i - 1), row.movieId, 0);
-                storeStringInByteArray(keys.get(i - 1), row.title, 0, row.title.length);
+//                storeStringInByteArray(keys.get(i - 1), row.title, 0, row.title.length);
                 setRowAtIndex(p, i, row);
             }
             // Final child pointer at row keys.size() + 1.
@@ -423,6 +436,7 @@ public class BTreeImpl implements BTree<String, Rid> {
     private int getNextLeafId(int pageId) {
         try {
             Page page = bufferMgr.getPage(pageId, File.DISK);
+            bufferMgr.unpinPage(page.getPid(), File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             int nxt = parseIntFromByteArray(meta.title, 4);
@@ -506,5 +520,14 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
         rows[index] = row;
         p.setAllRows(rows);
+    }
+
+    private byte[] padByteArrayToLength(byte[] arr, int totalLength) {
+        if (arr.length > totalLength) {
+            throw new IllegalArgumentException("Length of the passed arr is greater than expected padded length of the array");
+        }
+        byte[] returnArr = new byte[totalLength];
+        System.arraycopy(arr, 0, returnArr, 0, arr.length);
+        return returnArr;
     }
 }
