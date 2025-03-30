@@ -16,11 +16,12 @@ public class Main {
 
             BTreeImpl testBTreeIndex = new BTreeImpl(indexBufferManagerTest, 1, true);
 
-            testBTreeIndex.insert("00000001", new Rid(2, 5));
             testBTreeIndex.insert("00000002", new Rid(2, 6));
+            testBTreeIndex.insert("00000001", new Rid(2, 5));
             testBTreeIndex.insert("00000003", new Rid(2, 7));
+            testBTreeIndex.insert("00000002", new Rid(2, 6));
 
-            testBTreeIndex.search("00000001");
+            testBTreeIndex.search("00000002");
 
 
             // bufferManager.populateDisk(700, filePath);

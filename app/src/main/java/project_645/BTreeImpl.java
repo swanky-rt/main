@@ -63,8 +63,16 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     @Override
     public Iterator<Rid> search(String key) {
-        int leafPid = findLeafPageId(key.getBytes());
-        List<Rid> results = searchInLeaf(leafPid, padByteArrayToLength(key.getBytes(), 9));
+        List<Rid> results = new ArrayList<>();
+        boolean flag = true;
+        int curLeafPid = findLeafPageId(padByteArrayToLength(key.getBytes(), 9));
+        while (flag) {
+            List<Rid> tempResults = searchInLeaf(curLeafPid, padByteArrayToLength(key.getBytes(), 9));
+            results.addAll(tempResults);
+            curLeafPid = getNextLeafId(curLeafPid);
+            flag = !results.isEmpty() && curLeafPid != -1;
+        }
+
         return results.iterator();
     }
 
@@ -234,8 +242,11 @@ public class BTreeImpl implements BTree<String, Rid> {
                 List<Integer> children = new ArrayList<>();
                 readInternalNode(currentPid, keys, children);
                 int i = 0;
-                while (i < keys.size() && Arrays.compare(key, keys.get(i)) >= 0) {
+                while (i < keys.size() && Arrays.compare(padByteArrayToLength(key, 30), keys.get(i)) >= 0) {
                     i++;
+                    if (Arrays.compare(padByteArrayToLength(key, 30), keys.get(i - 1)) == 0) {
+                        break;
+                    }
                 }
                 int childPid = children.get(i);
                 bufferMgr.unpinPage(currentPid, File.DISK);
@@ -308,6 +319,9 @@ public class BTreeImpl implements BTree<String, Rid> {
             Page page = bufferMgr.getPage(pageId, File.DISK);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
+            Row[] replacementRowArray = new Row[105];
+            replacementRowArray[0] = meta;
+            p.setAllRows(replacementRowArray);
             storeIntInByteArray(keys.size(), meta.title, 8);
             // Write each key and RID starting at row 1.
             for (int i = 0; i < keys.size(); i++) {
