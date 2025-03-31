@@ -1,5 +1,7 @@
 package project_645;
 
+import java.util.Iterator;
+
 public class Main {
     public static void main(String[] args) {
         try {
@@ -14,14 +16,15 @@ public class Main {
 
             BufferManagerImpl indexBufferManagerTest = new BufferManagerImpl(4*4096, filePath, movieIdIndexFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
-            BTreeImpl testBTreeIndex = new BTreeImpl(indexBufferManagerTest, 1, true);
+            BTreeImpl testBTreeIndex = new BTreeImpl(indexBufferManagerTest, 1, true, File.MOVIE_ID_IDX);
 
             testBTreeIndex.insert("00000002", new Rid(2, 6));
             testBTreeIndex.insert("00000001", new Rid(2, 5));
             testBTreeIndex.insert("00000002", new Rid(2, 6));
             testBTreeIndex.insert("00000003", new Rid(2, 7));
+            testBTreeIndex.insert("00000002", new Rid(2, 9));
 
-            testBTreeIndex.search("00000003");
+            Iterator<Rid> rids = testBTreeIndex.search("00000002");
 
 
             // bufferManager.populateDisk(700, filePath);

@@ -34,7 +34,7 @@ public class BtreeTest {
         bufferManager = mock(BufferManagerImpl.class);
         Page mockPage = mock(Page.class);
         when(mockPage.getPid()).thenReturn(1);
-        btree = new BTreeImpl(bufferManager, TEST_ORDER, true);
+        btree = new BTreeImpl(bufferManager, TEST_ORDER, true, File.MOVIE_ID_IDX);
 
         testFilePath = System.getProperty("user.dir") + testFileDirectory + fileName;
         path = Paths.get(testFilePath);
