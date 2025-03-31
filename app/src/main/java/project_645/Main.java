@@ -16,9 +16,11 @@ public class Main {
 
             BufferManagerImpl indexBufferManagerTest = new BufferManagerImpl(20*4096, filePath, movieIdIndexFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
+            // Change the enum to change what file you want to write to
             BTreeImpl testBTreeIndex = new BTreeImpl(indexBufferManagerTest, 50, true, File.MOVIE_TITLE_IDX);
 
             // Uncomment out the following 3 lines to write the tsv file to the index.
+            // The third parameter is the number of entries to get. If you want to get all entries, pass -1.
             // Running this code will cause them to exist in the index but not on disk. To load on disk, use the "populate disk" method.
             // I plan on having these more closely linked later tonight.
 
@@ -43,11 +45,6 @@ public class Main {
 
 
 //            testBTreeIndex.search("Popular Science, Featuring Moon Rocket");
-
-
-//            Utilities utilities = new Utilities(mainFileName, diskFileName);
-//            utilities.populateIndex(testBTreeIndex, filePath, 50000);
-//            indexBufferManagerTest.force();
 
             int test = 2;
 
