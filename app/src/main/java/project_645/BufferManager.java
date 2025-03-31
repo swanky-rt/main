@@ -45,5 +45,11 @@ public abstract class BufferManager {
         return this.bufferSize;
     }
 
+    /**
+     *
+     * Forces a write of all pages in the buffer pool to disk
+     */
+    public abstract void force() throws Exception;
+
 
 }

@@ -34,6 +34,8 @@ public class BufferManagerImpl extends BufferManager{
         this.pinnedPages = new HashMap<>();
         this.filepath = filepath;
         this.diskFileName = diskFileName;
+        this.movieIdIndexFileName = movieIdIndexFileName;
+        this.movieTitleIndexFileName = movieTitleIndexFileName;
         this.currentPageID = (int)Files.size(Paths.get( filepath + diskFileName).toAbsolutePath()) / this.PAGE_SIZE;
         this.currentMovieIdPage = (int)Files.size(Paths.get( filepath + movieIdIndexFileName).toAbsolutePath()) / this.PAGE_SIZE;
         this.currentMovieTitlePageId = (int)(int)Files.size(Paths.get( filepath + movieTitleIndexFileName).toAbsolutePath()) / this.PAGE_SIZE;
@@ -70,7 +72,7 @@ public class BufferManagerImpl extends BufferManager{
             lru.addFirst(pageIdentifier);
             pageMap.put(page, pageId);
             this.pinPage(pageIdentifier);
-            System.out.println("the page " + pageId + " is pinned");
+            // System.out.println("the page " + pageId + " is pinned");
 
         } catch (Exception e) {
             System.out.println("issue in eviction as all pages currently in buffer pool marked pinned");
@@ -260,6 +262,19 @@ public class BufferManagerImpl extends BufferManager{
             return null;
         }
         return pageToPopulate;
+    }
+
+    @Override
+    public void force() throws Exception {
+        for (int i = lru.size() - 1; i >= 0; --i) {
+            String[] key = lru.get(i).split("-");
+            File dataFile = File.valueOf(key[0]);
+            int pid = Integer.parseInt(key[1]);
+            while (pinnedPages.containsKey(key)) {
+                unpinPage(pid, dataFile);
+            }
+            evictPage();
+        }
     }
 
     // IDs are now sequentially assigned starting from the most recent page on disk

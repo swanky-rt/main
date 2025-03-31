@@ -47,8 +47,8 @@ public class BTreeImpl implements BTree<String, Rid> {
             bufferMgr.unpinPage(rootPid, dataFile);
         } else {
             // For simplicity, assume root is page 0.
-            this.metadata.rootPageId = 0;
-            this.metadata.isRootLeaf = true;
+            this.metadata.rootPageId = findRoot(0);
+            this.metadata.isRootLeaf = isLeafNode(this.metadata.rootPageId);
         }
     }
 
@@ -72,7 +72,7 @@ public class BTreeImpl implements BTree<String, Rid> {
             List<Rid> tempResults = searchInLeaf(curLeafPid, padByteArrayToLength(key.getBytes(), 30));
             results.addAll(tempResults);
             curLeafPid = getNextLeafId(curLeafPid);
-            flag = !results.isEmpty() && curLeafPid != -1;
+            flag = !tempResults.isEmpty() && curLeafPid != -1;
         }
 
         return results.iterator();
@@ -140,6 +140,10 @@ public class BTreeImpl implements BTree<String, Rid> {
                 writeLeafKeysAndRids(siblingPid, siblingKeys, siblingRids);
                 setNextLeafId(leafPid, siblingPid);
                 writeLeafKeysAndRids(leafPid, keys, rids);
+                bufferMgr.markDirty(siblingPid, dataFile);
+                bufferMgr.unpinPage(siblingPid, dataFile);
+                bufferMgr.markDirty(leafPid, dataFile);
+                bufferMgr.unpinPage(leafPid, dataFile);
                 if (leafPid == metadata.rootPageId && metadata.isRootLeaf) {
                     createNewRoot(leafPid, siblingPid, siblingKeys.get(0));
                 } else {
@@ -176,6 +180,9 @@ public class BTreeImpl implements BTree<String, Rid> {
     }
 
     private void insertInParent(int leftPid, int rightPid, byte[] splitKey) throws Exception {
+        if (leftPid == 2 || rightPid == 11) {
+            int testBreakpoint = 2;
+        }
         int parentPid = getParentId(leftPid);
         if (parentPid == -1) {
             createNewRoot(leftPid, rightPid, splitKey);
@@ -214,6 +221,10 @@ public class BTreeImpl implements BTree<String, Rid> {
             }
             writeInternalKeysAndChildren(parentPid, keys, children);
             setNumKeys(parentPid, keys.size());
+            bufferMgr.markDirty(newPid, dataFile);
+            bufferMgr.unpinPage(newPid, dataFile);
+            bufferMgr.markDirty(parentPid, dataFile);
+            bufferMgr.unpinPage(parentPid, dataFile);
             if (parentPid == metadata.rootPageId) {
                 createNewRoot(parentPid, newPid, upKey);
             } else {
@@ -223,10 +234,11 @@ public class BTreeImpl implements BTree<String, Rid> {
             bufferMgr.unpinPage(newPid, dataFile);
         } else {
             writeInternalKeysAndChildren(parentPid, keys, children);
+            setParentId(rightPid, parentPid);
         }
         bufferMgr.markDirty(parentPid, dataFile);
         bufferMgr.unpinPage(parentPid, dataFile);
-        setParentId(rightPid, parentPid);
+
     }
 
 
@@ -319,6 +331,7 @@ public class BTreeImpl implements BTree<String, Rid> {
     private void writeLeafKeysAndRids(int pageId, List<byte[]> keys, List<byte[]> rids) {
         try {
             Page page = bufferMgr.getPage(pageId, dataFile);
+            bufferMgr.unpinPage(pageId, this.dataFile);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             Row[] replacementRowArray = new Row[105];
@@ -357,6 +370,7 @@ public class BTreeImpl implements BTree<String, Rid> {
     private void readInternalNode(int pageId, List<byte[]> keysOut, List<Integer> childrenOut) {
         try {
             Page page = bufferMgr.getPage(pageId, dataFile);
+            bufferMgr.unpinPage(pageId, this.dataFile);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
             if (meta.movieId[0] != 'I') {
@@ -387,9 +401,15 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void writeInternalKeysAndChildren(int pageId, List<byte[]> keys, List<Integer> children) {
         try {
+            if (pageId == 6) {
+                int breakpoint = 2;
+            }
             Page page = bufferMgr.getPage(pageId, dataFile);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
+            Row[] newRows = new Row[105];
+            newRows[0] = meta;
+            p.setAllRows(newRows);
             storeIntInByteArray(keys.size(), meta.title, 6);
             int rowCountNeeded = keys.size() + 1;
             for (int i = 1; i <= keys.size(); i++) {
@@ -403,6 +423,7 @@ public class BTreeImpl implements BTree<String, Rid> {
             storeIntInByteArray(children.get(keys.size()), lastRow.movieId, 0);
             setRowAtIndex(p, keys.size() + 1, lastRow);
             p.setRowCount(rowCountNeeded + 1);
+            bufferMgr.unpinPage(p.getPid(), this.dataFile);
         } catch (Exception e) {
             throw new RuntimeException("Error in writeInternalKeysAndChildren: " + e.getMessage());
         }
@@ -558,11 +579,16 @@ public class BTreeImpl implements BTree<String, Rid> {
     }
 
     private byte[] padByteArrayToLength(byte[] arr, int totalLength) {
-        if (arr.length > totalLength) {
-            throw new IllegalArgumentException("Length of the passed arr is greater than expected padded length of the array");
-        }
         byte[] returnArr = new byte[totalLength];
-        System.arraycopy(arr, 0, returnArr, 0, arr.length);
+        System.arraycopy(arr, 0, returnArr, 0, Math.min(totalLength, arr.length));
         return returnArr;
+    }
+
+    private int findRoot(int curPid) {
+        int parentPid = getParentId(curPid);
+        if (parentPid == -1) {
+            return curPid;
+        }
+        return findRoot(parentPid);
     }
 }

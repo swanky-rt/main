@@ -70,4 +70,35 @@ public class Utilities implements Serializable {
     }
 
 
+    public void populateIndex(BTreeImpl curIndex, String filePath, int numRecords) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(filePath + "title.basics.tsv"));
+        reader.readLine();
+        String curLine;
+        int testPage = 0;
+        int testSlot = 0;
+        long count = 0;
+        while ((curLine = reader.readLine()) != null && (numRecords == -1 || count < numRecords)) {
+                if (testPage == 297) {
+                    int breakpoint = 1;
+                }
+                if (testSlot == 11) {
+                    int breakpoint = 2;
+                }
+                String[] columns = curLine.split("\t");
+                String movieId = columns[0];
+                String titleId = columns[2];
+                if (titleId.equals("The Trials of Darryl Hunt")) {
+                    int breakpoint = 2;
+                }
+                byte[] testBytes = titleId.getBytes();
+                curIndex.insert(titleId, new Rid(testPage, testSlot));
+                ++testSlot;
+                if (testSlot >= 105) {
+                    testSlot = 0;
+                    testPage += 1;
+                }
+                count += 1;
+        }
+    }
+
 }
