@@ -14,35 +14,36 @@ public class Main {
 
             BufferManagerImpl bufferManager = new BufferManagerImpl(4 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
-            BufferManagerImpl indexBufferManagerTest = new BufferManagerImpl(5*4096, filePath, movieIdIndexFileName, movieIdIndexFileName, movieTitleIndexFileName);
+            BufferManagerImpl indexBufferManagerTest = new BufferManagerImpl(20*4096, filePath, movieIdIndexFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
-            BTreeImpl testBTreeIndex = new BTreeImpl(indexBufferManagerTest, 1, true, File.MOVIE_ID_IDX);
+            BTreeImpl testBTreeIndex = new BTreeImpl(indexBufferManagerTest, 50, true, File.MOVIE_TITLE_IDX);
 
-            int pageId = 0;
-            int slotId = 0;
-            for (int i = 0; i < 1000; ++i) {
-                testBTreeIndex.insert(String.format("%09d", i), new Rid(pageId, slotId));
-                slotId += 1;
-                if (slotId == 105) {
-                    slotId = 0;
-                    pageId += 1;
-                }
-            }
-            indexBufferManagerTest.force();
+            // Uncomment out the following 3 lines to write the tsv file to the index.
+            // Running this code will cause them to exist in the index but not on disk. To load on disk, use the "populate disk" method.
+            // I plan on having these more closely linked later tonight.
 
-//            testBTreeIndex.insert("00000002", new Rid(2, 6));
-//            testBTreeIndex.insert("00000001", new Rid(2, 5));
-//            testBTreeIndex.insert("00000002", new Rid(2, 6));
-//            testBTreeIndex.insert("00000003", new Rid(2, 7));
-//            testBTreeIndex.insert("00000002", new Rid(2, 9));
-//            testBTreeIndex.insert("00000002", new Rid(2, 6));
-//            testBTreeIndex.insert("00000001", new Rid(2, 5));
-//            testBTreeIndex.insert("00000002", new Rid(2, 6));
-//            testBTreeIndex.insert("00000003", new Rid(2, 7));
-//            testBTreeIndex.insert("00000002", new Rid(2, 9));
+            // Utilities utilities = new Utilities(mainFileName, diskFileName);
+            // utilities.populateIndex(testBTreeIndex, filePath, 50000);
+            // indexBufferManagerTest.force();
+
+//            int pageId = 0;
+//            int slotId = 0;
+//            for (int i = 0; i < 1000; ++i) {
+//                testBTreeIndex.insert(String.format("%09d", i), new Rid(pageId, slotId));
+//                 // bufferManager.unpinPage(2, File.MOVIE_ID_IDX);
+//                slotId += 1;
+//                if (slotId == 105) {
+//                    slotId = 0;
+//                    pageId += 1;
+//                }
+//            }
+//            indexBufferManagerTest.force();
+//
+//            Iterator<Rid> returnRIDs = testBTreeIndex.rangeSearch("000000513", "000000892");
+
 
 //            testBTreeIndex.search("Popular Science, Featuring Moon Rocket");
-            Iterator<Rid> returnRIDs = testBTreeIndex.rangeSearch("000000513", "000000892");
+
 
 //            Utilities utilities = new Utilities(mainFileName, diskFileName);
 //            utilities.populateIndex(testBTreeIndex, filePath, 50000);
@@ -52,8 +53,8 @@ public class Main {
 
 
             // bufferManager.populateDisk(700, filePath);
-            // Utilities utilities = new Utilities(mainFileName, diskFileName);
-            // utilities.loadDataset(bufferManager, filePath);
+//             Utilities utilities = new Utilities(mainFileName, diskFileName);
+//             utilities.loadDataset(bufferManager, filePath);
 
         } catch (Exception e) {
             System.out.println(e.toString());

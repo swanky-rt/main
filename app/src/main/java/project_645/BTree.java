@@ -7,7 +7,7 @@ public interface BTree<K extends Comparable<K>, V> {
      * Inserts a key-value pair into the B+ tree.
      *
      * @param key   The key to insert.
-     * @param rid The value associated with the key.
+     * @param r The value associated with the key.
      */
     void insert(K key, Rid r);
 

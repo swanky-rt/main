@@ -252,6 +252,14 @@ public class BufferManagerImpl extends BufferManager{
                         break;
                     }
                 }
+
+                for (byte b : curMovieTitle) {
+                    if (b != 0) {
+                        Row curRow = new Row(curMovieId, curMovieTitle);
+                        curPageRows[i] = curRow;
+                        break;
+                    }
+                }
             }
             reader.skip(pageToPopulate.getBytesToPad() - 1);
             curRowCount = reader.read();
