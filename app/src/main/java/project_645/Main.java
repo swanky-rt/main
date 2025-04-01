@@ -17,10 +17,10 @@ public class Main {
 //            bufferManager.populateDisk(50000, filePath);
 //            bufferManager.force();
 
-            BufferManagerImpl indexBufferManagerTest = new BufferManagerImpl(20*4096, filePath, movieIdIndexFileName, movieIdIndexFileName, movieTitleIndexFileName);
+            BufferManagerImpl indexBufferManagerTest = new BufferManagerImpl(500*4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
             // Change the enum to change what file you want to write to
-            BTreeImpl testBTreeIndex = new BTreeImpl(indexBufferManagerTest, 50, true, File.MOVIE_TITLE_IDX);
+            BTreeImpl testBTreeIndex = new BTreeImpl(indexBufferManagerTest, 50, true, File.MOVIE_ID_IDX);
 
             // Uncomment out the following 3 lines to write the tsv file to the index.
             // The third parameter is the number of entries to get. If you want to get all entries, pass -1.
