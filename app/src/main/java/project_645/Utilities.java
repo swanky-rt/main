@@ -89,7 +89,7 @@ public class Utilities implements Serializable {
                     String movieId = columns[0];
                     String titleId = columns[2];
                     byte[] testBytes = titleId.getBytes();
-                    curIndex.insert(titleId, new Rid(testPage, testSlot));
+                    curIndex.insert(movieId, new Rid(testPage, testSlot));
                     ++testSlot;
                     if (testSlot >= 105) {
                         testSlot = 0;

@@ -17,19 +17,19 @@ public class Main {
 //            bufferManager.populateDisk(50000, filePath);
 //            bufferManager.force();
 
-            BufferManagerImpl indexBufferManagerTest = new BufferManagerImpl(500*4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+            BufferManagerImpl indexBufferManagerTest = new BufferManagerImpl(5000*4096, filePath, movieIdIndexFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
             // Change the enum to change what file you want to write to
-            BTreeImpl testBTreeIndex = new BTreeImpl(indexBufferManagerTest, 50, true, File.MOVIE_ID_IDX);
+            BTreeImpl testBTreeIndex = new BTreeImpl(indexBufferManagerTest, 50, false, File.MOVIE_ID_IDX);
 
             // Uncomment out the following 3 lines to write the tsv file to the index.
             // The third parameter is the number of entries to get. If you want to get all entries, pass -1.
             // Running this code will cause them to exist in the index but not on disk. To load on disk, use the "populate disk" method.
             // I plan on having these more closely linked later tonight.
 
-            Utilities utilities = new Utilities(mainFileName, diskFileName);
-            utilities.populateIndex(testBTreeIndex, filePath, 50000);
-            indexBufferManagerTest.force();
+//            Utilities utilities = new Utilities(mainFileName, diskFileName);
+//            utilities.populateIndex(testBTreeIndex, filePath, 50000);
+//            indexBufferManagerTest.force();
 
 //            int pageId = 0;
 //            int slotId = 0;
@@ -44,7 +44,7 @@ public class Main {
 //            }
 //            indexBufferManagerTest.force();
 
-            Iterator<Rid> returnRIDs = testBTreeIndex.rangeSearch("000000513", "000000892");
+            Iterator<Rid> returnRIDs = testBTreeIndex.rangeSearch("tt0000014", "tt0000400");
 
 
 //            testBTreeIndex.search("Popular Science, Featuring Moon Rocket");
