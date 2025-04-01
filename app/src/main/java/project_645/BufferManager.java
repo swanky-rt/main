@@ -59,5 +59,10 @@ public abstract class BufferManager {
      */
     public abstract int getNumPagesOnDisk() throws IOException;
 
+    /**
+     *
+     * Gets the number of pages in the chosen file
+     */
+    public abstract int getFileSizeOfChosenFile(File dataFile) throws IOException;
 
 }

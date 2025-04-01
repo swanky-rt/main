@@ -53,6 +53,30 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
     }
 
+    public BTreeImpl(BufferManager bufferMgr, int order, File dataFile) throws Exception {
+        this.bufferMgr = bufferMgr;
+        this.metadata = new BTreeMetadata();
+        this.metadata.order = order;
+        this.maxKeysLeaf = 2 * order;
+        this.maxKeysInternal = 2 * order;
+        this.dataFile = dataFile;
+
+        if (bufferMgr.getFileSizeOfChosenFile(dataFile) == 0) {
+            // Create a new root page as a leaf node.
+            Page rootPage = bufferMgr.createPage(dataFile);
+            int rootPid = rootPage.getPid();
+            this.metadata.rootPageId = rootPid;
+            this.metadata.isRootLeaf = true;
+            initLeafPage(rootPage, -1, -1, 0);
+            bufferMgr.markDirty(rootPid, dataFile);
+            bufferMgr.unpinPage(rootPid, dataFile);
+        } else {
+            // For simplicity, assume root is page 0.
+            this.metadata.rootPageId = findRoot(0);
+            this.metadata.isRootLeaf = isLeafNode(this.metadata.rootPageId);
+        }
+    }
+
 
 
     @Override
@@ -606,6 +630,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         return findRoot(parentPid);
     }
 
+    // Only bulk-loading
 //    public String bulkLoad() {
 //
 //    }

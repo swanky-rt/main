@@ -70,7 +70,7 @@ public class Utilities implements Serializable {
     }
 
 
-    public void populateIndex(BTreeImpl curIndex, String filePath, int numRecords) throws IOException {
+    public void populateIndex(BTreeImpl curIndex, String filePath, int numRecords, File index) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(filePath + "title.basics.tsv"));
         reader.readLine();
         String curLine;
@@ -78,28 +78,25 @@ public class Utilities implements Serializable {
         int testSlot = 0;
         long count = 0;
         while ((curLine = reader.readLine()) != null && (numRecords == -1 || count < numRecords)) {
-                if (testPage == 93 && testSlot == 58) {
-                    int breakpoint = 1;
-                }
-                if (testSlot == 11) {
-                    int breakpoint = 2;
-                }
-                try {
-                    String[] columns = curLine.split("\t");
-                    String movieId = columns[0];
-                    String titleId = columns[2];
-                    byte[] testBytes = titleId.getBytes();
+            try {
+                String[] columns = curLine.split("\t");
+                String movieId = columns[0];
+                String titleId = columns[2];
+                byte[] testBytes = titleId.getBytes();
+                if (index == File.MOVIE_ID_IDX) {
                     curIndex.insert(movieId, new Rid(testPage, testSlot));
-                    ++testSlot;
-                    if (testSlot >= 105) {
-                        testSlot = 0;
-                        testPage += 1;
-                    }
-                    count += 1;
-                } catch (Exception e) {
-                    int breakpoint = 2;
+                } else if (index == File.MOVIE_TITLE_IDX){
+                    curIndex.insert(titleId, new Rid(testPage, testSlot));
                 }
+                ++testSlot;
+                if (testSlot >= 105) {
+                    testSlot = 0;
+                    testPage += 1;
+                }
+                count += 1;
+            } catch (Exception e) {
+                int test = 2;
+            }
         }
     }
-
 }

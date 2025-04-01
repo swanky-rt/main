@@ -113,7 +113,8 @@ public class BufferManagerImpl extends BufferManager{
     public Page createPage(File dataFile){
         Page page = null;
         try {
-            int pageId = getNextPageId();
+            int pageId = dataFile == File.DISK ? getNextPageId() : dataFile == File.MOVIE_ID_IDX ?
+                    getNextMovieIdIndexPage() : getNextMovieTitleIndexPage();
             String pageIdentifier = constructPageIdentifier(pageId, dataFile);
             if (this.bufferPool.size() >= this.MAX_PAGE) {
                 evictPage();
@@ -176,6 +177,18 @@ public class BufferManagerImpl extends BufferManager{
 
     public int getNumPagesOnDisk() throws IOException {
         return (int)Files.size(Paths.get(filepath + diskFileName)) / PAGE_SIZE;
+    }
+
+    public int getFileSizeOfChosenFile(File dataFile) throws IOException {
+        if (dataFile == File.DISK) {
+            return getNumPagesOnDisk();
+        }
+        else if (dataFile == File.MOVIE_ID_IDX) {
+            return (int)Files.size(Paths.get(filepath + movieIdIndexFileName)) / PAGE_SIZE;
+        }
+        else {
+            return (int)Files.size(Paths.get(filepath + movieTitleIndexFileName)) / PAGE_SIZE;
+        }
     }
 
     // This method writes pages to disk
