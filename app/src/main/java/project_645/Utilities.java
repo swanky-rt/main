@@ -68,35 +68,4 @@ public class Utilities implements Serializable {
         }
         bf.unpinPage(pageId, File.DISK);
     }
-
-
-    public void populateIndex(BTreeImpl curIndex, String filePath, int numRecords, File index) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(filePath + "title.basics.tsv"));
-        reader.readLine();
-        String curLine;
-        int testPage = 0;
-        int testSlot = 0;
-        long count = 0;
-        while ((curLine = reader.readLine()) != null && (numRecords == -1 || count < numRecords)) {
-            try {
-                String[] columns = curLine.split("\t");
-                String movieId = columns[0];
-                String titleId = columns[2];
-                byte[] testBytes = titleId.getBytes();
-                if (index == File.MOVIE_ID_IDX) {
-                    curIndex.insert(movieId, new Rid(testPage, testSlot));
-                } else if (index == File.MOVIE_TITLE_IDX){
-                    curIndex.insert(titleId, new Rid(testPage, testSlot));
-                }
-                ++testSlot;
-                if (testSlot >= 105) {
-                    testSlot = 0;
-                    testPage += 1;
-                }
-                count += 1;
-            } catch (Exception e) {
-                int test = 2;
-            }
-        }
-    }
 }

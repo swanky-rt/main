@@ -134,12 +134,12 @@ public class BTreeImpl implements BTree<String, Rid> {
     }
 
 
-    private void insertIntoLeaf(int leafPid, byte[] key, byte[] rid) {
+    private Page insertIntoLeaf(int leafPid, byte[] key, byte[] rid) {
         try {
-
             List<byte[]> keys = new ArrayList<>();
             List<byte[]> rids = new ArrayList<>();
             readLeafNode(leafPid, keys, rids);
+            Page returnPage = null;
             int pos = 0;
             while (pos < keys.size() && Arrays.compare(key, keys.get(pos)) > 0) {
                 pos++;
@@ -170,6 +170,7 @@ public class BTreeImpl implements BTree<String, Rid> {
                 bufferMgr.unpinPage(siblingPid, dataFile);
                 bufferMgr.markDirty(leafPid, dataFile);
                 bufferMgr.unpinPage(leafPid, dataFile);
+                returnPage = siblingPage;
                 if (leafPid == metadata.rootPageId && metadata.isRootLeaf) {
                     createNewRoot(leafPid, siblingPid, siblingKeys.get(0));
                 } else {
@@ -182,9 +183,11 @@ public class BTreeImpl implements BTree<String, Rid> {
             }
             bufferMgr.markDirty(leafPid, dataFile);
             bufferMgr.unpinPage(leafPid, dataFile);
+            return returnPage;
         } catch (Exception e) {
             System.err.println("Error in insertIntoLeaf: " + e.getMessage());
         }
+        return null;
     }
 
     private void createNewRoot(int oldRootPid, int siblingPid, byte[] splitKey) throws Exception {
@@ -630,8 +633,43 @@ public class BTreeImpl implements BTree<String, Rid> {
         return findRoot(parentPid);
     }
 
-    // Only bulk-loading
-//    public String bulkLoad() {
-//
-//    }
+    public String populateIndex() throws Exception {
+        int numPages = bufferMgr.getNumPagesOnDisk();
+        for (int curPageIdx = 0; curPageIdx < numPages; ++curPageIdx) {
+            Page curDiskPage = bufferMgr.getPage(curPageIdx, File.DISK);
+            for (int curRowIdx = 0; curRowIdx < curDiskPage.getRowCount(); ++curRowIdx) {
+                Row curRow = curDiskPage.getRow(curRowIdx);
+                byte[] key = dataFile == File.MOVIE_ID_IDX ? curRow.getMovieId() : curRow.getTitle();
+                String keyStr = new String(key).trim();
+                insert(keyStr, new Rid(curPageIdx, curRowIdx));
+            }
+            bufferMgr.unpinPage(curDiskPage.getPid(), File.DISK);
+        }
+        bufferMgr.force();
+        return "Successfully populated " + dataFile.toString();
+    }
+
+    // Only bulk-loading movieId index
+    public String bulkLoad() throws Exception {
+        Page curLeafPage = bufferMgr.getPage(metadata.rootPageId, File.MOVIE_ID_IDX);
+        int numPages = bufferMgr.getNumPagesOnDisk();
+        for (int curPageIdx = 0; curPageIdx < numPages; ++curPageIdx) {
+            Page curDiskPage = bufferMgr.getPage(curPageIdx, File.DISK);
+            for (int curRowIdx = 0; curRowIdx < curDiskPage.getRowCount(); ++curRowIdx) {
+                Row curRow = curDiskPage.getRow(curRowIdx);
+                byte[] arrRid = new byte[9];
+                storeIntInByteArray(curPageIdx, arrRid, 0);
+                storeIntInByteArray(curRowIdx, arrRid, 3);
+                Page tempLeafPage = insertIntoLeaf(curLeafPage.getPid(), curRow.getMovieId(), arrRid);
+                if (tempLeafPage != null) {
+                    bufferMgr.unpinPage(curLeafPage.getPid(), File.MOVIE_ID_IDX);
+                    curLeafPage = bufferMgr.getPage(tempLeafPage.getPid(), File.MOVIE_ID_IDX);
+                }
+            }
+            bufferMgr.unpinPage(curDiskPage.getPid(), File.DISK);
+        }
+        bufferMgr.unpinPage(curLeafPage.getPid(), File.MOVIE_ID_IDX);
+        bufferMgr.force();
+        return "successfully bulk loaded the index";
+    }
 }
