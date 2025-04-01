@@ -1,5 +1,7 @@
 package project_645;
 
+import java.io.IOException;
+
 public abstract class BufferManager {
 
         // configurable size of buffer cache.
@@ -50,6 +52,12 @@ public abstract class BufferManager {
      * Forces a write of all pages in the buffer pool to disk
      */
     public abstract void force() throws Exception;
+
+    /**
+     *
+     * Gets the number of pages written to disk
+     */
+    public abstract int getNumPagesOnDisk() throws IOException;
 
 
 }

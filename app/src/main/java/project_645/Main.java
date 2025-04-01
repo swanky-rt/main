@@ -12,7 +12,10 @@ public class Main {
             String movieTitleIndexFileName = "movieTitleIndex.dat";
             String filePath = System.getProperty("user.dir") + path;
 
-            BufferManagerImpl bufferManager = new BufferManagerImpl(4 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+            BufferManagerImpl bufferManager = new BufferManagerImpl(100000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+
+//            bufferManager.populateDisk(50000, filePath);
+//            bufferManager.force();
 
             BufferManagerImpl indexBufferManagerTest = new BufferManagerImpl(20*4096, filePath, movieIdIndexFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
@@ -24,9 +27,9 @@ public class Main {
             // Running this code will cause them to exist in the index but not on disk. To load on disk, use the "populate disk" method.
             // I plan on having these more closely linked later tonight.
 
-            // Utilities utilities = new Utilities(mainFileName, diskFileName);
-            // utilities.populateIndex(testBTreeIndex, filePath, 50000);
-            // indexBufferManagerTest.force();
+            Utilities utilities = new Utilities(mainFileName, diskFileName);
+            utilities.populateIndex(testBTreeIndex, filePath, 50000);
+            indexBufferManagerTest.force();
 
 //            int pageId = 0;
 //            int slotId = 0;
@@ -40,8 +43,8 @@ public class Main {
 //                }
 //            }
 //            indexBufferManagerTest.force();
-//
-//            Iterator<Rid> returnRIDs = testBTreeIndex.rangeSearch("000000513", "000000892");
+
+            Iterator<Rid> returnRIDs = testBTreeIndex.rangeSearch("000000513", "000000892");
 
 
 //            testBTreeIndex.search("Popular Science, Featuring Moon Rocket");
@@ -49,9 +52,8 @@ public class Main {
             int test = 2;
 
 
-            // bufferManager.populateDisk(700, filePath);
-//             Utilities utilities = new Utilities(mainFileName, diskFileName);
-//             utilities.loadDataset(bufferManager, filePath);
+             // bufferManager.populateDisk(-1, filePath);
+             bufferManager.force();
 
         } catch (Exception e) {
             System.out.println(e.toString());

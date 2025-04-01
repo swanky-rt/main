@@ -1,5 +1,6 @@
 package project_645;
 
+import java.io.IOException;
 import java.util.*;
 
 
@@ -313,9 +314,9 @@ public class BTreeImpl implements BTree<String, Rid> {
             for (int i = 1; i <= numKeys; i++) {
                 Row r = p.getRow(i);
                 if (r == null) break;
-                String k = parseStringFromByteArray(r.title, 0, r.title.length);
-                int pid = parseIntFromByteArray(r.movieId, 0);
-                int slot = parseIntFromByteArray(r.movieId, 3);
+//                String k = parseStringFromByteArray(r.title, 0, r.title.length);
+//                int pid = parseIntFromByteArray(r.movieId, 0);
+//                int slot = parseIntFromByteArray(r.movieId, 3);
                 // Currently changing the readLeafNode function definition to instead take byte arrays as input.
                 // This is done so that data stays serialized the entire time, which is a requirement for the lab description.
 //                keysOut.add(k.trim());
@@ -510,6 +511,18 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
     }
 
+//    private String bulkLoadMovieIdIndex() throws Exception {
+//        int numPages = bufferMgr.getNumPagesOnDisk();
+//        Page curLeaf = bufferMgr.getPage(metadata.rootPageId, File.MOVIE_ID_IDX);
+//        for (int curPageId = 0; curPageId < numPages; ++curPageId) {
+//            Page curPage = bufferMgr.getPage(curPageId, File.DISK);
+//            for (int curSlotId = 0; curSlotId < curPage.getRowCount(); ++curSlotId) {
+//                Row curRow = curPage.getRow(curSlotId);
+//                insertIntoLeaf(curLeaf.getPid(), curRow.movieId, );
+//            }
+//        }
+//    }
+
 
 
 //    private void storeIntInByteArray(int val, byte[] arr, int offset) {
@@ -592,4 +605,8 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
         return findRoot(parentPid);
     }
+
+//    public String bulkLoad() {
+//
+//    }
 }
