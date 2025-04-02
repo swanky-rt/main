@@ -19,28 +19,47 @@ public class Main {
 
             BTreeImpl testBTreeIndexMovieId = new BTreeImpl(bufferManager, 51, File.MOVIE_ID_IDX);
 
-            bufferManager.populateDisk(-1, filePath);
+            Utilities utilities = new Utilities(mainFileName, diskFileName);
 
-            System.out.println("Disk populated");
+            utilities.testC3(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+            utilities.testC4(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
-            testBTreeIndexMovieId.bulkLoad();
+            Iterator<Rid> ridIterator = testBTreeIndexMovieId.rangeSearch("s", "u");
 
-            System.out.println("MovieID Index Populated");
+//            int i = 0;
+//            Rid nextRid;
+//            while (ridIterator.hasNext()){
+//                nextRid = ridIterator.next();
+//                if (i % 574428 == 0) {
+//                    Page nextPage = bufferManager.getPage(nextRid.getPageId(), File.DISK);
+//                    bufferManager.unpinPage(nextPage.getPid(), File.DISK);
+//                    Row curRow = nextPage.getRow(nextRid.getSlotId());
+//                    System.out.println(curRow.ge);
+//                }
+//            }
 
-            testBTreeIndexTitle.populateIndex();
-
-            System.out.println("Movie Title Index Populated");
+//            bufferManager.populateDisk(-1, filePath);
+//
+//            System.out.println("Disk populated");
+//
+//            testBTreeIndexMovieId.bulkLoad();
+//
+//            System.out.println("MovieID Index Populated");
+//
+//            testBTreeIndexTitle.populateIndex();
+//
+//            System.out.println("Movie Title Index Populated");
 
             // testBTreeIndex.bulkLoad();
-            Iterator<Rid> returnRIDs = testBTreeIndexTitle.rangeSearch("b", "d");
+            // Iterator<Rid> returnRIDs = testBTreeIndexMovieId.rangeSearch("s", "u");
 
-            for (Iterator<Rid> it = returnRIDs; it.hasNext(); ) {
-                Rid rid = it.next();
-                Page page = bufferManager.getPage(rid.getPageId(), File.DISK);
-                bufferManager.unpinPage(page.getPid(), File.DISK);
-                Row record = page.getRow(rid.getSlotId());
-                System.out.println(new String(record.getMovieId()).trim());
-            }
+//            for (Iterator<Rid> it = returnRIDs; it.hasNext(); ) {
+//                Rid rid = it.next();
+//                Page page = bufferManager.getPage(rid.getPageId(), File.DISK);
+//                bufferManager.unpinPage(page.getPid(), File.DISK);
+//                Row record = page.getRow(rid.getSlotId());
+//                System.out.println(new String(record.getTitle()).trim());
+//            }
 //
 //            System.out.println(returnRIDs.hasNext());
 
