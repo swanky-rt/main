@@ -14,6 +14,7 @@ import java.awt.*;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.nio.charset.Charset;
@@ -88,8 +89,9 @@ public class Utilities {
         bf.unpinPage(pageId, File.DISK);
     }
 
-    public void testC1(boolean populateMovieIdIndexFile, boolean populateMovieTitleIndexFile, String filePath,
+    public void testC1(boolean populateMovieIdIndexFile, String filePath,
                        String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+
         BufferManager c1BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
                 movieIdIndexFileName, movieTitleIndexFileName);
 
@@ -101,7 +103,7 @@ public class Utilities {
         }
     }
 
-    public void testC2(boolean populateMovieIdIndexFile, boolean populateMovieTitleIndexFile, String filePath,
+    public void testC2(boolean populateMovieTitleIndexFile, String filePath,
                        String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
         BufferManager c2BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
                 movieIdIndexFileName, movieTitleIndexFileName);
@@ -494,5 +496,73 @@ public class Utilities {
     }
 
 
+    public void deleteAndRecreateIndexFiles(String filePath, String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) {
+        Path path = Paths.get(filePath + diskFileName);
+        try {
+            Files.deleteIfExists(path); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path movieIdIndexPath = Paths.get(filePath + movieIdIndexFileName);
+        try {
+            Files.deleteIfExists(movieIdIndexPath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path movieTitleIndexPath = Paths.get(filePath + movieTitleIndexFileName);
+        try {
+            Files.deleteIfExists(movieTitleIndexPath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(path);
+            System.out.println("File created: " + path.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(path)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(movieIdIndexPath);
+            System.out.println("File created: " + movieIdIndexPath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(movieIdIndexPath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(movieTitleIndexPath);
+            System.out.println("File created: " + movieTitleIndexPath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(movieTitleIndexPath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+
+
+    }
 
 }

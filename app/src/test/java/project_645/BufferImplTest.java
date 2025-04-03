@@ -42,6 +42,24 @@ public class BufferImplTest {
             System.err.println("An error occurred while deleting the file.");
             e.printStackTrace();
         }
+
+        Path movieIdIndexPath = Paths.get(workingDirectory + testFileDirectory + movieIdIndexFileName);
+        try {
+            Files.deleteIfExists(movieIdIndexPath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path movieTitleIndexPath = Paths.get(workingDirectory + testFileDirectory + movieTitleIndexFileName);
+        try {
+            Files.deleteIfExists(movieTitleIndexPath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
     }
 
     @BeforeEach
