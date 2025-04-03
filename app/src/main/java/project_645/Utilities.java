@@ -1,14 +1,29 @@
 package project_645;
-import java.io.*;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.List;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-public class Utilities implements Serializable {
+public class Utilities {
 
     private static final int PAGE_SIZE = 4096;
     private final String filename;
@@ -197,14 +212,283 @@ public class Utilities implements Serializable {
     public void testP1(String filePath,
                        String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
         // initialize buffer manager to perform the range query
-        BufferManager p1BufferManager = new BufferManagerImpl(500*4096, filePath, diskFileName,
+        BufferManager p1BufferManager = new BufferManagerImpl(10000*4096, filePath, diskFileName,
                 movieIdIndexFileName, movieTitleIndexFileName);
 
         BTreeImpl bTreeMovieId = new BTreeImpl(p1BufferManager, 51, File.MOVIE_ID_IDX);
 
-        // Increased selectivities
+        int numPages = p1BufferManager.getNumPagesOnDisk();
+        long startTimeScan = System.nanoTime();
+        for (int i = 0; i < numPages; ++i) {
+            p1BufferManager.getPage(i, File.DISK);
+            p1BufferManager.unpinPage(i, File.DISK);
+        }
+        long endTimeScan = System.nanoTime();
+        System.out.println(endTimeScan-startTimeScan);
+        p1BufferManager.force();
+
+        Iterator<Rid> rids = bTreeMovieId.rangeSearch("s", "u");
 
 
+        ArrayList<Integer> selectivityPercentage = new ArrayList<>();
+        selectivityPercentage.add(0);
+        ArrayList<String> keys = new ArrayList<>();
+        keys.add("");
+        ArrayList<Rid> ridsList = new ArrayList<>();
+        ArrayList<Long> Times = new ArrayList<Long>();
+
+        int size = 0;
+
+        while (rids.hasNext()) {
+            size += 1;
+            ridsList.add(rids.next());
+        }
+
+        rids = ridsList.iterator();
+
+
+
+        double curTotal = size / 20.0;
+        double curTotalAdd = size / 20.0;
+        int percentage = 5;
+        for (int i = 0; i < size; ++i) {
+            Rid curRid = rids.next();
+            if (i >= curTotal || i == size - 1) {
+                Page curPage = p1BufferManager.getPage(curRid.getPageId(), File.DISK);
+                Row curRow = curPage.getRow(curRid.getSlotId());
+                String key = new String(curRow.getMovieId()).trim();
+                p1BufferManager.unpinPage(curPage.getPid(), File.DISK);
+                selectivityPercentage.add(percentage);
+                keys.add(key);
+                percentage += 5;
+                curTotal += curTotalAdd;
+            }
+        }
+
+        p1BufferManager.force();
+
+
+        ArrayList<Long> times = new ArrayList<>();
+        for (int i = 0; i < selectivityPercentage.size(); ++i) {
+            String startKey = "";
+            String endKey = keys.get(i);
+            long startTime = System.nanoTime();
+            Iterator<Rid> curRangeRIDs = bTreeMovieId.rangeSearch(startKey, endKey);
+            while (curRangeRIDs.hasNext()) {
+                Rid curRID = curRangeRIDs.next();
+                Page curPage = p1BufferManager.getPage(curRID.getPageId(), File.DISK);
+                p1BufferManager.unpinPage(curPage.getPid(), File.DISK);
+            }
+            long endTime = System.nanoTime();
+            p1BufferManager.force();
+            times.add(endTime - startTime);
+        }
+        int test = 2;
+
+        for (int i = 0; i < selectivityPercentage.size(); ++i) {
+            System.out.println(keys.get(i));
+            System.out.println(selectivityPercentage.get(i));
+            System.out.println(times.get(i));
+        }
+
+        XYSeries indexQueries = new XYSeries("Index Queries");
+        XYSeries scanQuery = new XYSeries("Direct Scan");
+        XYSeries ratioSeries = new XYSeries("Ratio of index time to full scan");
+
+
+        for (int i = 0; i < keys.size(); ++i) {
+            indexQueries.add(selectivityPercentage.get(i), times.get(i));
+            scanQuery.add(selectivityPercentage.get(i), (Number)(endTimeScan - startTimeScan));
+            ratioSeries.add(selectivityPercentage.get(i), (Number)(times.get(i)/(endTimeScan - startTimeScan)));
+        }
+
+        XYSeriesCollection plot1 = new XYSeriesCollection();
+        XYSeriesCollection plot2 = new XYSeriesCollection();
+        plot1.addSeries(indexQueries);
+        plot1.addSeries(scanQuery);
+        plot2.addSeries(ratioSeries);
+
+
+       // QueryPerformancePlot.plotChart(selectivityPercentage, times, endTimeScan - startTimeScan);
+
+        JFreeChart chart1 = ChartFactory.createXYLineChart(
+                "Time/Selectivity",
+                "Selectivity Percentage",
+                "Execution Time (nano seconds)",
+                plot1,
+                PlotOrientation.VERTICAL,
+                true, true, false
+        );
+
+        ChartFrame graphFrame = new ChartFrame("XYLine Chart", chart1);
+
+        JFreeChart chart2 = ChartFactory.createXYLineChart(
+                "Time/Selectivity Ratio",
+                "Selectivity Percentage",
+                "Ratio of Execution Time (index/scan) (nano seconds)",
+                plot2,
+                PlotOrientation.VERTICAL,
+                true, true, false
+        );
+
+
+        ChartPanel chartPanel = new ChartPanel(chart1);
+        JFrame frame = new JFrame();
+        frame.setSize(800, 800);
+        frame.setContentPane(chartPanel);
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+
+        ChartPanel chartPanel2 = new ChartPanel(chart2);
+        JFrame frame2 = new JFrame();
+        frame2.setSize(800, 800);
+        frame2.setContentPane(chartPanel);
+        frame2.setLocationRelativeTo(null);
+        frame2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame2.setVisible(true);
     }
+
+    public void testP2(String filePath,
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+        // initialize buffer manager to perform the range query
+        BufferManager p2BufferManager = new BufferManagerImpl(10000*4096, filePath, diskFileName,
+                movieIdIndexFileName, movieTitleIndexFileName);
+
+        BTreeImpl bTreeMovieId = new BTreeImpl(p2BufferManager, 51, File.MOVIE_TITLE_IDX);
+
+        int numPages = p2BufferManager.getNumPagesOnDisk();
+        long startTimeScan = System.nanoTime();
+        for (int i = 0; i < numPages; ++i) {
+            p2BufferManager.getPage(i, File.DISK);
+            p2BufferManager.unpinPage(i, File.DISK);
+        }
+        long endTimeScan = System.nanoTime();
+        System.out.println(endTimeScan-startTimeScan);
+        p2BufferManager.force();
+
+        Iterator<Rid> rids = bTreeMovieId.rangeSearch("\0", "\256\256\256");
+
+
+        ArrayList<Integer> selectivityPercentage = new ArrayList<>();
+        selectivityPercentage.add(0);
+        ArrayList<String> keys = new ArrayList<>();
+        keys.add("");
+        ArrayList<Rid> ridsList = new ArrayList<>();
+        ArrayList<Long> Times = new ArrayList<Long>();
+
+        int size = 0;
+
+        while (rids.hasNext()) {
+            size += 1;
+            ridsList.add(rids.next());
+        }
+
+        rids = ridsList.iterator();
+
+
+
+        double curTotal = size / 20.0;
+        double curTotalAdd = size / 20.0;
+        int percentage = 5;
+        for (int i = 0; i < size; ++i) {
+            Rid curRid = rids.next();
+            if (i >= curTotal || i == size - 1) {
+                Page curPage = p2BufferManager.getPage(curRid.getPageId(), File.DISK);
+                Row curRow = curPage.getRow(curRid.getSlotId());
+                String key = new String(curRow.getMovieId()).trim();
+                p2BufferManager.unpinPage(curPage.getPid(), File.DISK);
+                selectivityPercentage.add(percentage);
+                keys.add(key);
+                percentage += 5;
+                curTotal += curTotalAdd;
+            }
+        }
+
+        p2BufferManager.force();
+
+
+        ArrayList<Long> times = new ArrayList<>();
+        for (int i = 0; i < selectivityPercentage.size(); ++i) {
+            String startKey = "";
+            String endKey = keys.get(i);
+            long startTime = System.nanoTime();
+            Iterator<Rid> curRangeRIDs = bTreeMovieId.rangeSearch(startKey, endKey);
+            while (curRangeRIDs.hasNext()) {
+                Rid curRID = curRangeRIDs.next();
+                Page curPage = p2BufferManager.getPage(curRID.getPageId(), File.DISK);
+                p2BufferManager.unpinPage(curPage.getPid(), File.DISK);
+            }
+            long endTime = System.nanoTime();
+            p2BufferManager.force();
+            times.add(endTime - startTime);
+        }
+        int test = 2;
+
+        for (int i = 0; i < selectivityPercentage.size(); ++i) {
+            System.out.println(keys.get(i));
+            System.out.println(selectivityPercentage.get(i));
+            System.out.println(times.get(i));
+        }
+
+        XYSeries indexQueries = new XYSeries("Index Queries");
+        XYSeries scanQuery = new XYSeries("Direct Scan");
+        XYSeries ratioSeries = new XYSeries("Ratio of index time to full scan");
+
+
+        for (int i = 0; i < keys.size(); ++i) {
+            indexQueries.add(selectivityPercentage.get(i), times.get(i));
+            scanQuery.add(selectivityPercentage.get(i), (Number)(endTimeScan - startTimeScan));
+            ratioSeries.add(selectivityPercentage.get(i), (Number)(times.get(i)/(endTimeScan - startTimeScan)));
+        }
+
+        XYSeriesCollection plot1 = new XYSeriesCollection();
+        XYSeriesCollection plot2 = new XYSeriesCollection();
+        plot1.addSeries(indexQueries);
+        plot1.addSeries(scanQuery);
+        plot2.addSeries(ratioSeries);
+
+
+        // QueryPerformancePlot.plotChart(selectivityPercentage, times, endTimeScan - startTimeScan);
+
+        JFreeChart chart1 = ChartFactory.createXYLineChart(
+                "Time/Selectivity",
+                "Selectivity Percentage",
+                "Execution Time (nano seconds)",
+                plot1,
+                PlotOrientation.VERTICAL,
+                true, true, false
+        );
+
+        ChartFrame graphFrame = new ChartFrame("XYLine Chart", chart1);
+
+        JFreeChart chart2 = ChartFactory.createXYLineChart(
+                "Time/Selectivity Ratio",
+                "Selectivity Percentage",
+                "Ratio of Execution Time (index/scan) (nano seconds)",
+                plot2,
+                PlotOrientation.VERTICAL,
+                true, true, false
+        );
+
+
+        ChartPanel chartPanel = new ChartPanel(chart1);
+        JFrame frame = new JFrame();
+        frame.setSize(800, 800);
+        frame.setContentPane(chartPanel);
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+
+        ChartPanel chartPanel2 = new ChartPanel(chart2);
+        JFrame frame2 = new JFrame();
+        frame2.setSize(800, 800);
+        frame2.setContentPane(chartPanel2);
+        frame2.setLocationRelativeTo(null);
+        frame2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame2.setVisible(true);
+    }
+
+
 
 }
