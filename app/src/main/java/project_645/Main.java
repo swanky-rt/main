@@ -21,10 +21,10 @@ public class Main {
 
             Utilities utilities = new Utilities(mainFileName, diskFileName);
 
-            utilities.testP1(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+            utilities.testP2(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
-            utilities.testC3(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
-            utilities.testC4(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+//            utilities.testC3(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+//            utilities.testC4(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
             // Iterator<Rid> ridIterator = testBTreeIndexMovieId.rangeSearch("s", "u");
 

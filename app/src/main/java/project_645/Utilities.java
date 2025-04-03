@@ -283,7 +283,6 @@ public class Utilities {
             p1BufferManager.force();
             times.add(endTime - startTime);
         }
-        int test = 2;
 
         for (int i = 0; i < selectivityPercentage.size(); ++i) {
             System.out.println(keys.get(i));
@@ -320,8 +319,6 @@ public class Utilities {
                 true, true, false
         );
 
-        ChartFrame graphFrame = new ChartFrame("XYLine Chart", chart1);
-
         JFreeChart chart2 = ChartFactory.createXYLineChart(
                 "Time/Selectivity Ratio",
                 "Selectivity Percentage",
@@ -337,7 +334,7 @@ public class Utilities {
         frame.setSize(800, 800);
         frame.setContentPane(chartPanel);
         frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
 
         ChartPanel chartPanel2 = new ChartPanel(chart2);
@@ -345,7 +342,7 @@ public class Utilities {
         frame2.setSize(800, 800);
         frame2.setContentPane(chartPanel);
         frame2.setLocationRelativeTo(null);
-        frame2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame2.setVisible(true);
     }
 
@@ -423,7 +420,6 @@ public class Utilities {
             p2BufferManager.force();
             times.add(endTime - startTime);
         }
-        int test = 2;
 
         for (int i = 0; i < selectivityPercentage.size(); ++i) {
             System.out.println(keys.get(i));
@@ -477,7 +473,7 @@ public class Utilities {
         frame.setSize(800, 800);
         frame.setContentPane(chartPanel);
         frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
 
         ChartPanel chartPanel2 = new ChartPanel(chart2);
@@ -485,7 +481,7 @@ public class Utilities {
         frame2.setSize(800, 800);
         frame2.setContentPane(chartPanel2);
         frame2.setLocationRelativeTo(null);
-        frame2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame2.setVisible(true);
     }
 
