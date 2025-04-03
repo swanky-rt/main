@@ -386,22 +386,25 @@ public class Utilities {
 
         rids = ridsList.iterator();
 
-
-
-        double curTotal = size / 20.0;
-        double curTotalAdd = size / 20.0;
-        int percentage = 5;
+        double curTotal = size / 100.0;
+        double curTotalAdd = size / 100.0;
+        int percentage = 1;
         for (int i = 0; i < size; ++i) {
             Rid curRid = rids.next();
             if (i >= curTotal || i == size - 1) {
                 Page curPage = p2BufferManager.getPage(curRid.getPageId(), File.DISK);
                 Row curRow = curPage.getRow(curRid.getSlotId());
-                String key = new String(curRow.getMovieId()).trim();
+                String key = new String(curRow.getTitle()).trim();
                 p2BufferManager.unpinPage(curPage.getPid(), File.DISK);
                 selectivityPercentage.add(percentage);
+                System.out.println(percentage);
+                System.out.println(key);
                 keys.add(key);
-                percentage += 5;
+                percentage += 1;
                 curTotal += curTotalAdd;
+                if (percentage == 11){
+                    break;
+                }
             }
         }
 
@@ -410,7 +413,7 @@ public class Utilities {
 
         ArrayList<Long> times = new ArrayList<>();
         for (int i = 0; i < selectivityPercentage.size(); ++i) {
-            String startKey = "";
+            String startKey = new String(startKeyArr).trim();
             String endKey = keys.get(i);
             long startTime = System.nanoTime();
             Iterator<Rid> curRangeRIDs = bTreeMovieId.rangeSearch(startKey, endKey);
@@ -420,6 +423,8 @@ public class Utilities {
                 p2BufferManager.unpinPage(curPage.getPid(), File.DISK);
             }
             long endTime = System.nanoTime();
+            System.out.println(keys.get(i));
+            System.out.println(endTime - startTime);
             p2BufferManager.force();
             times.add(endTime - startTime);
         }
