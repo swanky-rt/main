@@ -13,6 +13,10 @@ public class Main {
             String movieTitleIndexFileName = "movieTitleIndex.dat";
             String filePath = System.getProperty("user.dir") + path;
 
+            // NOTE: RUNNING MAIN WILL DELETE AND RECREATE THE INDEX FILES SO THAT ALL TESTS CAN BE RUN IN SUCCESSION
+            // PLEASE MAKE SURE TO SAVE THE INDEX FILES BEFORE RUNNING MAIN.
+            // IF YOU DO LOSE THE INDEX FILES, PLEASE SEE OUR DOCUMENTATION FOR A LINK TO A BACKUP VERSION WE CREATED
+
             Utilities utilities = new Utilities(mainFileName, diskFileName);
             utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
