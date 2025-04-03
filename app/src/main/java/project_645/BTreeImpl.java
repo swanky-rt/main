@@ -7,12 +7,6 @@ import java.util.*;
 public class BTreeImpl implements BTree<String, Rid> {
 
 
-
-    private enum NodeType {
-        LEAF, INTERNAL
-    }
-
-
     private static class BTreeMetadata {
         int rootPageId;   // page id of the root node
         boolean isRootLeaf;
@@ -209,9 +203,6 @@ public class BTreeImpl implements BTree<String, Rid> {
     }
 
     private void insertInParent(int leftPid, int rightPid, byte[] splitKey) throws Exception {
-        if (leftPid == 2 || rightPid == 11) {
-            int testBreakpoint = 2;
-        }
         int parentPid = getParentId(leftPid);
         if (parentPid == -1) {
             createNewRoot(leftPid, rightPid, splitKey);
@@ -341,14 +332,6 @@ public class BTreeImpl implements BTree<String, Rid> {
             for (int i = 1; i <= numKeys; i++) {
                 Row r = p.getRow(i);
                 if (r == null) break;
-//                String k = parseStringFromByteArray(r.title, 0, r.title.length);
-//                int pid = parseIntFromByteArray(r.movieId, 0);
-//                int slot = parseIntFromByteArray(r.movieId, 3);
-                // Currently changing the readLeafNode function definition to instead take byte arrays as input.
-                // This is done so that data stays serialized the entire time, which is a requirement for the lab description.
-//                keysOut.add(k.trim());
-//                ridsOut.add(new Rid(pid, slot));
-
                 keysOut.add(r.title);
                 ridsOut.add(r.movieId);
             }
@@ -370,9 +353,6 @@ public class BTreeImpl implements BTree<String, Rid> {
             // Write each key and RID starting at row 1.
             for (int i = 0; i < keys.size(); i++) {
                 Row row = new Row(rids.get(i), keys.get(i));
-//                storeStringInByteArray(keys.get(i), row.movieId, 0, row.movieId.length);
-//                storeIntInByteArray(rids.get(i).getPageId(), row.title, 0);
-//                storeIntInByteArray(rids.get(i).getSlotId(), row.title, 4);
                 setRowAtIndex(p, i + 1, row);
             }
             // Update row count (1 meta row + one row per key)
@@ -413,7 +393,6 @@ public class BTreeImpl implements BTree<String, Rid> {
                 Row row = p.getRow(i);
                 if (row == null) break;
                 int childPid = parseIntFromByteArray(row.movieId, 0);
-//                String k = parseStringFromByteArray(row.title, 0, row.title.length);
                 childrenOut.add(childPid);
                 keysOut.add(row.title);
             }
@@ -430,9 +409,6 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void writeInternalKeysAndChildren(int pageId, List<byte[]> keys, List<Integer> children) {
         try {
-            if (pageId == 6) {
-                int breakpoint = 2;
-            }
             Page page = bufferMgr.getPage(pageId, dataFile);
             PageImpl p = (PageImpl) page;
             Row meta = p.getRow(0);
@@ -444,7 +420,6 @@ public class BTreeImpl implements BTree<String, Rid> {
             for (int i = 1; i <= keys.size(); i++) {
                 Row row = new Row(new byte[9], keys.get(i - 1));
                 storeIntInByteArray(children.get(i - 1), row.movieId, 0);
-//                storeStringInByteArray(keys.get(i - 1), row.title, 0, row.title.length);
                 setRowAtIndex(p, i, row);
             }
             // Final child pointer at row keys.size() + 1.
@@ -538,35 +513,6 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
     }
 
-//    private String bulkLoadMovieIdIndex() throws Exception {
-//        int numPages = bufferMgr.getNumPagesOnDisk();
-//        Page curLeaf = bufferMgr.getPage(metadata.rootPageId, File.MOVIE_ID_IDX);
-//        for (int curPageId = 0; curPageId < numPages; ++curPageId) {
-//            Page curPage = bufferMgr.getPage(curPageId, File.DISK);
-//            for (int curSlotId = 0; curSlotId < curPage.getRowCount(); ++curSlotId) {
-//                Row curRow = curPage.getRow(curSlotId);
-//                insertIntoLeaf(curLeaf.getPid(), curRow.movieId, );
-//            }
-//        }
-//    }
-
-
-
-//    private void storeIntInByteArray(int val, byte[] arr, int offset) {
-//        arr[offset]   = (byte) (val >>> 24);
-//        arr[offset+1] = (byte) (val >>> 16);
-//        arr[offset+2] = (byte) (val >>> 8);
-//        arr[offset+3] = (byte) (val);
-//    }
-//
-//    private int parseIntFromByteArray(byte[] arr, int offset) {
-//        int b1 = (arr[offset]   & 0xFF) << 24;
-//        int b2 = (arr[offset+1] & 0xFF) << 16;
-//        int b3 = (arr[offset+2] & 0xFF) << 8;
-//        int b4 = (arr[offset+3] & 0xFF);
-//        return (b1 | b2 | b3 | b4);
-//    }
-
     private void storeIntInByteArray(int val, byte[] arr, int offset) {
         //arr[offset]   = (byte) (val >>> 24);
         arr[offset+0] = (byte) (val >>> 16);
@@ -586,24 +532,6 @@ public class BTreeImpl implements BTree<String, Rid> {
         return (b2 | b3 | b4);
     }
 
-
-    private void storeStringInByteArray(String str, byte[] arr, int offset, int length) {
-        byte[] bytes = str.getBytes();
-        // Truncate if necessary.
-        int len = Math.min(bytes.length, length);
-        System.arraycopy(bytes, 0, arr, offset, len);
-        // Pad with 0 if necessary.
-        for (int i = len; i < length; i++) {
-            arr[offset + i] = 0;
-        }
-    }
-
-
-    private String parseStringFromByteArray(byte[] arr, int offset, int length) {
-        byte[] bytes = new byte[length];
-        System.arraycopy(arr, offset, bytes, 0, length);
-        return new String(bytes).trim();
-    }
 
 
     private void setRowAtIndex(PageImpl p, int index, Row row) {

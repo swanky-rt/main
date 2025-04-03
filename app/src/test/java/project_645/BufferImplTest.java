@@ -65,6 +65,34 @@ public class BufferImplTest {
             }
         }
 
+        Path movieIdPath = Paths.get(workingDirectory + testFileDirectory + movieIdIndexFileName);
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(movieIdPath);
+            System.out.println("File created: " + movieIdPath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(movieIdPath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+
+        Path movieTitlePath = Paths.get(workingDirectory + testFileDirectory + movieTitleIndexFileName);
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(movieTitlePath);
+            System.out.println("File created: " + movieTitlePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(movieTitlePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+
         bufferManager = new BufferManagerImpl(2, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName);
 
     }

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +24,16 @@ public class TATests {
     String movieIdIndexFileName = "movieIdIndex.dat";
     String movieIdTitleFileName = "movieTitleIndex.dat";
 
+    private BufferManagerImpl bufferManager;
+    private RandomAccessFile randomAccessFile;
+    private Path path1;
+    private Page page;
+    String path = "/src/main/java/project_645/DB files/";
+    String movieTitleIndexFileName = "movieTitleIndex.dat";
+    String filePath = System.getProperty("user.dir") + path;
+
+    String testFilePath = System.getProperty("user.dir") + testFileDirectory;
+
     @BeforeEach
     public void setUp() {
 
@@ -40,6 +51,34 @@ public class TATests {
                 e.printStackTrace();
             }
         }
+
+        Path movieIdPath = Paths.get(workingDirectory + testFileDirectory + movieIdIndexFileName);
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(movieIdPath);
+            System.out.println("File created: " + movieIdPath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(movieIdPath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+
+        Path movieTitlePath = Paths.get(workingDirectory + testFileDirectory + movieTitleIndexFileName);
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(movieTitlePath);
+            System.out.println("File created: " + movieTitlePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(movieTitlePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
     }
 
     @AfterEach
@@ -47,6 +86,24 @@ public class TATests {
         Path path = Paths.get(workingDirectory + testFileDirectory + fileName);
         try {
             Files.deleteIfExists(path); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path movieIdPath = Paths.get(workingDirectory, testFileDirectory, movieIdIndexFileName);
+        try {
+            Files.deleteIfExists(movieIdPath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path movieTitlePath = Paths.get(workingDirectory, testFileDirectory, movieTitleIndexFileName);
+        try {
+            Files.deleteIfExists(movieTitlePath); // Deletes the file if it exists
             System.out.println("File deleted successfully.");
         } catch (IOException e) {
             System.err.println("An error occurred while deleting the file.");
