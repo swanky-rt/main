@@ -103,6 +103,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         int leafPid = findLeafPageId(startKey.getBytes());
         int currentPid = leafPid;
         byte[] testBytes = startKey.getBytes();
+        byte[] testEndBytes = endKey.getBytes();
         while (currentPid != -1) {
             List<byte[]> leafKeys = new ArrayList<>();
             List<byte[]> leafRids = new ArrayList<>();

@@ -12,7 +12,9 @@ import org.jfree.data.xy.XYSeriesCollection;
 import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
+import java.util.Arrays;
 import java.util.List;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -357,16 +359,17 @@ public class Utilities {
         int numPages = p2BufferManager.getNumPagesOnDisk();
         long startTimeScan = System.nanoTime();
         for (int i = 0; i < numPages; ++i) {
-            p2BufferManager.getPage(i, File.DISK);
+            Page curPage = p2BufferManager.getPage(i, File.DISK);
             p2BufferManager.unpinPage(i, File.DISK);
         }
         long endTimeScan = System.nanoTime();
         System.out.println(endTimeScan-startTimeScan);
         p2BufferManager.force();
 
-        Iterator<Rid> rids = bTreeMovieId.rangeSearch("\0", "\256\256\256");
 
-
+        byte[] startKeyArr = new byte[] { -62, -95, -62, -95, -62, -95, -62, -65, 51, 48, 48, 46, 48, 48, 48, 32, 66, 111, 116, 101, 108, 108, 105, 110, 101, 115, 63, 33, 33, 33 };
+        byte[] endKeyArr = new byte[] { 126, 121, 101, 115, 126, 32, 80, 82, 79, 88, 73, 77, 73, 84, 89, 32, 67, 72, 65, 84, 32, 126, 121, 101, 115, 126, 32, 45, 32, 65 };
+        Iterator<Rid> rids = bTreeMovieId.rangeSearch(new String(startKeyArr), new String(endKeyArr));
         ArrayList<Integer> selectivityPercentage = new ArrayList<>();
         selectivityPercentage.add(0);
         ArrayList<String> keys = new ArrayList<>();
