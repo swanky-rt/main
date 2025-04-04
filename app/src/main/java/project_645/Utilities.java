@@ -210,7 +210,7 @@ public class Utilities {
 
 //This method to perform P1 test
     public void testP1(String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName, boolean pinPages) throws Exception {
         // initialize buffer manager to perform the range query
         BufferManager p1BufferManager = new BufferManagerImpl(10000*4096, filePath, diskFileName,
                 movieIdIndexFileName, movieTitleIndexFileName);
@@ -258,9 +258,13 @@ public class Utilities {
             }
         }
 
+        int rootId = bTreeMovieId.findRoot(0);
         p1BufferManager.force();
         ArrayList<Long> times = new ArrayList<>();
         for (int i = 0; i < selectivityPercentage.size(); ++i) {
+            if (pinPages) {
+                pinPages(rootId, p1BufferManager, File.MOVIE_ID_IDX);
+            }
             String startKey = "";
             String endKey = keys.get(i);
             long startTime = System.nanoTime();
@@ -339,7 +343,7 @@ public class Utilities {
 
 //This method to perform P2 test
     public void testP2(String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName, boolean pinPages) throws Exception {
         // initialize buffer manager to perform the range query
         BufferManager p2BufferManager = new BufferManagerImpl(10000*4096, filePath, diskFileName,
                 movieIdIndexFileName, movieTitleIndexFileName);
@@ -398,9 +402,13 @@ public class Utilities {
             }
         }
 
+        int rootPid = bTreeMovieId.findRoot(0);
         p2BufferManager.force();
         ArrayList<Long> times = new ArrayList<>();
         for (int i = 0; i < selectivityPercentage.size(); ++i) {
+            if (pinPages) {
+                pinPages(rootPid, p2BufferManager, File.MOVIE_TITLE_IDX);
+            }
             String startKey = new String(startKeyArr).trim();
             String endKey = keys.get(i);
             long startTime = System.nanoTime();
@@ -478,6 +486,52 @@ public class Utilities {
         frame2.setLocationRelativeTo(null);
         frame2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame2.setVisible(true);
+    }
+
+    public void testP3(String filePath,
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+
+        testP1(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, true);
+        testP2(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, true);
+
+    }
+
+    // Helper method for P3
+    private int parseIntFromByteArray(byte[] arr, int offset) {
+        //int b1 = (arr[offset]   & 0xFF) << 24;
+        int b2 = (arr[offset+0] & 0xFF) << 16;
+        int b3 = (arr[offset+1] & 0xFF) << 8;
+        int b4 = (arr[offset+2] & 0xFF);
+        int returnVal = (b2 | b3 | b4);
+        if (returnVal == 16777215) {
+            return -1;
+        }
+        return (b2 | b3 | b4);
+    }
+
+    private void pinPages(int rootPageId, BufferManager bufferManager, File indexFile) throws Exception {
+        Page rootPage = bufferManager.getPage(rootPageId, indexFile);
+
+        ArrayList<Page> curLevelPages = new ArrayList<>();
+        curLevelPages.add(rootPage);
+        ArrayList<Page> nextLevelPages = new ArrayList<>();
+
+        // adjust condition to change amount of levels pinned in the buffer pool
+        for (int i = 0; i < 1; ++i) {
+            for (Page page : curLevelPages) {
+                Row[] rows = page.getAllRows();
+                for (int j = 1; j < rows.length; ++j) {
+                    Row curDataRow = rows[i];
+                    if (curDataRow != null) {
+                        int nextChildId = parseIntFromByteArray(curDataRow.movieId, 0);
+                        Page childPage = bufferManager.getPage(nextChildId, indexFile);
+                        nextLevelPages.add(childPage);
+                    }
+                }
+            }
+            curLevelPages = nextLevelPages;
+            nextLevelPages = new ArrayList<>();
+        }
     }
 
 //This method to delete and recreate the index files as everytime the file limit exceeds thus it is important to delete and create the index-

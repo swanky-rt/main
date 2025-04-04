@@ -559,7 +559,7 @@ public class BTreeImpl implements BTree<String, Rid> {
     }
 
 //method to find root
-    private int findRoot(int curPid) {
+    public int findRoot(int curPid) {
         int parentPid = getParentId(curPid);
         if (parentPid == -1) {
             return curPid;
