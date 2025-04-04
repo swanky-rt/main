@@ -110,4 +110,6 @@ public interface Page {
      */
     int getPinCount();
 
+
+    File getDataFile();
 }

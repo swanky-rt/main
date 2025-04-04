@@ -1,5 +1,7 @@
 package project_645;
 
+import java.io.IOException;
+
 public abstract class BufferManager {
 
         // configurable size of buffer cache.
@@ -13,27 +15,29 @@ public abstract class BufferManager {
         * @param pageId The ID of the page to fetch.
                 * @return The Page object whose content is stored in a frame of the buffer pool manager.
      */
-        abstract Page getPage(int pageId) throws Exception;
 
 
-        /**
+    public abstract Page getPage(int pageId, File dataFile) throws Exception;
+
+    /**
          * Creates a new page.
          * The page is immediately pinned.
          * @return The Page object whose content is stored in a frame of the buffer pool manager.
          */
-        abstract Page createPage() throws Exception;
+        abstract Page createPage(File dataFile) throws Exception;
 
         /**
          * Marks a page as dirty, indicating it needs to be written to disk before eviction.
          * @param pageId The ID of the page to mark as dirty.
          */
-        abstract void markDirty(int pageId);
 
-        /**
+    public abstract void markDirty(int pageId, File dataFile);
+
+    /**
          * Unpins a page in the buffer pool, allowing it to be evicted if necessary.
          * @param pageId The ID of the page to unpin.
          */
-        abstract void unpinPage(int pageId);
+    public abstract void unpinPage(int pageId, File dataFile);
 
     /**
      *
@@ -42,4 +46,23 @@ public abstract class BufferManager {
     public int getBufferSize() {
         return this.bufferSize;
     }
-} 
+
+    /**
+     *
+     * Forces a write of all pages in the buffer pool to disk
+     */
+    public abstract void force() throws Exception;
+
+    /**
+     *
+     * Gets the number of pages written to disk
+     */
+    public abstract int getNumPagesOnDisk() throws IOException;
+
+    /**
+     *
+     * Gets the number of pages in the chosen file
+     */
+    public abstract int getFileSizeOfChosenFile(File dataFile) throws IOException;
+
+}

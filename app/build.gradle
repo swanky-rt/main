@@ -82,6 +82,10 @@ application {
 
 }
 
+dependencies {
+    implementation 'org.jfree:jfreechart:1.5.3'
+}
+
 
 
 tasks.named('test') {

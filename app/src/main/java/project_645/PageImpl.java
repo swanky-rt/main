@@ -13,10 +13,12 @@ public class PageImpl implements Page, Serializable {
     private boolean isDirty = true;
     private String[][] deserializedRows = new String[MAX_TUPLES][2];
     private int pageId;
+    private File dataFile;
     private int pinCount = 0;
 
-    public PageImpl(int pageId){
+    public PageImpl(int pageId, File dataFile){
         this.pageId = pageId;
+        this.dataFile = dataFile;
     }
 
     //This method gets the row based on the row id (index)
@@ -140,6 +142,12 @@ public class PageImpl implements Page, Serializable {
     @Override
     public String[][] getDeserializedRows() {
         return this.deserializedRows;
+    }
+
+
+    @Override
+    public File getDataFile() {
+        return this.dataFile;
     }
 
 }
