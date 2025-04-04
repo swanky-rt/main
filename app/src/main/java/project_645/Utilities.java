@@ -315,7 +315,7 @@ public class Utilities {
        // QueryPerformancePlot.plotChart(selectivityPercentage, times, endTimeScan - startTimeScan);
 
         JFreeChart chart1 = ChartFactory.createXYLineChart(
-                "Time/Selectivity",
+                "Time/Selectivity (Clustered)",
                 "Selectivity Percentage",
                 "Execution Time (nano seconds)",
                 plot1,
@@ -324,7 +324,7 @@ public class Utilities {
         );
 
         JFreeChart chart2 = ChartFactory.createXYLineChart(
-                "Time/Selectivity Ratio",
+                "Time/Selectivity Ratio (Clustered)",
                 "Selectivity Percentage",
                 "Ratio of Execution Time (index/scan) (nano seconds)",
                 plot2,
@@ -344,7 +344,7 @@ public class Utilities {
         ChartPanel chartPanel2 = new ChartPanel(chart2);
         JFrame frame2 = new JFrame();
         frame2.setSize(800, 800);
-        frame2.setContentPane(chartPanel);
+        frame2.setContentPane(chartPanel2);
         frame2.setLocationRelativeTo(null);
         frame2.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame2.setVisible(true);
@@ -458,7 +458,7 @@ public class Utilities {
         // QueryPerformancePlot.plotChart(selectivityPercentage, times, endTimeScan - startTimeScan);
 
         JFreeChart chart1 = ChartFactory.createXYLineChart(
-                "Time/Selectivity",
+                "Time/Selectivity (Unclustered)",
                 "Selectivity Percentage",
                 "Execution Time (nano seconds)",
                 plot1,
@@ -469,7 +469,7 @@ public class Utilities {
         ChartFrame graphFrame = new ChartFrame("XYLine Chart", chart1);
 
         JFreeChart chart2 = ChartFactory.createXYLineChart(
-                "Time/Selectivity Ratio",
+                "Time/Selectivity Ratio (Unclustered)",
                 "Selectivity Percentage",
                 "Ratio of Execution Time (index/scan) (nano seconds)",
                 plot2,

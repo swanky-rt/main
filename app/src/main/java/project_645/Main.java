@@ -21,15 +21,17 @@ public class Main {
             utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
             BufferManagerImpl bufferManager = new BufferManagerImpl(1000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
-
-            // Change the enum to change what file you want to write to
-            // The following two lines are an example of how to create the index.
-            // Note that C1 and C2 create the index with order 51, as that is the maximum possible order possible for this index
+            // Note: The index objects are defined within the utilities methods themselves. If you want to create
+            //an index object that matches the attribute/file, read the following instructions.
+            //Example instantiations are included
+//             Change the enum to change what file you want to write to
+//             The following two lines are an example of how to create the index.
+//             Note that C1 and C2 create the index with order 51, as that is the maximum possible order possible for this index
 //            BTreeImpl testBTreeIndexTitle = new BTreeImpl(bufferManager, 51, File.MOVIE_TITLE_IDX);
 //
 //            BTreeImpl testBTreeIndexMovieId = new BTreeImpl(bufferManager, 51, File.MOVIE_ID_IDX);
 
-            // The following creates/populates testdb.dat with every entry from the imdb file.
+//             The following creates/populates testdb.dat with every entry from the imdb file.
             bufferManager.populateDisk(-1, filePath);
             System.out.println("Successfully populate the disk file with all entries from the imdb dataset");
 
