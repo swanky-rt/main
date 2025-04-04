@@ -343,7 +343,7 @@ public class BufferManagerImpl extends BufferManager{
         writePageToDisk(newPage, File.DISK);
     }
 
-    // creates bufferpool map descriptors based on the data file containing the page
+    // creates buffer pool map descriptors based on the data file containing the page
     public String constructPageIdentifier(int pageId, File dataFile) {
         return dataFile.toString() + "-" + Integer.toString(pageId);
     }

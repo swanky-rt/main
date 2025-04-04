@@ -21,12 +21,8 @@ public class BPlusTreeTests {
     private RandomAccessFile randomAccessFile;
     private Path path1;
     private Page page;
-    String path = "/src/test/java/project_645/DB files/";
-    String mainFileName = "title.basics.tsv";
-    String diskFileName = "testdb.dat";
     String movieIdIndexFileName = "movieIdIndex.dat";
     String movieTitleIndexFileName = "movieTitleIndex.dat";
-    String filePath = System.getProperty("user.dir") + path;
 
     String workingDirectory = System.getProperty("user.dir");
     String testFileDirectory = "/src/test/java/project_645/DB files/";

@@ -4,27 +4,18 @@ import org.jfree.chart.ChartFrame;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.stream.Stream;
 
 public class Utilities {
 
@@ -89,6 +80,7 @@ public class Utilities {
         bf.unpinPage(pageId, File.DISK);
     }
 
+//This method to perform c1 test
     public void testC1(boolean populateMovieIdIndexFile, String filePath,
                        String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
 
@@ -103,6 +95,7 @@ public class Utilities {
         }
     }
 
+//This method to perform c2 test
     public void testC2(boolean populateMovieTitleIndexFile, String filePath,
                        String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
         BufferManager c2BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
@@ -114,6 +107,7 @@ public class Utilities {
         }
     }
 
+ //This method to perform c3 test
     public void testC3(boolean populateMovieIdIndexFile, boolean populateMovieTitleIndexFile, String filePath,
                        String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
         // Search by one key on b+ tree index:
@@ -163,6 +157,7 @@ public class Utilities {
         System.out.println("The expected movie RIDs were found by traversing the requested index!");
     }
 
+//This method to perform c4 test
     public void testC4(boolean populateMovieIdIndexFile, boolean populateMovieTitleIndexFile, String filePath,
                        String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
         BufferManager c4BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
@@ -213,6 +208,7 @@ public class Utilities {
         System.out.println("All tested RIDs found in range query do fall in the range denoted by the index!");
     }
 
+//This method to perform P1 test
     public void testP1(String filePath,
                        String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
         // initialize buffer manager to perform the range query
@@ -232,26 +228,19 @@ public class Utilities {
         p1BufferManager.force();
 
         Iterator<Rid> rids = bTreeMovieId.rangeSearch("s", "u");
-
-
         ArrayList<Integer> selectivityPercentage = new ArrayList<>();
         selectivityPercentage.add(0);
         ArrayList<String> keys = new ArrayList<>();
         keys.add("");
         ArrayList<Rid> ridsList = new ArrayList<>();
         ArrayList<Long> Times = new ArrayList<Long>();
-
         int size = 0;
 
         while (rids.hasNext()) {
             size += 1;
             ridsList.add(rids.next());
         }
-
         rids = ridsList.iterator();
-
-
-
         double curTotal = size / 20.0;
         double curTotalAdd = size / 20.0;
         int percentage = 5;
@@ -270,8 +259,6 @@ public class Utilities {
         }
 
         p1BufferManager.force();
-
-
         ArrayList<Long> times = new ArrayList<>();
         for (int i = 0; i < selectivityPercentage.size(); ++i) {
             String startKey = "";
@@ -350,6 +337,7 @@ public class Utilities {
         frame2.setVisible(true);
     }
 
+//This method to perform P2 test
     public void testP2(String filePath,
                        String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
         // initialize buffer manager to perform the range query
@@ -411,8 +399,6 @@ public class Utilities {
         }
 
         p2BufferManager.force();
-
-
         ArrayList<Long> times = new ArrayList<>();
         for (int i = 0; i < selectivityPercentage.size(); ++i) {
             String startKey = new String(startKeyArr).trim();
@@ -454,7 +440,6 @@ public class Utilities {
         plot1.addSeries(scanQuery);
         plot2.addSeries(ratioSeries);
 
-
         // QueryPerformancePlot.plotChart(selectivityPercentage, times, endTimeScan - startTimeScan);
 
         JFreeChart chart1 = ChartFactory.createXYLineChart(
@@ -495,7 +480,8 @@ public class Utilities {
         frame2.setVisible(true);
     }
 
-
+//This method to delete and recreate the index files as everytime the file limit exceeds thus it is important to delete and create the index-
+//file instead of appending and increasing the size of the file.
     public void deleteAndRecreateIndexFiles(String filePath, String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) {
         Path path = Paths.get(filePath + diskFileName);
         try {
@@ -505,7 +491,6 @@ public class Utilities {
             System.err.println("An error occurred while deleting the file.");
             e.printStackTrace();
         }
-
         Path movieIdIndexPath = Paths.get(filePath + movieIdIndexFileName);
         try {
             Files.deleteIfExists(movieIdIndexPath); // Deletes the file if it exists
@@ -523,7 +508,6 @@ public class Utilities {
             System.err.println("An error occurred while deleting the file.");
             e.printStackTrace();
         }
-
         try {
             // Create an empty file if it doesn't exist
             Files.createFile(path);
@@ -536,7 +520,6 @@ public class Utilities {
                 e.printStackTrace();
             }
         }
-
         try {
             // Create an empty file if it doesn't exist
             Files.createFile(movieIdIndexPath);
@@ -561,8 +544,5 @@ public class Utilities {
                 e.printStackTrace();
             }
         }
-
-
     }
-
 }
