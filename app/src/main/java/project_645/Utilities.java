@@ -521,7 +521,7 @@ public class Utilities {
             for (Page page : curLevelPages) {
                 Row[] rows = page.getAllRows();
                 for (int j = 1; j < rows.length; ++j) {
-                    Row curDataRow = rows[i];
+                    Row curDataRow = rows[j];
                     if (curDataRow != null) {
                         int nextChildId = parseIntFromByteArray(curDataRow.movieId, 0);
                         Page childPage = bufferManager.getPage(nextChildId, indexFile);
