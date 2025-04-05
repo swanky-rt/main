@@ -296,7 +296,8 @@ public class BufferManagerImpl extends BufferManager{
             String[] key = lru.get(i).split("-");
             File dataFile = File.valueOf(key[0]);
             int pid = Integer.parseInt(key[1]);
-            while (pinnedPages.containsKey(key)) {
+            String fileKey = lru.get(i);
+            while (pinnedPages.containsKey(fileKey)) {
                 unpinPage(pid, dataFile);
             }
             evictPage();
