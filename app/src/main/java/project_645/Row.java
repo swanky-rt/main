@@ -25,8 +25,8 @@ public class Row implements Serializable {
 
     public Row(byte[] movieId, byte[] personId, byte[] category) {
         System.arraycopy(movieId, 0, this.movieId, 0, Math.min(this.movieId.length, movieId.length));
-        System.arraycopy(movieId, 0, this.personId, 0, Math.min(this.personId.length, personId.length));
-        System.arraycopy(movieId, 0, this.category, 0, Math.min(this.category.length, category.length));
+        System.arraycopy(personId, 0, this.personId, 0, Math.min(this.personId.length, personId.length));
+        System.arraycopy(category, 0, this.category, 0, Math.min(this.category.length, category.length));
     }
 
     public Row(byte[] personId, byte[] name, boolean peopleTable) {

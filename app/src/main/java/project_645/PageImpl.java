@@ -22,6 +22,7 @@ public class PageImpl implements Page, Serializable {
 
         if (dataFile == File.PEOPLE) {
             ROW_SIZE = 115;
+            MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
         }
 
         rowList = new Row[MAX_TUPLES];

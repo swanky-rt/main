@@ -543,7 +543,8 @@ public class Utilities {
 
 //This method to delete and recreate the index files as everytime the file limit exceeds thus it is important to delete and create the index-
 //file instead of appending and increasing the size of the file.
-    public void deleteAndRecreateIndexFiles(String filePath, String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) {
+    public void deleteAndRecreateIndexFiles(String filePath, String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                                            String workedOnTableFileName, String personTableFileName) {
         Path path = Paths.get(filePath + diskFileName);
         try {
             Files.deleteIfExists(path); // Deletes the file if it exists
@@ -564,6 +565,24 @@ public class Utilities {
         Path movieTitleIndexPath = Paths.get(filePath + movieTitleIndexFileName);
         try {
             Files.deleteIfExists(movieTitleIndexPath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path workedOnFilePath = Paths.get(filePath, workedOnTableFileName);
+        try {
+            Files.deleteIfExists(workedOnFilePath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path peopleTableFilePath = Paths.get(filePath + personTableFileName);
+        try {
+            Files.deleteIfExists(peopleTableFilePath); // Deletes the file if it exists
             System.out.println("File deleted successfully.");
         } catch (IOException e) {
             System.err.println("An error occurred while deleting the file.");
@@ -605,5 +624,97 @@ public class Utilities {
                 e.printStackTrace();
             }
         }
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(workedOnFilePath);
+            System.out.println("File created: " + workedOnFilePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(workedOnFilePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(peopleTableFilePath);
+            System.out.println("File created: " + peopleTableFilePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(peopleTableFilePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void populateAllDiskFiles(String filepath, String titleBasicsTSVReader, String workedOnTSVReader,
+                                     String personTSVReader, BufferManager bf) throws Exception{
+            Path dbFilePath = Paths.get( filepath + titleBasicsTSVReader).toAbsolutePath();
+            Path workedOnTableFilePath = Paths.get(filepath + workedOnTSVReader);
+            Path personTableFilePath = Paths.get(filepath + personTSVReader);
+            // create page
+            BufferedReader diskReader = new BufferedReader(new FileReader(filepath + titleBasicsTSVReader));
+            diskReader.readLine();
+            String curLine;
+            Page nextPage = bf.createPage(File.DISK);
+            // add rows using p.insertRow without filling p up
+            while ((curLine = diskReader.readLine()) != null) {
+                String[] splitLine = curLine.split("\t");
+                byte[] movieId = splitLine[0].getBytes();
+                byte[] titleId = splitLine[2].getBytes();
+                Row row = new Row(movieId, titleId);
+                nextPage.insertRow(row);
+                if (nextPage.isFull()) {
+                    bf.unpinPage(nextPage.getPid(), File.DISK);
+                    nextPage = bf.createPage(File.DISK);
+                }
+            }
+            bf.unpinPage(nextPage.getPid(), File.DISK);
+            bf.force();
+
+            System.out.println("main disk file populated");
+
+            BufferedReader workedOnTableReader = new BufferedReader(new FileReader(filepath + workedOnTSVReader));
+            workedOnTableReader.readLine();
+            nextPage = bf.createPage(File.WORKEDON);
+            while ((curLine = workedOnTableReader.readLine()) != null) {
+                String[] splitLine = curLine.split("\t");
+                byte[] movieId = splitLine[0].getBytes();
+                byte[] personId = splitLine[2].getBytes();
+                byte[] category = splitLine[3].getBytes();
+                Row row = new Row(movieId, personId, category);
+                nextPage.insertRow(row);
+                if (nextPage.isFull()) {
+                    bf.unpinPage(nextPage.getPid(), File.WORKEDON);
+                    nextPage = bf.createPage(File.WORKEDON);
+                }
+            }
+            bf.unpinPage(nextPage.getPid(), File.WORKEDON);
+            bf.force();
+
+
+            System.out.println("Worked on table populated");
+
+            BufferedReader peopleTableReader = new BufferedReader(new FileReader(filepath + personTSVReader));
+            peopleTableReader.readLine();
+            nextPage = bf.createPage(File.PEOPLE);
+            while ((curLine = peopleTableReader.readLine()) != null) {
+                String[] splitLine = curLine.split("\t");
+                byte[] personId = splitLine[0].getBytes();
+                byte[] name = splitLine[1].getBytes();
+                Row row = new Row(personId, name, true);
+                nextPage.insertRow(row);
+                if (nextPage.isFull()) {
+                    bf.unpinPage(nextPage.getPid(), File.PEOPLE);
+                    nextPage = bf.createPage(File.PEOPLE);
+                }
+            }
+            bf.unpinPage(nextPage.getPid(), File.PEOPLE);
+            bf.force();
+
+            System.out.println("Person table populated");
     }
 }
