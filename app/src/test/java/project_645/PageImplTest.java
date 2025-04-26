@@ -38,11 +38,11 @@ public class PageImplTest {
 
     @Test
     public void testBytesToPad() {
-        Row row1 = new Row(new byte[1], new byte[1]);
-        Row row2 = new Row(new byte[2], new byte[2]);
+        Row row1 = new Row(new byte[1], new byte[1], null, null, null);
+        Row row2 = new Row(new byte[2], new byte[2], null, null, null);
         page.insertRow(row1);
         page.insertRow(row2);
-        assertEquals(PageImpl.bytesToPad, page.getBytesToPad());  // Assert the bytes to pad
+        assertEquals(page.bytesToPad, page.getBytesToPad());  // Assert the bytes to pad
     }
 
     @Test
@@ -92,8 +92,8 @@ public class PageImplTest {
 
     @Test
     public void testDeserializeRows() {
-        Row row1 = new Row("tt01".getBytes(), "An impossible movie".getBytes());
-        Row row2 = new Row("tt02".getBytes(), "Not impossible movie".getBytes());
+        Row row1 = new Row("tt01".getBytes(), "An impossible movie".getBytes(), null, null, null);
+        Row row2 = new Row("tt02".getBytes(), "Not impossible movie".getBytes(), null, null, null);
         Row[] rows = new Row[]{row1, row2};
         page.setAllRows(rows);
         page.deserializeRows();
@@ -105,7 +105,7 @@ public class PageImplTest {
 
     @Test
     public void testDeserializeEmptyRows() {
-        Row row = new Row("".getBytes(), "".getBytes());
+        Row row = new Row("".getBytes(), "".getBytes(), null, null, null);
         Row[] rows = new Row[]{row};
         page.setAllRows(rows);
         page.deserializeRows();
@@ -141,8 +141,9 @@ public class PageImplTest {
 
     @Test
     public void testIsFull() {
-        for (int i = 0; i < PageImpl.MAX_TUPLES; i++) {
-            page.insertRow(new Row(new byte[1], new byte[1]));
+        PageImpl tempPage = new PageImpl(100, File.DISK);
+        for (int i = 0; i < tempPage.MAX_TUPLES; i++) {
+            page.insertRow(new Row(new byte[1], new byte[1], null, null, null));
         }
         assertTrue(page.isFull());  // Assert that the page is full after inserting MAX_TUPLES rows
     }
@@ -164,7 +165,7 @@ public class PageImplTest {
         assertNull(testRowThree);
 
         // we now insert a row into the page object, this should be accessible
-        Row row = new Row("moveId0".getBytes(StandardCharsets.US_ASCII), "movie title 0".getBytes());
+        Row row = new Row("moveId0".getBytes(StandardCharsets.US_ASCII), "movie title 0".getBytes(), null, null, null);
         page.insertRow(row);
         // we should be able to access this row now
         Row testRowFour = page.getRow(0);
@@ -182,7 +183,7 @@ public class PageImplTest {
         // run these tests for each iteration of filling up the page
         for (int i = 1; i < page.getAllRows().length; ++i) {
             Row loopRow = new Row(("movieId" + i).getBytes(StandardCharsets.US_ASCII),
-                    ("movie Title" + i).getBytes(StandardCharsets.US_ASCII));
+                    ("movie Title" + i).getBytes(StandardCharsets.US_ASCII), null, null, null);
             page.insertRow(loopRow);
             // check not possible + out of bounds, except for the last iteration of the loop
             // where null reference should be impossible
@@ -207,7 +208,7 @@ public class PageImplTest {
         assertEquals(testPage.getRowCount(), 0);
         for (int i = 0; i < testPage.getAllRows().length; ++i) {
             Row loopRow = new Row(("movieId" + i).getBytes(StandardCharsets.US_ASCII),
-                    ("movie Title" + i).getBytes(StandardCharsets.US_ASCII));
+                    ("movie Title" + i).getBytes(StandardCharsets.US_ASCII), null, null, null);
             testPage.insertRow(loopRow);
             //make sure count properly updates
             assertEquals(testPage.getRowCount(), i + 1);
@@ -222,7 +223,7 @@ public class PageImplTest {
             }
         }
         // attempt to insert a row after the page is full
-        int status = testPage.insertRow(new Row("aefawf".getBytes(StandardCharsets.US_ASCII), "awefawef".getBytes(StandardCharsets.US_ASCII)));
+        int status = testPage.insertRow(new Row("aefawf".getBytes(StandardCharsets.US_ASCII), "awefawef".getBytes(StandardCharsets.US_ASCII), null, null, null));
         assertEquals(status, -1);
         assertEquals(105, testPage.getRowCount());
     }
@@ -261,4 +262,3 @@ public class PageImplTest {
         assertEquals(page.getPinCount(), 0);
     }
 }
-
