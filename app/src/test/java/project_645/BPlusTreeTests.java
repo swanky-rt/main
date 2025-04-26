@@ -295,12 +295,12 @@ public class BPlusTreeTests {
         Arrays.sort(keysToInsert);
 
         for (int i = 0; i < 105; ++i) {
-            newPage.insertRow(new Row(keysToInsert[i].getBytes(), ("" + i + i + i + i).getBytes()));
+            newPage.insertRow(new Row(keysToInsert[i].getBytes(), ("" + i + i + i + i).getBytes(), null, null, null));
         }
         bufferManager.unpinPage(newPage.getPid(), File.DISK);
         Page evenNewerPage = bufferManager.createPage(File.DISK);
         for (int i = 105; i < 110; ++i) {
-            evenNewerPage.insertRow(new Row(keysToInsert[i].getBytes(),  ("" + i + i + i + i).getBytes()));
+            evenNewerPage.insertRow(new Row(keysToInsert[i].getBytes(),  ("" + i + i + i + i).getBytes(), null, null, null));
         }
         bufferManager.unpinPage(evenNewerPage.getPid(), File.DISK);
         bufferManager.force();

@@ -46,7 +46,7 @@ public class Utilities {
             String[] columns = curLine.split("\t");
             byte[] movieId = columns[0].getBytes();
             byte[] titleId = columns[2].getBytes();
-            Row row = new Row(movieId, titleId);
+            Row row = new Row(movieId, titleId, null, null, null);
             newPage.insertRow(row);
         }
         bf.unpinPage(pageId, File.DISK);
@@ -74,7 +74,7 @@ public class Utilities {
             String[] columns = curLine.split("\t");
             byte[] movieId = columns[0].getBytes();
             byte[] titleId = columns[2].getBytes();
-            Row row = new Row(movieId, titleId);
+            Row row = new Row(movieId, titleId, null, null, null);
             newPage.insertRow(row);
         }
         bf.unpinPage(pageId, File.DISK);

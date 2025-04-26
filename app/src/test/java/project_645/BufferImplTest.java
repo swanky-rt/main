@@ -182,9 +182,9 @@ public class BufferImplTest {
                 movieIdIndexFileName, movieTitleIndexFileName);
         Page page1 = new PageImpl(5, File.DISK);
         // populate the page
-        page1.insertRow(new Row("movie 1".getBytes(), "movie title 1".getBytes()));
-        page1.insertRow(new Row("movie 2".getBytes(), "movie title 2".getBytes()));
-        page1.insertRow(new Row("movie 3".getBytes(), "movie title 3".getBytes()));
+        page1.insertRow(new Row("movie 1".getBytes(), "movie title 1".getBytes(), null, null, null));
+        page1.insertRow(new Row("movie 2".getBytes(), "movie title 2".getBytes(),null, null, null));
+        page1.insertRow(new Row("movie 3".getBytes(), "movie title 3".getBytes(), null, null, null));
 
         // attempt to write the page to disk, should throw an exception as page with id 5 isn't
         // the next available free space on disk. This should now write 4 blank pages before writing the 5th.
@@ -212,9 +212,9 @@ public class BufferImplTest {
         Page page4 = new PageImpl(3, File.DISK);
 
         // populate page3 with records
-        page3.insertRow(new Row("3movie 1".getBytes(), "3movie title 1".getBytes()));
-        page3.insertRow(new Row("3movie 2".getBytes(), "3movie title 2".getBytes()));
-        page3.insertRow(new Row("3movie 3".getBytes(), "3movie title 3".getBytes()));
+        page3.insertRow(new Row("3movie 1".getBytes(), "3movie title 1".getBytes(), null, null, null));
+        page3.insertRow(new Row("3movie 2".getBytes(), "3movie title 2".getBytes(), null, null, null));
+        page3.insertRow(new Row("3movie 3".getBytes(), "3movie title 3".getBytes(), null, null, null));
 
         // write to disk
         assertDoesNotThrow(() -> bf.writePageToDisk(page2, File.DISK));
