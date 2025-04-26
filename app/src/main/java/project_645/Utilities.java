@@ -82,10 +82,11 @@ public class Utilities {
 
 //This method to perform c1 test
     public void testC1(boolean populateMovieIdIndexFile, String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
 
         BufferManager c1BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
 
         // Create the indexes
         BTreeImpl bTreeMovieId = new BTreeImpl(c1BufferManager, 51, File.MOVIE_ID_IDX);
@@ -97,9 +98,10 @@ public class Utilities {
 
 //This method to perform c2 test
     public void testC2(boolean populateMovieTitleIndexFile, String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
         BufferManager c2BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
         BTreeImpl bTreeTitleId = new BTreeImpl(c2BufferManager, 51, File.MOVIE_TITLE_IDX);
 
         if (populateMovieTitleIndexFile) {
@@ -109,10 +111,11 @@ public class Utilities {
 
  //This method to perform c3 test
     public void testC3(boolean populateMovieIdIndexFile, boolean populateMovieTitleIndexFile, String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
         // Search by one key on b+ tree index:
         BufferManager c3BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
 
         // Create the indexes
         BTreeImpl bTreeMovieId = new BTreeImpl(c3BufferManager, 51, File.MOVIE_ID_IDX);
@@ -159,9 +162,10 @@ public class Utilities {
 
 //This method to perform c4 test
     public void testC4(boolean populateMovieIdIndexFile, boolean populateMovieTitleIndexFile, String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
         BufferManager c4BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
 
         // Create the indexes
         BTreeImpl bTreeMovieId = new BTreeImpl(c4BufferManager, 51, File.MOVIE_ID_IDX);
@@ -210,10 +214,11 @@ public class Utilities {
 
 //This method to perform P1 test
     public void testP1(String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName, boolean pinPages) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName, boolean pinPages,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
         // initialize buffer manager to perform the range query
         BufferManager p1BufferManager = new BufferManagerImpl(10000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
 
         BTreeImpl bTreeMovieId = new BTreeImpl(p1BufferManager, 51, File.MOVIE_ID_IDX);
 
@@ -343,10 +348,11 @@ public class Utilities {
 
 //This method to perform P2 test
     public void testP2(String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName, boolean pinPages) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName, boolean pinPages,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
         // initialize buffer manager to perform the range query
         BufferManager p2BufferManager = new BufferManagerImpl(10000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
 
         BTreeImpl bTreeMovieId = new BTreeImpl(p2BufferManager, 51, File.MOVIE_TITLE_IDX);
 
@@ -489,10 +495,11 @@ public class Utilities {
     }
 
     public void testP3(String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
 
-        testP1(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, true);
-        testP2(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, true);
+        testP1(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, true, workedOnTableFileName, personTableFileName);
+        testP2(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, true, workedOnTableFileName, personTableFileName);
 
     }
 

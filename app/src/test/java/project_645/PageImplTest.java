@@ -42,7 +42,7 @@ public class PageImplTest {
         Row row2 = new Row(new byte[2], new byte[2]);
         page.insertRow(row1);
         page.insertRow(row2);
-        assertEquals(PageImpl.bytesToPad, page.getBytesToPad());  // Assert the bytes to pad
+        assertEquals(page.bytesToPad, page.getBytesToPad());  // Assert the bytes to pad
     }
 
     @Test
@@ -141,7 +141,8 @@ public class PageImplTest {
 
     @Test
     public void testIsFull() {
-        for (int i = 0; i < PageImpl.MAX_TUPLES; i++) {
+        PageImpl tempPage = new PageImpl(100, File.DISK);
+        for (int i = 0; i < tempPage.MAX_TUPLES; i++) {
             page.insertRow(new Row(new byte[1], new byte[1]));
         }
         assertTrue(page.isFull());  // Assert that the page is full after inserting MAX_TUPLES rows

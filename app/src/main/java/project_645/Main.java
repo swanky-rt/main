@@ -11,6 +11,8 @@ public class Main {
             String diskFileName = "testdb.dat";
             String movieIdIndexFileName = "movieIdIndex.dat";
             String movieTitleIndexFileName = "movieTitleIndex.dat";
+            String workedOnFileName = "workedOnTable.dat";
+            String peopleFileName = "peopleTable.dat";
             String filePath = System.getProperty("user.dir") + path;
 //
 //            // NOTE: RUNNING MAIN WILL DELETE AND RECREATE THE INDEX FILES SO THAT ALL TESTS CAN BE RUN IN SUCCESSION
@@ -20,7 +22,7 @@ public class Main {
             Utilities utilities = new Utilities(mainFileName, diskFileName);
             utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
 
-            BufferManagerImpl bufferManager = new BufferManagerImpl(1000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+            BufferManagerImpl bufferManager = new BufferManagerImpl(1000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
              // Note: The index objects are defined within the utilities methods themselves. If you want to create
              //an index object that matches the attribute/file, read the following instructions.
              //Example instantiations are included
@@ -36,23 +38,23 @@ public class Main {
             System.out.println("Successfully populate the disk file with all entries from the imdb dataset");
 
             // comment out the following lines to not create/populate the two index files.
-            utilities.testC1(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+            utilities.testC1(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
             System.out.println("Successfully bulk loaded the movie ID index with all records on disk");
             // Creating the index on movie title should take 2-3 hours.
-            utilities.testC2(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+            utilities.testC2(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
             System.out.println("Successfully created the index on movie title");
 
              // search and range search
-             utilities.testC3(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
-             utilities.testC4(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+             utilities.testC3(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+             utilities.testC4(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
             // generate the plots (each takes 1-2 hours)
             // plot on the clustered index checks all selectivities in increments of 5%
-            utilities.testP1(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, false);
+            utilities.testP1(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, false, workedOnFileName, peopleFileName);
             // plot on the unclustered index checks selectivities from 1%-10% in 1% increments
-            utilities.testP2(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, false);
+            utilities.testP2(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, false, workedOnFileName, peopleFileName);
             // performance test on both
-            utilities.testP3(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+            utilities.testP3(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
         } catch (Exception e) {
             System.out.println(e.toString());

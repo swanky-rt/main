@@ -310,7 +310,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void initLeafPage(Page page, int parentId, int nextLeafId, int numKeys) {
         PageImpl p = (PageImpl) page;
-        p.setAllRows(new Row[PageImpl.MAX_TUPLES]);
+        p.setAllRows(new Row[p.MAX_TUPLES]);
         p.setRowCount(0);
         Row metaRow = new Row(new byte[9], new byte[30]);
         metaRow.movieId[0] = 'L';
@@ -371,7 +371,7 @@ public class BTreeImpl implements BTree<String, Rid> {
 
     private void initInternalPage(Page page, int parentId, int numKeys) {
         PageImpl p = (PageImpl) page;
-        p.setAllRows(new Row[PageImpl.MAX_TUPLES]);
+        p.setAllRows(new Row[p.MAX_TUPLES]);
         p.setRowCount(0);
         Row metaRow = new Row(new byte[9], new byte[30]);
         metaRow.movieId[0] = 'I';
@@ -542,7 +542,7 @@ public class BTreeImpl implements BTree<String, Rid> {
     private void setRowAtIndex(PageImpl p, int index, Row row) {
         Row[] rows = p.getAllRows();
         if (rows == null || rows.length < index + 1) {
-            Row[] newRows = new Row[PageImpl.MAX_TUPLES];
+            Row[] newRows = new Row[p.MAX_TUPLES];
             if (rows != null) {
                 System.arraycopy(rows, 0, newRows, 0, rows.length);
             }

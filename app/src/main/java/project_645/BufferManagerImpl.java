@@ -17,14 +17,18 @@ public class BufferManagerImpl extends BufferManager{
     private int currentPageID;
     private int currentMovieIdPage;
     private int currentMovieTitlePageId;
+    private int currentWorkedOnPageId;
+    private int currentPeoplePageId;
     private String filepath;
     private String diskFileName;
     private String movieIdIndexFileName;
     private String movieTitleIndexFileName;
+    private String workedOnFileName;
+    private String peopleFileName;
 
 
     public BufferManagerImpl(int bufferSize, String filepath, String diskFileName, String movieIdIndexFileName,
-                             String movieTitleIndexFileName) throws IOException {
+                             String movieTitleIndexFileName, String workedOnFilename, String peopleFileName) throws IOException {
         super(bufferSize);
         this.PAGE_SIZE = 4096;
         this.MAX_PAGE = bufferSize/PAGE_SIZE;
@@ -36,9 +40,13 @@ public class BufferManagerImpl extends BufferManager{
         this.diskFileName = diskFileName;
         this.movieIdIndexFileName = movieIdIndexFileName;
         this.movieTitleIndexFileName = movieTitleIndexFileName;
+        this.workedOnFileName = workedOnFilename;
+        this.peopleFileName = peopleFileName;
         this.currentPageID = (int)Files.size(Paths.get( filepath + diskFileName).toAbsolutePath()) / this.PAGE_SIZE;
         this.currentMovieIdPage = (int)Files.size(Paths.get( filepath + movieIdIndexFileName).toAbsolutePath()) / this.PAGE_SIZE;
         this.currentMovieTitlePageId = (int)(int)Files.size(Paths.get( filepath + movieTitleIndexFileName).toAbsolutePath()) / this.PAGE_SIZE;
+        this.currentWorkedOnPageId = (int)Files.size(Paths.get( filepath + workedOnFilename).toAbsolutePath()) / this.PAGE_SIZE;
+        this.currentPeoplePageId = (int)Files.size(Paths.get( filepath + peopleFileName).toAbsolutePath()) / this.PAGE_SIZE;
     }
 
 //This method gets the page from buffer pool and disk(if not present in buffer pool)
@@ -113,8 +121,7 @@ public class BufferManagerImpl extends BufferManager{
     public Page createPage(File dataFile){
         Page page = null;
         try {
-            int pageId = dataFile == File.DISK ? getNextPageId() : dataFile == File.MOVIE_ID_IDX ?
-                    getNextMovieIdIndexPage() : getNextMovieTitleIndexPage();
+            int pageId = getNextCreatePageId(dataFile);
             String pageIdentifier = constructPageIdentifier(pageId, dataFile);
             if (this.bufferPool.size() >= this.MAX_PAGE) {
                 evictPage();
@@ -129,6 +136,30 @@ public class BufferManagerImpl extends BufferManager{
             System.out.println("buffer pool is full, eviction is not happening as all pages are pinned");
         }
         return page;
+    }
+
+    // private helper method to get the next page ID for the appropriate page
+    private int getNextCreatePageId(File dataFile) {
+        return switch (dataFile) {
+            case File.DISK -> getNextPageId();
+            case File.MOVIE_ID_IDX -> getNextMovieIdIndexPage();
+            case File.MOVIE_TITLE_IDX -> getNextMovieTitleIndexPage();
+            case File.WORKEDON -> getNextWorkedOnPageId();
+            case File.PEOPLE -> getNextPersonPageId();
+            default -> getNextPageId();
+        };
+    }
+
+    // private helper method to get the corresponding file name for the correct data file
+    private String getDataFileName(File dataFile) {
+        return switch (dataFile) {
+            case File.DISK -> diskFileName;
+            case File.MOVIE_ID_IDX -> movieIdIndexFileName;
+            case File.MOVIE_TITLE_IDX -> movieTitleIndexFileName;
+            case File.WORKEDON -> workedOnFileName;
+            case File.PEOPLE -> peopleFileName;
+            default -> diskFileName;
+        };
     }
 
 //This method marks the page dirty
@@ -183,18 +214,25 @@ public class BufferManagerImpl extends BufferManager{
         if (dataFile == File.DISK) {
             return getNumPagesOnDisk();
         }
+        else if (dataFile == File.WORKEDON) {
+            return (int)Files.size(Paths.get(filepath + workedOnFileName)) / PAGE_SIZE;
+        }
+        else if (dataFile == File.PEOPLE) {
+            return (int)Files.size(Paths.get(filepath + peopleFileName)) / PAGE_SIZE;
+        }
         else if (dataFile == File.MOVIE_ID_IDX) {
             return (int)Files.size(Paths.get(filepath + movieIdIndexFileName)) / PAGE_SIZE;
         }
-        else {
+        else if (dataFile == File.MOVIE_TITLE_IDX) {
             return (int)Files.size(Paths.get(filepath + movieTitleIndexFileName)) / PAGE_SIZE;
         }
+        return -1;
     }
 
     // This method writes pages to disk
 
     public void writePageToDisk(Page page, File dataFile) throws IOException {
-        String curDiskFileName = dataFile == File.DISK ? diskFileName : dataFile == File.MOVIE_ID_IDX ? this.movieIdIndexFileName : this.movieTitleIndexFileName;
+        String curDiskFileName = getDataFileName(dataFile);
         int pageId = page.getPid();
         Path curPath = Paths.get( filepath + curDiskFileName).toAbsolutePath();
         long fileSize = Files.size(curPath);
@@ -217,10 +255,24 @@ public class BufferManagerImpl extends BufferManager{
 
         for (Row row : page.getAllRows()) {
             if (row == null) {
-                row = new Row(new byte[9], new byte[30]);
+                row = createNewRow(dataFile);
             }
-            curFile.write(row.movieId);
-            curFile.write(row.title);
+            if (dataFile == File.DISK || dataFile == File.MOVIE_ID_IDX || dataFile == File.MOVIE_TITLE_IDX) {
+                curFile.write(row.movieId);
+                curFile.write(row.title);
+            }
+            else if (dataFile == File.WORKEDON) {
+                curFile.write(row.movieId);
+                curFile.write(row.personId);
+                curFile.write(row.category);
+            }
+            else if (dataFile == File.PEOPLE) {
+                curFile.write(row.personId);
+                curFile.write(row.name);
+            }
+            else {
+                throw new IOException();
+            }
         }
 
         curFile.write(new byte[page.getBytesToPad() - 1]);
@@ -232,13 +284,25 @@ public class BufferManagerImpl extends BufferManager{
         curFile.close();
     }
 
+    // helper method to create row object
+    private Row createNewRow(File dataFile) {
+        return switch (dataFile) {
+            case File.DISK -> new Row(new byte[9], new byte[30]);
+            case File.MOVIE_ID_IDX -> new Row(new byte[9], new byte[30]);
+            case File.MOVIE_TITLE_IDX -> new Row(new byte[9], new byte[30]);
+            case File.WORKEDON -> new Row(new byte[9], new byte[10], new byte[20]);
+            case File.PEOPLE -> new Row(new byte[10], new byte[105], true);
+            default -> new Row(new byte[9], new byte[30]);
+        };
+    }
+
     // This method loads pages from disk
 
     public Page loadPageFromDisk(int pageId, File dataFile) {
-        String curDiskFileName = dataFile == File.DISK ? diskFileName : dataFile == File.MOVIE_ID_IDX ? this.movieIdIndexFileName : this.movieTitleIndexFileName;
+        String curDiskFileName = getDataFileName(dataFile);
         Path curPath = Paths.get(filepath + curDiskFileName);
         Charset charset = StandardCharsets.US_ASCII;
-        Page pageToPopulate = new PageImpl(pageId, dataFile);
+        PageImpl pageToPopulate = new PageImpl(pageId, dataFile);
         pageToPopulate.markNotDirty();
         try (BufferedInputStream reader = new BufferedInputStream(new FileInputStream(filepath + curDiskFileName))) {
             long fileSize = Files.size(curPath);
@@ -253,32 +317,21 @@ public class BufferManagerImpl extends BufferManager{
 
             int curRowCount = 0;
 
-            Row[] curPageRows = new Row[PageImpl.MAX_TUPLES];
+            Row[] curPageRows = new Row[pageToPopulate.MAX_TUPLES];
 
-            for (int i = 0; i < PageImpl.PAGE_SIZE / PageImpl.ROW_SIZE; ++i) {
-                byte[] curMovieId = new byte[Row.MOVIE_ID_SIZE];
-                byte[] curMovieTitle = new byte[Row.TITLE_SIZE];
-
-                reader.read(curMovieId, 0, curMovieId.length);
-
-                reader.read(curMovieTitle, 0, curMovieTitle.length);
-
-                for (byte b : curMovieId) {
-                    if (b != 0) {
-                        Row curRow = new Row(curMovieId, curMovieTitle);
-                        curPageRows[i] = curRow;
-                        break;
-                    }
-                }
-
-                for (byte b : curMovieTitle) {
-                    if (b != 0) {
-                        Row curRow = new Row(curMovieId, curMovieTitle);
-                        curPageRows[i] = curRow;
-                        break;
-                    }
-                }
+            if (dataFile == File.DISK || dataFile == File.MOVIE_ID_IDX || dataFile == File.MOVIE_TITLE_IDX) {
+                populateDataRows(curPageRows, reader);
             }
+            else if (dataFile == File.WORKEDON) {
+                populateWorkedOnRows(curPageRows, reader);
+            }
+            else if (dataFile == File.PEOPLE) {
+                populatePeopleRows(curPageRows, reader);
+            }
+            else {
+                throw new Exception();
+            }
+
             reader.skip(pageToPopulate.getBytesToPad() - 1);
             curRowCount = reader.read();
             pageToPopulate.setAllRows(curPageRows);
@@ -289,6 +342,101 @@ public class BufferManagerImpl extends BufferManager{
         }
         return pageToPopulate;
     }
+
+
+    // Helper method to load the data into a page in the case that it is from the disk, or index file
+    private void populateDataRows(Row[] curPageRows, BufferedInputStream reader) throws IOException {
+        for (int i = 0; i < curPageRows.length; ++i) {
+            byte[] curMovieId = new byte[Row.MOVIE_ID_SIZE];
+            byte[] curMovieTitle = new byte[Row.TITLE_SIZE];
+
+            reader.read(curMovieId, 0, curMovieId.length);
+
+            reader.read(curMovieTitle, 0, curMovieTitle.length);
+
+            for (byte b : curMovieId) {
+                if (b != 0) {
+                    Row curRow = new Row(curMovieId, curMovieTitle);
+                    curPageRows[i] = curRow;
+                    break;
+                }
+            }
+
+            for (byte b : curMovieTitle) {
+                if (b != 0) {
+                    Row curRow = new Row(curMovieId, curMovieTitle);
+                    curPageRows[i] = curRow;
+                    break;
+                }
+            }
+        }
+    }
+
+    // Helper method to load the data into a page object in the case it is from the WorkedOn table
+    private void populateWorkedOnRows(Row[] curPageRows, BufferedInputStream reader) throws IOException {
+        for (int i = 0; i < curPageRows.length; ++i) {
+            byte[] curMovieId = new byte[Row.MOVIE_ID_SIZE];
+            byte[] curPersonId = new byte[Row.PERSON_ID_SIZE];
+            byte[] curCategory = new byte[Row.CATEGORY_SIZE];
+
+            reader.read(curMovieId, 0, curMovieId.length);
+            reader.read(curPersonId, 0, curPersonId.length);
+            reader.read(curCategory, 0, curCategory.length);
+
+            for (byte b : curMovieId) {
+                if (b != 0) {
+                    Row curRow = new Row(curMovieId, curPersonId, curCategory);
+                    curPageRows[i] = curRow;
+                    break;
+                }
+            }
+
+            for (byte b : curPersonId) {
+                if (b != 0) {
+                    Row curRow = new Row(curMovieId, curPersonId, curCategory);
+                    curPageRows[i] = curRow;
+                    break;
+                }
+            }
+
+            for (byte b : curCategory) {
+                if (b != 0) {
+                    Row curRow = new Row(curMovieId, curPersonId, curCategory);
+                    curPageRows[i] = curRow;
+                    break;
+                }
+            }
+        }
+    }
+
+    // Helper method to load people rows into the page object
+    private void populatePeopleRows(Row[] curPageRows, BufferedInputStream reader) throws IOException {
+        for (int i = 0; i < curPageRows.length; ++i) {
+            byte[] curPersonId = new byte[Row.PERSON_ID_SIZE];
+            byte[] curName = new byte[Row.NAME_SIZE];
+
+            reader.read(curPersonId, 0, curPersonId.length);
+
+            reader.read(curName, 0, curName.length);
+
+            for (byte b : curPersonId) {
+                if (b != 0) {
+                    Row curRow = new Row(curPersonId, curName);
+                    curPageRows[i] = curRow;
+                    break;
+                }
+            }
+
+            for (byte b : curName) {
+                if (b != 0) {
+                    Row curRow = new Row(curPersonId, curName);
+                    curPageRows[i] = curRow;
+                    break;
+                }
+            }
+        }
+    }
+
 
     @Override
     public void force() throws Exception {
@@ -317,6 +465,16 @@ public class BufferManagerImpl extends BufferManager{
     // Method to access next ID for movie title ID index page on disk
     public int getNextMovieTitleIndexPage() {
         return currentMovieTitlePageId++;
+    }
+
+    // Method to access next ID for the worked on table
+    public int getNextWorkedOnPageId() {
+        return currentWorkedOnPageId++;
+    }
+
+    // Method to access next ID for the person table
+    public int getNextPersonPageId() {
+        return currentPeoplePageId++;
     }
 
 //     meant to be run separately from the buffer manager, helper utility to initially populate the disk.
