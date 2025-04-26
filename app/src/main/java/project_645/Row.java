@@ -1,5 +1,6 @@
 package project_645;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * Struct representing a database row, containing primary data types.
@@ -32,6 +33,11 @@ public class Row implements Serializable {
     public Row(byte[] personId, byte[] name, boolean peopleTable) {
         System.arraycopy(personId, 0, this.personId, 0, Math.min(this.personId.length, personId.length));
         System.arraycopy(name, 0, this.name, 0, Math.min(this.name.length, name.length));
+    }
+
+    public Row(byte[] movieId, byte[] personId, File tempDataFile) {
+        System.arraycopy(movieId, 0, this.movieId, 0, Math.min(this.movieId.length, movieId.length));
+        System.arraycopy(personId, 0, this.personId, 0, Math.min(this.personId.length, personId.length));
     }
 
     public byte[] getMovieId()

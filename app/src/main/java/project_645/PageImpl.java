@@ -24,6 +24,10 @@ public class PageImpl implements Page, Serializable {
             ROW_SIZE = 115;
             MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
         }
+        if (dataFile == File.TEMPORARY) {
+            ROW_SIZE = 29;
+            MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
+        }
 
         rowList = new Row[MAX_TUPLES];
         bytesToPad = PAGE_SIZE - (MAX_TUPLES * ROW_SIZE);

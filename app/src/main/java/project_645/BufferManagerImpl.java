@@ -19,6 +19,7 @@ public class BufferManagerImpl extends BufferManager{
     private int currentMovieTitlePageId;
     private int currentWorkedOnPageId;
     private int currentPeoplePageId;
+    private int curTempTableId;
     private String filepath;
     private String diskFileName;
     private String movieIdIndexFileName;
@@ -47,6 +48,7 @@ public class BufferManagerImpl extends BufferManager{
         this.currentMovieTitlePageId = (int)(int)Files.size(Paths.get( filepath + movieTitleIndexFileName).toAbsolutePath()) / this.PAGE_SIZE;
         this.currentWorkedOnPageId = (int)Files.size(Paths.get( filepath + workedOnFilename).toAbsolutePath()) / this.PAGE_SIZE;
         this.currentPeoplePageId = (int)Files.size(Paths.get( filepath + peopleFileName).toAbsolutePath()) / this.PAGE_SIZE;
+        this.curTempTableId = 0;
     }
 
 //This method gets the page from buffer pool and disk(if not present in buffer pool)
@@ -146,6 +148,7 @@ public class BufferManagerImpl extends BufferManager{
             case File.MOVIE_TITLE_IDX -> getNextMovieTitleIndexPage();
             case File.WORKEDON -> getNextWorkedOnPageId();
             case File.PEOPLE -> getNextPersonPageId();
+            case File.TEMPORARY -> getNextTempTableId();
             default -> getNextPageId();
         };
     }
@@ -158,6 +161,7 @@ public class BufferManagerImpl extends BufferManager{
             case File.MOVIE_TITLE_IDX -> movieTitleIndexFileName;
             case File.WORKEDON -> workedOnFileName;
             case File.PEOPLE -> peopleFileName;
+            case File.TEMPORARY -> File.TEMPORARY.toString() + ".dat";
             default -> diskFileName;
         };
     }
@@ -226,6 +230,9 @@ public class BufferManagerImpl extends BufferManager{
         else if (dataFile == File.MOVIE_TITLE_IDX) {
             return (int)Files.size(Paths.get(filepath + movieTitleIndexFileName)) / PAGE_SIZE;
         }
+        else if (dataFile == File.TEMPORARY) {
+            return (int)Files.size(Paths.get(filepath + File.TEMPORARY.toString() + ".dat")) / PAGE_SIZE;
+        }
         return -1;
     }
 
@@ -270,6 +277,10 @@ public class BufferManagerImpl extends BufferManager{
                 curFile.write(row.personId);
                 curFile.write(row.name);
             }
+            else if (dataFile == File.TEMPORARY) {
+                curFile.write(row.movieId);
+                curFile.write(row.personId);
+            }
             else {
                 throw new IOException();
             }
@@ -292,6 +303,7 @@ public class BufferManagerImpl extends BufferManager{
             case File.MOVIE_TITLE_IDX -> new Row(new byte[9], new byte[30]);
             case File.WORKEDON -> new Row(new byte[9], new byte[10], new byte[20]);
             case File.PEOPLE -> new Row(new byte[10], new byte[105], true);
+            case File.TEMPORARY -> new Row(new byte[9], new byte[10]);
             default -> new Row(new byte[9], new byte[30]);
         };
     }
@@ -327,6 +339,9 @@ public class BufferManagerImpl extends BufferManager{
             }
             else if (dataFile == File.PEOPLE) {
                 populatePeopleRows(curPageRows, reader);
+            }
+            else if (dataFile == File.TEMPORARY) {
+                populateTempTableRows(curPageRows, reader);
             }
             else {
                 throw new Exception();
@@ -437,6 +452,33 @@ public class BufferManagerImpl extends BufferManager{
         }
     }
 
+    // Helper method to load the data into a page object in the case it is from the WorkedOn table
+    private void populateTempTableRows(Row[] curPageRows, BufferedInputStream reader) throws IOException {
+        for (int i = 0; i < curPageRows.length; ++i) {
+            byte[] curMovieId = new byte[Row.MOVIE_ID_SIZE];
+            byte[] curPersonId = new byte[Row.PERSON_ID_SIZE];
+
+            reader.read(curMovieId, 0, curMovieId.length);
+            reader.read(curPersonId, 0, curPersonId.length);
+
+            for (byte b : curMovieId) {
+                if (b != 0) {
+                    Row curRow = new Row(curMovieId, curPersonId, File.TEMPORARY);
+                    curPageRows[i] = curRow;
+                    break;
+                }
+            }
+
+            for (byte b : curPersonId) {
+                if (b != 0) {
+                    Row curRow = new Row(curMovieId, curPersonId, File.TEMPORARY);
+                    curPageRows[i] = curRow;
+                    break;
+                }
+            }
+        }
+    }
+
 
     @Override
     public void force() throws Exception {
@@ -476,6 +518,11 @@ public class BufferManagerImpl extends BufferManager{
     public int getNextPersonPageId() {
         return currentPeoplePageId++;
     }
+
+    public int getNextTempTableId() {
+        return curTempTableId++;
+    }
+
 
 //     meant to be run separately from the buffer manager, helper utility to initially populate the disk.
     public void populateDisk(int numRecords, String filepath) throws IOException {
