@@ -24,13 +24,13 @@ public interface Page {
      *
      * @return the ID of the page
      */
-    int getPid();
+    long getPid();
 
     /**
      *
      * @param pageId, the ID to update the page to
      */
-    void reassignPageId(int pageId);
+    void reassignPageId(long pageId);
 
     /**
      *

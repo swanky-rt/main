@@ -23,6 +23,8 @@ public class TATests {
     String fileName = "testdbfile.dat";
     String movieIdIndexFileName = "movieIdIndex.dat";
     String movieIdTitleFileName = "movieTitleIndex.dat";
+    String workedOnFileName = "workedOnTable.dat";
+    String peopleTableFileName = "peopleTable.dat";
 
     private BufferManagerImpl bufferManager;
     private RandomAccessFile randomAccessFile;
@@ -79,6 +81,34 @@ public class TATests {
                 e.printStackTrace();
             }
         }
+
+        Path workedOnFilePath = Paths.get(workingDirectory + testFileDirectory + workedOnFileName);
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(workedOnFilePath);
+            System.out.println("File created: " + workedOnFilePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(workedOnFilePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+
+        Path peopleTablePath = Paths.get(workingDirectory + testFileDirectory + peopleTableFileName);
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(peopleTablePath);
+            System.out.println("File created: " + peopleTablePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(peopleTablePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
     }
 
     @AfterEach
@@ -109,12 +139,30 @@ public class TATests {
             System.err.println("An error occurred while deleting the file.");
             e.printStackTrace();
         }
+
+        Path workedOnFilePath = Paths.get(workingDirectory, testFileDirectory, workedOnFileName);
+        try {
+            Files.deleteIfExists(workedOnFilePath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path peopleTableFilePath = Paths.get(workingDirectory, testFileDirectory, peopleTableFileName);
+        try {
+            Files.deleteIfExists(peopleTableFilePath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
     }
 
     @Test
     void testCreationAndEviction() throws Exception {
         BufferManager bf = new BufferManagerImpl(100 * 4096, workingDirectory + testFileDirectory, fileName,
-                movieIdIndexFileName, movieIdTitleFileName);
+                movieIdIndexFileName, movieIdTitleFileName, workedOnFileName, peopleTableFileName);
         int counter = 0;
         for (int i = 0; i < 10000; ++i) {
             Page page = bf.createPage(File.DISK);
@@ -160,7 +208,7 @@ public class TATests {
     @Test
     void testLRUEviction() throws Exception {
         BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName,
-                movieIdIndexFileName, movieIdTitleFileName);
+                movieIdIndexFileName, movieIdTitleFileName, workedOnFileName, peopleTableFileName);
 
         for (int i = 0; i < 5; ++i) {
             Page page = bf.createPage(File.DISK);
@@ -181,7 +229,7 @@ public class TATests {
     @Test
     void testPinnedLRUEviction() throws Exception {
         BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName,
-                movieIdIndexFileName, movieIdTitleFileName);
+                movieIdIndexFileName, movieIdTitleFileName, workedOnFileName, peopleTableFileName);
         Page page = bf.createPage(File.DISK);
         Page tempPage = bf.createPage(File.DISK);
         bf.unpinPage(tempPage.getPid(), File.DISK);
@@ -205,7 +253,7 @@ public class TATests {
     @Test
     void testEditNotWrittenIfNotMarkedDirty() throws Exception {
         BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName,
-                movieIdIndexFileName, movieIdTitleFileName);
+                movieIdIndexFileName, movieIdTitleFileName, workedOnFileName, peopleTableFileName);
         Page page = bf.createPage(File.DISK);
         page.insertRow(new Row("Movie1".getBytes(StandardCharsets.US_ASCII), "Title1".getBytes(StandardCharsets.US_ASCII)));
         page.markNotDirty();

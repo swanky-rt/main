@@ -23,7 +23,8 @@ public class BPlusTreeTests {
     private Page page;
     String movieIdIndexFileName = "movieIdIndex.dat";
     String movieTitleIndexFileName = "movieTitleIndex.dat";
-
+    String workedOnFileName = "workedOnTable.dat";
+    String peopleTableFileName = "peopleTable.dat";
     String workingDirectory = System.getProperty("user.dir");
     String testFileDirectory = "/src/test/java/project_645/DB files/";
     String testFilePath = System.getProperty("user.dir") + testFileDirectory;
@@ -53,6 +54,24 @@ public class BPlusTreeTests {
         Path movieTitlePath = Paths.get(workingDirectory, testFileDirectory, movieTitleIndexFileName);
         try {
             Files.deleteIfExists(movieTitlePath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path workedOnFilePath = Paths.get(workingDirectory, testFileDirectory, workedOnFileName);
+        try {
+            Files.deleteIfExists(workedOnFilePath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path peopleTableFilePath = Paths.get(workingDirectory, testFileDirectory, peopleTableFileName);
+        try {
+            Files.deleteIfExists(peopleTableFilePath); // Deletes the file if it exists
             System.out.println("File deleted successfully.");
         } catch (IOException e) {
             System.err.println("An error occurred while deleting the file.");
@@ -109,11 +128,39 @@ public class BPlusTreeTests {
             }
         }
 
+        Path workedOnFilePath = Paths.get(workingDirectory + testFileDirectory + workedOnFileName);
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(workedOnFilePath);
+            System.out.println("File created: " + workedOnFilePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(workedOnFilePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+
+        Path peopleTablePath = Paths.get(workingDirectory + testFileDirectory + peopleTableFileName);
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(peopleTablePath);
+            System.out.println("File created: " + peopleTablePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(peopleTablePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+
     }
 
     @Test
     public void testSingleInsertAndSearch() throws Exception {
-        BufferManagerImpl bufferManager = new BufferManagerImpl(4*4096, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName);
+        BufferManagerImpl bufferManager = new BufferManagerImpl(4*4096, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleTableFileName);
 
         BTreeImpl index = new BTreeImpl(bufferManager, 1, File.MOVIE_ID_IDX);
 
@@ -134,7 +181,7 @@ public class BPlusTreeTests {
 
     @Test
     public void testSplitOfLeafNode() throws Exception {
-        BufferManagerImpl bufferManager = new BufferManagerImpl(4*4096, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName);
+        BufferManagerImpl bufferManager = new BufferManagerImpl(4*4096, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleTableFileName);
 
         BTreeImpl index = new BTreeImpl(bufferManager, 1, File.MOVIE_ID_IDX);
         index.insert("key1", new Rid(0, 0));
@@ -179,7 +226,7 @@ public class BPlusTreeTests {
 
     @Test
     public void testLargeInsertionSearchAndRangeSearch() throws Exception {
-        BufferManagerImpl bufferManager = new BufferManagerImpl(20*4096, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName);
+        BufferManagerImpl bufferManager = new BufferManagerImpl(20*4096, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleTableFileName);
 
         BTreeImpl index = new BTreeImpl(bufferManager, 5, File.MOVIE_ID_IDX);
 
@@ -254,7 +301,7 @@ public class BPlusTreeTests {
     // Note, subsequent indexes should have the same order.
     @Test
     public void testFindRoot() throws Exception {
-        BufferManagerImpl bufferManager = new BufferManagerImpl(20*4096, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName);
+        BufferManagerImpl bufferManager = new BufferManagerImpl(20*4096, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleTableFileName);
 
         BTreeImpl index = new BTreeImpl(bufferManager, 1, true, File.MOVIE_ID_IDX);
 
@@ -282,7 +329,7 @@ public class BPlusTreeTests {
 
     @Test
     public void testPopulateIndexAndBulkLoadIndex() throws Exception {
-        BufferManagerImpl bufferManager = new BufferManagerImpl(20*4096, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName);
+        BufferManagerImpl bufferManager = new BufferManagerImpl(20*4096, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleTableFileName);
 
         Page newPage = bufferManager.createPage(File.DISK);
 
