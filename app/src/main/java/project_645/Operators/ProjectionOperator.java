@@ -1,24 +1,28 @@
 package project_645.Operators;
 
-import project_645.BufferManagerImpl;
-import project_645.File;
+import project_645.*;
 import project_645.Record;
-import project_645.Row;
 
 
 import java.io.IOException;
 
 public class ProjectionOperator implements Operator {
-    private final Operator child;
+    private Operator child;
     // private final String[] columns;
     private final File relation;
     private final BufferManagerImpl bufferManager;
+    private boolean firstNext;
+    private Page currentPage;
+    private final boolean prematerialized;
 
-    public ProjectionOperator(Operator child, String[] columns, File relation, BufferManagerImpl bufferManager) {
+    public ProjectionOperator(Operator child, String[] columns, File relation, BufferManagerImpl bufferManager, boolean prematerialized) {
         this.child = child;
         // this.columns = columns;
         this.relation = relation;
         this.bufferManager = bufferManager;
+        this.firstNext = true;
+        this.currentPage = null;
+        this.prematerialized = prematerialized;
     }
 
     @Override
@@ -33,60 +37,101 @@ public class ProjectionOperator implements Operator {
 
     @Override
     public Record next() throws Exception {
-        if (relation == File.TEMPORARY) {
+        if (firstNext && relation == File.TEMPORARY && !prematerialized) {
+            materializeTable();
+        }
 
+        if (firstNext) {
+            firstNext = false;
+            this.child = new TableScanOperator(bufferManager, relation, new String[2]);
+            this.child.open();
         }
         Record input;
         while ((input = child.next()) != null) {
-            byte[] newMovieId = new byte[9];
-            byte[] newTitle = new byte[30];
-
-            // Optional fields (set to empty or null)
-            byte[] newPersonId = new byte[10];   // Empty for non-relevant fields
-            byte[] newCategory = new byte[20];   // Empty for non-relevant fields
-            byte[] newName = new byte[105];      // Empty for non-relevant fields
-
-            // Loop through the columns being projected
-
-            Row newRow;
-            switch (this.relation) {
-                case File.DISK:
-                    newMovieId = input.getMovieIdBytes();
-                    newTitle = input.getMovieTitleBytes();
-                    newRow = new Row(newMovieId, newTitle);
-                    break;
-                case File.WORKEDON:
-                    newMovieId = input.getMovieIdBytes();
-                    newPersonId = input.getPersonIdBytes();
-                    newCategory = input.getCategoryBytes();
-                    newRow = new Row(newMovieId, newPersonId, newCategory);
-                    break;
-                case File.PEOPLE:
-                    newPersonId = input.getPersonIdBytes();
-                    newName = input.getNameBytes();
-                    newRow = new Row(newPersonId, newName, true);
-                    break;
-                case File.TEMPORARY:
-                    newMovieId = input.getMovieIdBytes();
-                    newPersonId = input.getPersonIdBytes();
-                    newRow = new Row(newMovieId, newPersonId);
-                    break;
-                default:
-                    throw new Exception();
-            }
-
-            // Create Row with the relevant fields (movieId, title) and use dummy values for the others
-              // Create Row with movieId and title
-
-            // Create a Record object and pass the Row along with the other fields (personId, category, name)
-            return new Record(newRow, newPersonId, newCategory, newName);
+            return createNewRecord(input);
+        }
+        // unpin the last page in the relation after all records are exhausted
+        if (relation == File.TEMPORARY) {
+            bufferManager.unpinPage(currentPage.getPid(), File.TEMPORARY);
         }
         return null;
     }
 
     @Override
     public void close() {
+
+        bufferManager.deleteTemporaryTable();
         child.close();
+    }
+
+    public void materializeTable() throws Exception {
+        currentPage = bufferManager.createPage(File.TEMPORARY);
+
+        int curMaterializedRecord = 0;
+        Record input;
+        while ((input = child.next()) != null) {
+            createNewRecord(input);
+            curMaterializedRecord += 1;
+            if (curMaterializedRecord % 100000 == 0) {
+                System.out.println("" + curMaterializedRecord + " records materialized");
+            }
+        }
+        if (relation == File.TEMPORARY) {
+            bufferManager.unpinPage(currentPage.getPid(), File.TEMPORARY);
+        }
+    }
+
+    // helper method to construct record/row
+    private Record createNewRecord(Record input) throws Exception {
+        byte[] newMovieId = new byte[9];
+        byte[] newTitle = new byte[30];
+
+        // Optional fields (set to empty or null)
+        byte[] newPersonId = new byte[10];   // Empty for non-relevant fields
+        byte[] newCategory = new byte[20];   // Empty for non-relevant fields
+        byte[] newName = new byte[105];      // Empty for non-relevant fields
+
+        // Loop through the columns being projected
+
+        Row newRow;
+        switch (this.relation) {
+            case File.DISK:
+                newMovieId = input.getMovieIdBytes();
+                newTitle = input.getMovieTitleBytes();
+                newRow = new Row(newMovieId, newTitle);
+                break;
+            case File.WORKEDON:
+                newMovieId = input.getMovieIdBytes();
+                newPersonId = input.getPersonIdBytes();
+                newCategory = input.getCategoryBytes();
+                newRow = new Row(newMovieId, newPersonId, newCategory);
+                break;
+            case File.PEOPLE:
+                newPersonId = input.getPersonIdBytes();
+                newName = input.getNameBytes();
+                newRow = new Row(newPersonId, newName, true);
+                break;
+            case File.TEMPORARY:
+                newMovieId = input.getMovieIdBytes();
+                newPersonId = input.getPersonIdBytes();
+                newRow = new Row(newMovieId, newPersonId, File.TEMPORARY);
+                break;
+            default:
+                throw new Exception();
+        }
+
+        // Create Row with the relevant fields (movieId, title) and use dummy values for the others
+        // Create Row with movieId and title
+
+        // Create a Record object and pass the Row along with the other fields (personId, category, name)
+        if (relation == File.TEMPORARY) {
+            currentPage.insertRow(newRow);
+            if (currentPage.isFull()) {
+                bufferManager.unpinPage(currentPage.getPid(), File.TEMPORARY);
+                currentPage = bufferManager.createPage(File.TEMPORARY);
+            }
+        }
+        return new Record(newRow, newPersonId, newCategory, newName);
     }
 
     // Helper method to convert byte array to int

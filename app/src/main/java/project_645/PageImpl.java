@@ -25,7 +25,7 @@ public class PageImpl implements Page, Serializable {
             MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
         }
         if (dataFile == File.TEMPORARY) {
-            ROW_SIZE = 29;
+            ROW_SIZE = 19;
             MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
         }
 

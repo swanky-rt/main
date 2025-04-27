@@ -1,5 +1,6 @@
 package project_645;
 
+import project_645.Operators.ProjectionOperator;
 import project_645.Operators.SelectionOperator;
 import project_645.Operators.TableScanOperator;
 
@@ -39,16 +40,15 @@ public class QueryExecutor {
 //            records.add(result1);  // CSV format without spaces
 //        }
         TableScanOperator workedOnScan = new TableScanOperator(bufferManager, File.WORKEDON, new String[] {"movieId", "personId", "category"});
-        workedOnScan.open();
         Record result2;
-        long count = 0;
-        while ((result2 = workedOnScan.next()) != null) {
-            count += 1;  // CSV format without spaces
-        }
+        // long count = 0;
+//        while ((result2 = workedOnScan.next()) != null) {
+//            count += 1;  // CSV format without spaces
+//        }
 
 
 
-        System.out.println(count);
+        // System.out.println(count);
 //        TableScanOperator peopleScan = new TableScanOperator(bufferManager, File.PEOPLE, new String[] {"personId", "name"});
 //        Record result3;
 //        while ((result3 = peopleScan.next()) != null) {
@@ -68,34 +68,51 @@ public class QueryExecutor {
                 "director"  // Filtering based on category being "director"
         );
 
-        workedOnSelection.open();
-        Record curResult;
-        long curRecordCount = 0;
-        while ((curResult = workedOnSelection.next()) != null) {
-            // System.out.println(curResult.getCategory());
-            curRecordCount += 1;
-            if (curRecordCount % 100000 == 0) {
-                System.gc();
-                System.out.println(bufferManager.bufferPool.size());
-                System.out.println(bufferManager.pinnedPages.size());
-                System.out.println(bufferManager.lru.size());
-                System.out.println(curRecordCount);
-                System.out.println(bufferManager.bufferPool.get(bufferManager.lru.getFirst()).getPid());
-                System.out.println("Initial Heap Size: " + Runtime.getRuntime().totalMemory());
-                System.out.println("Max Heap Size: " + Runtime.getRuntime().maxMemory());
-                System.out.println("Free Heap Space: " + Runtime.getRuntime().freeMemory());
-            }
-        }
+//        Record curResult;
+//        long curRecordCount = 0;
+//        while ((curResult = workedOnSelection.next()) != null) {
+//            // System.out.println(curResult.getCategory());
+//            curRecordCount += 1;
+//            if (curRecordCount % 100000 == 0) {
+//                System.gc();
+//                System.out.println(bufferManager.bufferPool.size());
+//                System.out.println(bufferManager.pinnedPages.size());
+//                System.out.println(bufferManager.lru.size());
+//                System.out.println(curRecordCount);
+//                System.out.println(bufferManager.bufferPool.get(bufferManager.lru.getFirst()).getPid());
+//                System.out.println("Initial Heap Size: " + Runtime.getRuntime().totalMemory());
+//                System.out.println("Max Heap Size: " + Runtime.getRuntime().maxMemory());
+//                System.out.println("Free Heap Space: " + Runtime.getRuntime().freeMemory());
+//            }
+//        }
 
-        System.out.println(curRecordCount);
+        // System.out.println(curRecordCount);
+
+
 
 
 
 //        // Step 3: WorkedOn projection (keep only movieId and personId)
-//        ProjectionOperator workedOnProject = new ProjectionOperator(
-//                workedOnSelection,
-//                new String[] {"movieId", "personId"}
-//        );
+        ProjectionOperator workedOnProject = new ProjectionOperator(
+                workedOnSelection,
+                new String[] {"movieId", "personId"},
+                File.TEMPORARY,
+                bufferManager,
+                false
+        );
+
+        workedOnProject.open();
+        Record curResult;
+        int curResultCount = 0;
+        while ((curResult = workedOnProject.next()) != null) {
+            curResultCount += 1;
+            if (curResultCount % 100000 == 0) {
+                System.out.println("" + curResultCount + " number of projections observed");
+            }
+        }
+
+        System.out.println("" + curResultCount + " number of projections observed");
+        bufferManager.force();
 //
 //        // Step 4: First Join — Movies ⨝ WorkedOn on movieId
 //        BNLJoinOperator join1 = new BNLJoinOperator(

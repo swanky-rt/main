@@ -117,11 +117,45 @@ public class BufferManagerImpl extends BufferManager{
         throw new Exception("Every page in the buffer pool is currently pinned");
     }
 
+    // deletes the temporary file and marks the remaining pages as not dirty
+    public void deleteTemporaryTable() {
+        for (Page page : bufferPool.values()) {
+            unpinPage(page.getPid(), File.TEMPORARY);
+            page.markNotDirty();
+        }
+        Path path = Paths.get(this.filepath + File.TEMPORARY.toString() + ".dat");
+        try {
+            Files.deleteIfExists(path); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+    }
+
 //This method creates the new page
 
     @Override
     public Page createPage(File dataFile){
         Page page = null;
+        if (dataFile == File.TEMPORARY) {
+            String fileName = getDataFileName(File.TEMPORARY);
+            String curPathStr = filepath + fileName;
+            Path curPath = Paths.get(curPathStr);
+            try {
+                if (!Files.exists(curPath)) {
+                    Files.createFile(curPath);
+                    System.out.println("File created: " + curPath.toAbsolutePath());
+                    }
+            } catch (IOException e) {
+                if (Files.exists(curPath)) {
+                    System.out.println("File already exists.");
+                } else {
+                    System.err.println("An error occurred while creating the file.");
+                    e.printStackTrace();
+                }
+            }
+        }
         try {
             long pageId = getNextCreatePageId(dataFile);
             String pageIdentifier = constructPageIdentifier(pageId, dataFile);
@@ -288,6 +322,8 @@ public class BufferManagerImpl extends BufferManager{
             else {
                 throw new IOException();
             }
+//            long currentPosition = curFile.getFilePointer();
+//            System.out.println("Current file pointer position: " + currentPosition);
         }
 
         curFile.write(new byte[page.getBytesToPad() - 1]);
