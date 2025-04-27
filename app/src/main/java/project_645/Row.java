@@ -49,5 +49,17 @@ public class Row implements Serializable {
         return title;
     }
 
+    public byte[] getPersonId() {
+        return personId;
+    }
+
+    public byte[] getCategory() {
+        return category;
+    }
+
+    public byte[] getName() {
+        return name;
+    }
+
 }
 

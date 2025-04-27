@@ -46,7 +46,7 @@ public class BufferManagerImpl extends BufferManager{
         this.currentPageID = (int)Files.size(Paths.get( filepath + diskFileName).toAbsolutePath()) / this.PAGE_SIZE;
         this.currentMovieIdPage = (int)Files.size(Paths.get( filepath + movieIdIndexFileName).toAbsolutePath()) / this.PAGE_SIZE;
         this.currentMovieTitlePageId = (int)(int)Files.size(Paths.get( filepath + movieTitleIndexFileName).toAbsolutePath()) / this.PAGE_SIZE;
-        this.currentWorkedOnPageId = (int)Files.size(Paths.get( filepath + workedOnFilename).toAbsolutePath()) / this.PAGE_SIZE;
+        this.currentWorkedOnPageId = (int)(Files.size(Paths.get( filepath + workedOnFilename).toAbsolutePath()) / (long)this.PAGE_SIZE);
         this.currentPeoplePageId = (int)Files.size(Paths.get( filepath + peopleFileName).toAbsolutePath()) / this.PAGE_SIZE;
         this.curTempTableId = 0;
     }
@@ -219,19 +219,19 @@ public class BufferManagerImpl extends BufferManager{
             return getNumPagesOnDisk();
         }
         else if (dataFile == File.WORKEDON) {
-            return (int)Files.size(Paths.get(filepath + workedOnFileName)) / PAGE_SIZE;
+            return (int)(Files.size(Paths.get(filepath + workedOnFileName)) / (long)PAGE_SIZE);
         }
         else if (dataFile == File.PEOPLE) {
-            return (int)Files.size(Paths.get(filepath + peopleFileName)) / PAGE_SIZE;
+            return (int)(Files.size(Paths.get(filepath + peopleFileName)) / (long)PAGE_SIZE);
         }
         else if (dataFile == File.MOVIE_ID_IDX) {
-            return (int)Files.size(Paths.get(filepath + movieIdIndexFileName)) / PAGE_SIZE;
+            return (int)(Files.size(Paths.get(filepath + movieIdIndexFileName)) / (long)PAGE_SIZE);
         }
         else if (dataFile == File.MOVIE_TITLE_IDX) {
-            return (int)Files.size(Paths.get(filepath + movieTitleIndexFileName)) / PAGE_SIZE;
+            return (int)(Files.size(Paths.get(filepath + movieTitleIndexFileName)) / (long)PAGE_SIZE);
         }
         else if (dataFile == File.TEMPORARY) {
-            return (int)Files.size(Paths.get(filepath + File.TEMPORARY.toString() + ".dat")) / PAGE_SIZE;
+            return (int)(Files.size(Paths.get(filepath + File.TEMPORARY.toString() + ".dat")) / (long)PAGE_SIZE);
         }
         return -1;
     }
