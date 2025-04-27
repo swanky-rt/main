@@ -120,7 +120,10 @@ public class BufferManagerImpl extends BufferManager{
     // deletes the temporary file and marks the remaining pages as not dirty
     public void deleteTemporaryTable() {
         for (Page page : bufferPool.values()) {
-            unpinPage(page.getPid(), File.TEMPORARY);
+            String key = constructPageIdentifier(page.getPid(), File.TEMPORARY);
+            while (pinnedPages.containsKey(key)) {
+                unpinPage(page.getPid(), File.TEMPORARY);
+            }
             page.markNotDirty();
         }
         Path path = Paths.get(this.filepath + File.TEMPORARY.toString() + ".dat");
