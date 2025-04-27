@@ -38,6 +38,9 @@ public class TableScanOperator implements Operator {
 
     @Override
     public Record next() throws Exception {
+        if (this.currentPage == null) {
+            int test = 1;
+        }
         if (hasNext()) {
             Row row = currentPage.getRow(curRowIndex);  // Get the next row from the current page
             curRowIndex++;  // Move to the next row
@@ -49,14 +52,13 @@ public class TableScanOperator implements Operator {
                 if (hasNext()) {
                     currentPage = bufferManager.getPage(currentPageIndex, tableFile);
                 }
-
             }
             // For Movies table, we only need movieId and title.
             // Pass null for personId, category, and name.
             return new Record(row, null, null, null);  // Pass null for unused fields (personId, category, name)
         }
-        return null;
-    }
+    return null;
+}
 
     @Override
     public void close() {

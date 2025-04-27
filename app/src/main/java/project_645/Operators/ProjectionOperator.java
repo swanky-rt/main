@@ -39,6 +39,7 @@ public class ProjectionOperator implements Operator {
     public Record next() throws Exception {
         if (firstNext && relation == File.TEMPORARY && !prematerialized) {
             materializeTable();
+            bufferManager.unpinPage(currentPage.getPid(), File.TEMPORARY);
         }
 
         if (firstNext) {
@@ -48,12 +49,9 @@ public class ProjectionOperator implements Operator {
         }
         Record input;
         while ((input = child.next()) != null) {
-            return createNewRecord(input);
+            return createNewRecord(input, false);
         }
         // unpin the last page in the relation after all records are exhausted
-        if (relation == File.TEMPORARY) {
-            bufferManager.unpinPage(currentPage.getPid(), File.TEMPORARY);
-        }
         return null;
     }
 
@@ -70,7 +68,7 @@ public class ProjectionOperator implements Operator {
         int curMaterializedRecord = 0;
         Record input;
         while ((input = child.next()) != null) {
-            createNewRecord(input);
+            createNewRecord(input, true);
             curMaterializedRecord += 1;
             if (curMaterializedRecord % 100000 == 0) {
                 System.out.println("" + curMaterializedRecord + " records materialized");
@@ -82,7 +80,7 @@ public class ProjectionOperator implements Operator {
     }
 
     // helper method to construct record/row
-    private Record createNewRecord(Record input) throws Exception {
+    private Record createNewRecord(Record input, boolean materialize) throws Exception {
         byte[] newMovieId = new byte[9];
         byte[] newTitle = new byte[30];
 
@@ -124,7 +122,7 @@ public class ProjectionOperator implements Operator {
         // Create Row with movieId and title
 
         // Create a Record object and pass the Row along with the other fields (personId, category, name)
-        if (relation == File.TEMPORARY) {
+        if (relation == File.TEMPORARY && materialize) {
             currentPage.insertRow(newRow);
             if (currentPage.isFull()) {
                 bufferManager.unpinPage(currentPage.getPid(), File.TEMPORARY);
