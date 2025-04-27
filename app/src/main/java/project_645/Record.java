@@ -45,14 +45,14 @@ public class Record {
     }
 
     public String getPersonIdDeserialized() {
-        return personId == null ? null : new String(row.getPersonId()).trim();  // Convert personId (byte array) to String
+        return new String(row.getPersonId()).trim();  // Convert personId (byte array) to String
     }
 
     public String getCategory() {
-        return category == null ? null : new String(row.getCategory()).trim();  // Convert category (byte array) to String
+        return new String(row.getCategory()).trim();  // Convert category (byte array) to String
     }
 
     public String getName() {
-        return name == null ? null : new String(row.getName()).trim();  // Convert name (byte array) to String
+        return new String(row.getName()).trim();  // Convert name (byte array) to String
     }
 }

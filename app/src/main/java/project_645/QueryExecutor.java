@@ -3,6 +3,8 @@ package project_645;
 import project_645.Operators.SelectionOperator;
 import project_645.Operators.TableScanOperator;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -37,10 +39,16 @@ public class QueryExecutor {
 //            records.add(result1);  // CSV format without spaces
 //        }
         TableScanOperator workedOnScan = new TableScanOperator(bufferManager, File.WORKEDON, new String[] {"movieId", "personId", "category"});
+        workedOnScan.open();
         Record result2;
-//        while ((result2 = workedOnScan.next()) != null) {
-//            System.out.println(result2.getMovieId() + "," + result2.getPersonId() + "," + result2.getCategory());  // CSV format without spaces
-//        }
+        long count = 0;
+        while ((result2 = workedOnScan.next()) != null) {
+            count += 1;  // CSV format without spaces
+        }
+
+
+
+        System.out.println(count);
 //        TableScanOperator peopleScan = new TableScanOperator(bufferManager, File.PEOPLE, new String[] {"personId", "name"});
 //        Record result3;
 //        while ((result3 = peopleScan.next()) != null) {
@@ -64,10 +72,22 @@ public class QueryExecutor {
         Record curResult;
         long curRecordCount = 0;
         while ((curResult = workedOnSelection.next()) != null) {
+            // System.out.println(curResult.getCategory());
             curRecordCount += 1;
+            if (curRecordCount % 100000 == 0) {
+                System.gc();
+                System.out.println(bufferManager.bufferPool.size());
+                System.out.println(bufferManager.pinnedPages.size());
+                System.out.println(bufferManager.lru.size());
+                System.out.println(curRecordCount);
+                System.out.println(bufferManager.bufferPool.get(bufferManager.lru.getFirst()).getPid());
+                System.out.println("Initial Heap Size: " + Runtime.getRuntime().totalMemory());
+                System.out.println("Max Heap Size: " + Runtime.getRuntime().maxMemory());
+                System.out.println("Free Heap Space: " + Runtime.getRuntime().freeMemory());
+            }
         }
 
-        int test3 = 2;
+        System.out.println(curRecordCount);
 
 
 

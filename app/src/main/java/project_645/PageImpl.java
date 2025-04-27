@@ -12,11 +12,11 @@ public class PageImpl implements Page, Serializable {
     private int curRowCount = 0;
     private boolean isDirty = true;
     private String[][] deserializedRows = new String[MAX_TUPLES][2];
-    private int pageId;
+    private long pageId;
     private File dataFile;
     private int pinCount = 0;
 
-    public PageImpl(int pageId, File dataFile){
+    public PageImpl(long pageId, File dataFile){
         this.pageId = pageId;
         this.dataFile = dataFile;
 
@@ -60,13 +60,13 @@ public class PageImpl implements Page, Serializable {
 
     //This method returns the id of the page
     @Override
-    public int getPid() {
+    public long getPid() {
         return this.pageId;
     }
 
     //This method updates the current id of the page
     @Override
-    public void reassignPageId(int pageId) {
+    public void reassignPageId(long pageId) {
         this.pageId = pageId;
     }
 

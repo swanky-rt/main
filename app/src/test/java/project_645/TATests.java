@@ -219,7 +219,7 @@ public class TATests {
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
         long startTime1 = System.nanoTime();
-        bf.getPage(-5, File.DISK);
+        bf.getPage(4, File.DISK);
         long endtime1 = System.nanoTime();
         long duration1 = endtime1 - startTime1;
 

@@ -35,7 +35,7 @@ public class Utilities {
          Path dbFilePath = Paths.get( filepath + diskFileName).toAbsolutePath();
         // create page
         Page newPage = bf.createPage(File.DISK);
-        int pageId = newPage.getPid();
+        int pageId = (int)newPage.getPid();
         System.out.print(pageId+ "the page number");
         newPage = bf.getPage(pageId, File.DISK);
         BufferedReader reader = new BufferedReader(new FileReader(filepath + this.filename));
@@ -64,7 +64,7 @@ public class Utilities {
             bf.unpinPage(i, File.DISK);
         }
         //get page back
-        pageId = newPage.getPid();
+        pageId = (int)newPage.getPid();
         newPage = bf.getPage(pageId, File.DISK);
         bf.markDirty(pageId, File.DISK);
 

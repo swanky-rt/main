@@ -210,9 +210,9 @@ public class BufferImplTest {
 
     @Test
     public void testgetNextPageId(){
-        int nextPageId = bufferManager.getNextPageId();
+        int nextPageId = (int)bufferManager.getNextPageId();
         assertEquals(0, nextPageId);
-        nextPageId = bufferManager.getNextPageId();
+        nextPageId = (int)bufferManager.getNextPageId();
         assertEquals(1, nextPageId);
 
     }
@@ -286,7 +286,7 @@ public class BufferImplTest {
 
         // now, create a page in the buffer manager.
         Page page1 = bf.createPage(File.DISK);
-        int page1Id = page1.getPid();
+        int page1Id = (int)page1.getPid();
         // check that the page is returned by getPage()
         Page retreivedPage = bf.getPage(page1.getPid(), File.DISK);
         // at this point should be the same reference since it was never evicted from the buffer pool
@@ -295,7 +295,7 @@ public class BufferImplTest {
         bf.unpinPage(page1.getPid(), File.DISK);
         // fill the buffer pool with only pinned pages
         Page page2 = bf.createPage(File.DISK);
-        int page2Id = page2.getPid();
+        int page2Id = (int)page2.getPid();
         Page page3 = bf.createPage(File.DISK);
         Page page4 = bf.createPage(File.DISK);
         // Now, attempting to create a new page should return null. There is no space in the buffer pool,
