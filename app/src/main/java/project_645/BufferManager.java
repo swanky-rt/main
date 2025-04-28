@@ -24,7 +24,7 @@ public abstract class BufferManager {
          * The page is immediately pinned.
          * @return The Page object whose content is stored in a frame of the buffer pool manager.
          */
-        abstract Page createPage(File dataFile) throws Exception;
+    public abstract Page createPage(File dataFile) throws Exception;
 
         /**
          * Marks a page as dirty, indicating it needs to be written to disk before eviction.

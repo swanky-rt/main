@@ -74,8 +74,8 @@ public class BTreeImpl implements BTree<String, Rid> {
     public void insert(String key, Rid rid) {
         int leafPid = findLeafPageId(key.getBytes());
         byte[] arrRid = new byte[9];
-        storeIntInByteArray(rid.getPageId(), arrRid, 0);
-        storeIntInByteArray(rid.getSlotId(), arrRid, 3);
+        storeIntInByteArray((int)rid.getPageId(), arrRid, 0);
+        storeIntInByteArray((int)rid.getSlotId(), arrRid, 3);
         insertIntoLeaf(leafPid, padByteArrayToLength(key.getBytes(), 30), arrRid);
     }
 

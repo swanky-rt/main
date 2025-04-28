@@ -26,12 +26,13 @@ public class Main {
             // utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
             BufferManagerImpl bufferManager = new BufferManagerImpl(1000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+            // bufferManager.populateDisk(10000, filePath, "A", "z");
 
             // utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
 
             QueryExecutor testExecutor = new QueryExecutor();
 
-            testExecutor.executeQuery("A", "Z", 1000 * 4096);
+            testExecutor.executeQuery("A", "z", 50000 * 4096);
 
 
              // Note: The index objects are defined within the utilities methods themselves. If you want to create

@@ -1,5 +1,6 @@
 package project_645;
 
+import project_645.Operators.BNLJoinOperator;
 import project_645.Operators.ProjectionOperator;
 import project_645.Operators.SelectionOperator;
 import project_645.Operators.TableScanOperator;
@@ -39,6 +40,17 @@ public class QueryExecutor {
 //        while ((result1 = moviesScan.next()) != null) {
 //            records.add(result1);  // CSV format without spaces
 //        }
+
+
+        SelectionOperator testRangeSelection = new SelectionOperator(moviesScan, ColumnNames.TITLE, "C", "G", bufferManager);
+
+//        testRangeSelection.open();
+//        Record selectionResult;
+//        while ((selectionResult = testRangeSelection.next()) != null) {
+//            System.out.println(selectionResult.getTitleDeserialized());
+//        }
+
+
         TableScanOperator workedOnScan = new TableScanOperator(bufferManager, File.WORKEDON, new String[] {"movieId", "personId", "category"});
         Record result2;
         // long count = 0;
@@ -49,10 +61,11 @@ public class QueryExecutor {
 
 
         // System.out.println(count);
-//        TableScanOperator peopleScan = new TableScanOperator(bufferManager, File.PEOPLE, new String[] {"personId", "name"});
+        TableScanOperator peopleScan = new TableScanOperator(bufferManager, File.PEOPLE, new String[] {"personId", "name"});
+//        peopleScan.open();
 //        Record result3;
 //        while ((result3 = peopleScan.next()) != null) {
-//            System.out.println(result3.getPersonId() + "," + result3.getName());  // CSV format without spaces
+//            System.out.println(result3.getPersonIdDeserialized() + "," + result3.getName());  // CSV format without spaces
 //        }
 //        SelectionOperator movieSelection = new SelectionOperator(
 //                moviesScan,
@@ -65,7 +78,8 @@ public class QueryExecutor {
         SelectionOperator workedOnSelection = new SelectionOperator(
                 workedOnScan,
                 ColumnNames.CATEGORY,
-                "director"  // Filtering based on category being "director"
+                "director",  // Filtering based on category being "director"
+                bufferManager
         );
 
 //        Record curResult;
@@ -98,21 +112,44 @@ public class QueryExecutor {
                 new String[] {"movieId", "personId"},
                 File.TEMPORARY,
                 bufferManager,
-                false
+                true
         );
 
         workedOnProject.open();
         Record curResult;
         int curResultCount = 0;
-        while ((curResult = workedOnProject.next()) != null) {
-            curResultCount += 1;
-            if (curResultCount % 100000 == 0) {
-                System.out.println("" + curResultCount + " number of projections observed");
-            }
-        }
 
-        System.out.println("" + curResultCount + " number of projections observed");
-        bufferManager.force();
+
+
+//        while ((curResult = workedOnProject.next()) != null) {
+//            curResultCount += 1;
+//            if (curResultCount % 100000 == 0) {
+//                System.out.println("" + curResultCount + " number of projections observed");
+//            }
+//        }
+//
+//        System.out.println("" + curResultCount + " number of projections observed");
+//        workedOnProject.close();
+//        bufferManager.force();
+
+        BNLJoinOperator bnlJoinOperator = new BNLJoinOperator(testRangeSelection, workedOnProject,
+                ColumnNames.MOVIEID, ColumnNames.MOVIEID, bufferManager, File.BNL1);
+
+//        bnlJoinOperator.open();
+
+         BNLJoinOperator bnlJoinOperator2 = new BNLJoinOperator(bnlJoinOperator, peopleScan, ColumnNames.PERSONID, ColumnNames.PERSONID, bufferManager, File.BNL2);
+         bnlJoinOperator2.open();
+         Record curResult2;
+
+         while ((curResult2 = bnlJoinOperator2.next()) != null) {
+             System.out.println(curResult2.getMovieIdDeserialized() + ", " + curResult2.getTitleDeserialized() + ", " + curResult2.getPersonIdDeserialized() + ", " + curResult2.getName());
+         }
+
+        int currentCount = 0;
+        Record nextRecord;
+//        while ((nextRecord = bnlJoinOperator.next()) != null) {
+//            System.out.println(nextRecord.getMovieIdDeserialized() + ", " + nextRecord.getTitleDeserialized() + ", " + nextRecord.getPersonIdDeserialized());
+//        }
 //
 //        // Step 4: First Join — Movies ⨝ WorkedOn on movieId
 //        BNLJoinOperator join1 = new BNLJoinOperator(

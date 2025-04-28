@@ -55,7 +55,7 @@ public class TableScanOperator implements Operator {
             }
             // For Movies table, we only need movieId and title.
             // Pass null for personId, category, and name.
-            return new Record(row, null, null, null);  // Pass null for unused fields (personId, category, name)
+            return new Record(row, null, null, null, new Rid(currentPageIndex, curRowIndex));  // Pass null for unused fields (personId, category, name)
         }
     return null;
 }
@@ -67,5 +67,15 @@ public class TableScanOperator implements Operator {
         }
         // Close the operator, releasing any resources if needed
         currentPage = null;
+    }
+
+    @Override
+    public File getRelation() {
+        return tableFile;
+    }
+
+    @Override
+    public void makeResetOperatorTrue() {
+        return;
     }
 }

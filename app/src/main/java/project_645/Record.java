@@ -5,15 +5,20 @@ public class Record {
     private final byte[] personId;
     private final byte[] category;
     private final byte[] name;
+    private Rid rid;
 
     // Constructor for handling fields from Movies and WorkedOn tables
-    public Record(Row row, byte[] personId, byte[] category, byte[] name) {
+    public Record(Row row, byte[] personId, byte[] category, byte[] name, Rid rid) {
         this.row = row;
         this.personId = personId;
         this.category = category;
         this.name = name;
+        this.rid = rid;
     }
 
+    public Row getRow() {
+        return this.row;
+    }
     // Accessors for the fields in the Row
     public byte[] getMovieIdBytes() {
         return row.getMovieId();  // Get raw movieId as byte[]
@@ -54,5 +59,9 @@ public class Record {
 
     public String getName() {
         return new String(row.getName()).trim();  // Convert name (byte array) to String
+    }
+
+    public Rid getRid() {
+        return this.rid;
     }
 }

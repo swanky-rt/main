@@ -14,6 +14,7 @@ public class ProjectionOperator implements Operator {
     private boolean firstNext;
     private Page currentPage;
     private final boolean prematerialized;
+    private boolean resetOperator = false;
 
     public ProjectionOperator(Operator child, String[] columns, File relation, BufferManagerImpl bufferManager, boolean prematerialized) {
         this.child = child;
@@ -26,7 +27,7 @@ public class ProjectionOperator implements Operator {
     }
 
     @Override
-    public void open() {
+    public void open() throws Exception {
         child.open();
     }
 
@@ -42,8 +43,9 @@ public class ProjectionOperator implements Operator {
             bufferManager.unpinPage(currentPage.getPid(), File.TEMPORARY);
         }
 
-        if (firstNext) {
+        if (firstNext || resetOperator) {
             firstNext = false;
+            resetOperator = false;
             this.child = new TableScanOperator(bufferManager, relation, new String[2]);
             this.child.open();
         }
@@ -60,6 +62,11 @@ public class ProjectionOperator implements Operator {
 
         bufferManager.deleteTemporaryTable();
         child.close();
+    }
+
+    @Override
+    public void makeResetOperatorTrue() {
+        this.resetOperator = true;
     }
 
     public void materializeTable() throws Exception {
@@ -129,7 +136,12 @@ public class ProjectionOperator implements Operator {
                 currentPage = bufferManager.createPage(File.TEMPORARY);
             }
         }
-        return new Record(newRow, newPersonId, newCategory, newName);
+        return new Record(newRow, newPersonId, newCategory, newName, input.getRid());
+    }
+
+    @Override
+    public File getRelation() {
+        return child.getRelation();
     }
 
     // Helper method to convert byte array to int

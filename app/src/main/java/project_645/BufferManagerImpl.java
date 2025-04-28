@@ -20,6 +20,8 @@ public class BufferManagerImpl extends BufferManager{
     private long currentWorkedOnPageId;
     private long currentPeoplePageId;
     private long curTempTableId;
+    private long bnlJoin1PageId;
+    private long bnlJoin2PageId;
     private String filepath;
     private String diskFileName;
     private String movieIdIndexFileName;
@@ -49,6 +51,8 @@ public class BufferManagerImpl extends BufferManager{
         this.currentWorkedOnPageId = (int)(Files.size(Paths.get( filepath + workedOnFilename).toAbsolutePath()) / (long)this.PAGE_SIZE);
         this.currentPeoplePageId = (int)Files.size(Paths.get( filepath + peopleFileName).toAbsolutePath()) / this.PAGE_SIZE;
         this.curTempTableId = 0;
+        this.bnlJoin1PageId = 0;
+        this.bnlJoin2PageId = 0;
     }
 
 //This method gets the page from buffer pool and disk(if not present in buffer pool)
@@ -190,6 +194,8 @@ public class BufferManagerImpl extends BufferManager{
             case File.WORKEDON -> getNextWorkedOnPageId();
             case File.PEOPLE -> getNextPersonPageId();
             case File.TEMPORARY -> getNextTempTableId();
+            case File.BNL1 -> getNextBnlJoin1Id();
+            case File.BNL2 -> getNextBnlJoin2Id();
             default -> getNextPageId();
         };
     }
@@ -203,6 +209,8 @@ public class BufferManagerImpl extends BufferManager{
             case File.WORKEDON -> workedOnFileName;
             case File.PEOPLE -> peopleFileName;
             case File.TEMPORARY -> File.TEMPORARY.toString() + ".dat";
+            case File.BNL1 -> File.BNL1.toString();
+            case File.BNL2 -> File.BNL2.toString();
             default -> diskFileName;
         };
     }
@@ -347,6 +355,8 @@ public class BufferManagerImpl extends BufferManager{
             case File.WORKEDON -> new Row(new byte[9], new byte[10], new byte[20]);
             case File.PEOPLE -> new Row(new byte[10], new byte[105], true);
             case File.TEMPORARY -> new Row(new byte[9], new byte[10]);
+            case File.BNL1 -> new Row(new byte[9], new byte[30], new byte[10], true);
+            case File.BNL2 -> new Row(new byte[9], new byte[30], new byte[10], new byte[105]);
             default -> new Row(new byte[9], new byte[30]);
         };
     }
@@ -482,7 +492,7 @@ public class BufferManagerImpl extends BufferManager{
 
             for (byte b : curPersonId) {
                 if (b != 0) {
-                    Row curRow = new Row(curPersonId, curName);
+                    Row curRow = new Row(curPersonId, curName, true);
                     curPageRows[i] = curRow;
                     break;
                 }
@@ -490,7 +500,7 @@ public class BufferManagerImpl extends BufferManager{
 
             for (byte b : curName) {
                 if (b != 0) {
-                    Row curRow = new Row(curPersonId, curName);
+                    Row curRow = new Row(curPersonId, curName, true);
                     curPageRows[i] = curRow;
                     break;
                 }
@@ -569,10 +579,22 @@ public class BufferManagerImpl extends BufferManager{
         return curTempTableId++;
     }
 
+    public long getNextBnlJoin1Id() {
+        return bnlJoin1PageId++;
+    }
+
+    public long getNextBnlJoin2Id() {
+        return bnlJoin2PageId++;
+    }
+
 
 //     meant to be run separately from the buffer manager, helper utility to initially populate the disk.
-    public void populateDisk(int numRecords, String filepath) throws IOException {
+    public void populateDisk(int numRecords, String filepath, String startKey, String endKey) throws IOException {
         int curPageId = 0;
+        byte[] startKeyBytes = new byte[30];
+        byte[] endKeyBytes = new byte[30];
+        System.arraycopy(startKey.getBytes(), 0, startKeyBytes, 0, Math.min(startKey.getBytes().length, startKeyBytes.length));
+        System.arraycopy(endKey.getBytes(), 0, endKeyBytes, 0, Math.min(endKey.getBytes().length, endKeyBytes.length));
         BufferedReader reader = new BufferedReader(new FileReader(filepath + "title.basics.tsv"));
         reader.readLine();
         String line = reader.readLine();
