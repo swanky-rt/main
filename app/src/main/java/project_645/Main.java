@@ -25,14 +25,24 @@ public class Main {
             Utilities utilities = new Utilities(mainFileName, diskFileName);
             // utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
-            BufferManagerImpl bufferManager = new BufferManagerImpl(1000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+            BufferManagerImpl bufferManager = new BufferManagerImpl(100000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
             // bufferManager.populateDisk(10000, filePath, "A", "z");
 
             // utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
 
             QueryExecutor testExecutor = new QueryExecutor();
 
-            testExecutor.executeQuery("A", "z", 50000 * 4096);
+            // testExecutor.prematerializeTable(1000 * 4096);
+
+            utilities.queryPlanCorrectnessTest1();
+
+            System.out.println("--------------------------------------------");
+
+            utilities.queryPlanCorrectnessTest2();
+
+            System.out.println("--------------------------------------------");
+
+            utilities.queryPlanCorrectnessTest3();
 
 
              // Note: The index objects are defined within the utilities methods themselves. If you want to create
@@ -41,7 +51,7 @@ public class Main {
 //             Change the enum to change what file you want to write to
 //             The following two lines are an example of how to create the index.
 //             Note that C1 and C2 create the index with order 51, as that is the maximum possible order possible for this index
-//            BTreeImpl testBTreeIndexTitle = new BTreeImpl(bufferManager, 51, File.MOVIE_TITLE_IDX);
+            // BTreeImpl testBTreeIndexTitle = new BTreeImpl(bufferManager, 51, File.MOVIE_TITLE_IDX);
 //
 //            BTreeImpl testBTreeIndexMovieId = new BTreeImpl(bufferManager, 51, File.MOVIE_ID_IDX);
 //

@@ -312,7 +312,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         PageImpl p = (PageImpl) page;
         p.setAllRows(new Row[p.MAX_TUPLES]);
         p.setRowCount(0);
-        Row metaRow = new Row(new byte[9], new byte[30]);
+        Row metaRow = new Row(new byte[9], new byte[30], null, null, null);
         metaRow.movieId[0] = 'L';
         storeIntInByteArray(parentId, metaRow.title, 0);
         storeIntInByteArray(nextLeafId, metaRow.title, 3);
@@ -357,7 +357,7 @@ public class BTreeImpl implements BTree<String, Rid> {
             storeIntInByteArray(keys.size(), meta.title, 6);
             // Write each key and RID starting at row 1.
             for (int i = 0; i < keys.size(); i++) {
-                Row row = new Row(rids.get(i), keys.get(i));
+                Row row = new Row(rids.get(i), keys.get(i), null, null, null);
                 setRowAtIndex(p, i + 1, row);
             }
             // Update row count (1 meta row + one row per key)
@@ -373,7 +373,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         PageImpl p = (PageImpl) page;
         p.setAllRows(new Row[p.MAX_TUPLES]);
         p.setRowCount(0);
-        Row metaRow = new Row(new byte[9], new byte[30]);
+        Row metaRow = new Row(new byte[9], new byte[30], null, null, null);
         metaRow.movieId[0] = 'I';
         storeIntInByteArray(parentId, metaRow.title, 0);
         storeIntInByteArray(-1, metaRow.title, 3);
@@ -423,12 +423,12 @@ public class BTreeImpl implements BTree<String, Rid> {
             storeIntInByteArray(keys.size(), meta.title, 6);
             int rowCountNeeded = keys.size() + 1;
             for (int i = 1; i <= keys.size(); i++) {
-                Row row = new Row(new byte[9], keys.get(i - 1));
+                Row row = new Row(new byte[9], keys.get(i - 1), null, null, null);
                 storeIntInByteArray(children.get(i - 1), row.movieId, 0);
                 setRowAtIndex(p, i, row);
             }
             // Final child pointer at row keys.size() + 1.
-            Row lastRow = new Row(new byte[9], new byte[30]);
+            Row lastRow = new Row(new byte[9], new byte[30], null, null, null);
             storeIntInByteArray(children.get(keys.size()), lastRow.movieId, 0);
             setRowAtIndex(p, keys.size() + 1, lastRow);
             p.setRowCount(rowCountNeeded + 1);

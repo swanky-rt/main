@@ -63,7 +63,7 @@ public class SelectionOperator implements Operator {
 
         if (resetOperator) {
             resetOperator = false;
-            this.child = new TableScanOperator(bufferManager, child.getRelation(), new String[2]);
+            this.child = new TableScanOperator(bufferManager, child.getRelation());
             this.child.open();
         }
 

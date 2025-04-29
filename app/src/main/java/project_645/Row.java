@@ -19,38 +19,22 @@ public class Row implements Serializable {
     public byte[] category = new byte[20];
     public byte[] name = new byte[105];
 
-    public Row(byte[] movieId, byte[] title) {
-        System.arraycopy(movieId, 0, this.movieId, 0, Math.min(this.movieId.length, movieId.length));
-        System.arraycopy(title, 0, this.title, 0, Math.min(this.title.length, title.length));
-    }
-
-    public Row(byte[] movieId, byte[] personId, byte[] category) {
-        System.arraycopy(movieId, 0, this.movieId, 0, Math.min(this.movieId.length, movieId.length));
-        System.arraycopy(personId, 0, this.personId, 0, Math.min(this.personId.length, personId.length));
-        System.arraycopy(category, 0, this.category, 0, Math.min(this.category.length, category.length));
-    }
-
-    public Row(byte[] personId, byte[] name, boolean peopleTable) {
-        System.arraycopy(personId, 0, this.personId, 0, Math.min(this.personId.length, personId.length));
-        System.arraycopy(name, 0, this.name, 0, Math.min(this.name.length, name.length));
-    }
-
-    public Row(byte[] movieId, byte[] personId, File tempDataFile) {
-        System.arraycopy(movieId, 0, this.movieId, 0, Math.min(this.movieId.length, movieId.length));
-        System.arraycopy(personId, 0, this.personId, 0, Math.min(this.personId.length, personId.length));
-    }
-
-    public Row(byte[] movieId, byte[] title, byte[] personId, boolean bnl1) {
-        System.arraycopy(movieId, 0, this.movieId, 0, Math.min(this.movieId.length, movieId.length));
-        System.arraycopy(title, 0, this.title, 0, Math.min(this.title.length, title.length));
-        System.arraycopy(personId, 0, this.personId, 0, Math.min(this.personId.length, personId.length));
-    }
-
-    public Row(byte[] movieId, byte[] title, byte[] personId, byte[] name) {
-        System.arraycopy(movieId, 0, this.movieId, 0, Math.min(this.movieId.length, movieId.length));
-        System.arraycopy(title, 0, this.title, 0, Math.min(this.title.length, title.length));
-        System.arraycopy(personId, 0, this.personId, 0, Math.min(this.personId.length, personId.length));
-        System.arraycopy(name, 0, this.name, 0, Math.min(this.name.length, name.length));
+    public Row(byte[] movieId, byte[] title, byte[] personId, byte[] category, byte[] name) {
+        if (movieId != null) {
+            System.arraycopy(movieId, 0, this.movieId, 0, Math.min(this.movieId.length, movieId.length));
+        }
+        if (title != null) {
+            System.arraycopy(title, 0, this.title, 0, Math.min(this.title.length, title.length));
+        }
+        if (personId != null) {
+            System.arraycopy(personId, 0, this.personId, 0, Math.min(this.personId.length, personId.length));
+        }
+        if (category != null) {
+            System.arraycopy(category, 0, this.category, 0, Math.min(this.category.length, category.length));
+        }
+        if (name != null) {
+            System.arraycopy(name, 0, this.name, 0, Math.min(this.name.length, name.length));
+        }
     }
 
     public byte[] getMovieId()

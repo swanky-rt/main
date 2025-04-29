@@ -46,7 +46,7 @@ public class Utilities {
             String[] columns = curLine.split("\t");
             byte[] movieId = columns[0].getBytes();
             byte[] titleId = columns[2].getBytes();
-            Row row = new Row(movieId, titleId);
+            Row row = new Row(movieId, titleId, null, null, null);
             newPage.insertRow(row);
         }
         bf.unpinPage(pageId, File.DISK);
@@ -74,7 +74,7 @@ public class Utilities {
             String[] columns = curLine.split("\t");
             byte[] movieId = columns[0].getBytes();
             byte[] titleId = columns[2].getBytes();
-            Row row = new Row(movieId, titleId);
+            Row row = new Row(movieId, titleId, null, null, null);
             newPage.insertRow(row);
         }
         bf.unpinPage(pageId, File.DISK);
@@ -503,6 +503,29 @@ public class Utilities {
 
     }
 
+    public void queryPlanCorrectnessTest1() throws Exception {
+
+        QueryExecutor queryExecutor = new QueryExecutor();
+        long ios = queryExecutor.executeQuery("cb", "cbz", 100000*4096, true);
+
+    }
+
+    public void queryPlanCorrectnessTest2() throws Exception {
+
+        QueryExecutor queryExecutor = new QueryExecutor();
+        long ios = queryExecutor.executeQuery("x", "y", 100000*4096, true);
+
+    }
+
+    public void queryPlanCorrectnessTest3() throws Exception {
+
+        QueryExecutor queryExecutor = new QueryExecutor();
+        long ios = queryExecutor.executeQuery("w", "z", 100000*4096, true);
+
+    }
+
+
+
     // Helper method for P3
     private int parseIntFromByteArray(byte[] arr, int offset) {
         //int b1 = (arr[offset]   & 0xFF) << 24;
@@ -663,9 +686,12 @@ public class Utilities {
             // add rows using p.insertRow without filling p up
             while ((curLine = diskReader.readLine()) != null) {
                 String[] splitLine = curLine.split("\t");
-                byte[] movieId = splitLine[0].getBytes();
-                byte[] titleId = splitLine[2].getBytes();
-                Row row = new Row(movieId, titleId);
+                byte[] movieId = splitLine[0].toLowerCase().getBytes();
+                if (movieId.length > 9) {
+                    continue;
+                }
+                byte[] titleId = splitLine[2].toLowerCase().getBytes();
+                Row row = new Row(movieId, titleId, null, null, null);
                 nextPage.insertRow(row);
                 if (nextPage.isFull()) {
                     bf.unpinPage(nextPage.getPid(), File.DISK);
@@ -682,10 +708,13 @@ public class Utilities {
             nextPage = bf.createPage(File.WORKEDON);
             while ((curLine = workedOnTableReader.readLine()) != null) {
                 String[] splitLine = curLine.split("\t");
-                byte[] movieId = splitLine[0].getBytes();
-                byte[] personId = splitLine[2].getBytes();
-                byte[] category = splitLine[3].getBytes();
-                Row row = new Row(movieId, personId, category);
+                byte[] movieId = splitLine[0].toLowerCase().getBytes();
+                byte[] personId = splitLine[2].toLowerCase().getBytes();
+                byte[] category = splitLine[3].toLowerCase().getBytes();
+                if (movieId.length > 9) {
+                    continue;
+                }
+                Row row = new Row(movieId, null, personId, category, null);
                 nextPage.insertRow(row);
                 if (nextPage.isFull()) {
                     bf.unpinPage(nextPage.getPid(), File.WORKEDON);
@@ -703,9 +732,9 @@ public class Utilities {
             nextPage = bf.createPage(File.PEOPLE);
             while ((curLine = peopleTableReader.readLine()) != null) {
                 String[] splitLine = curLine.split("\t");
-                byte[] personId = splitLine[0].getBytes();
-                byte[] name = splitLine[1].getBytes();
-                Row row = new Row(personId, name, true);
+                byte[] personId = splitLine[0].toLowerCase().getBytes();
+                byte[] name = splitLine[1].toLowerCase().getBytes();
+                Row row = new Row(null, null, personId, null, name);
                 nextPage.insertRow(row);
                 if (nextPage.isFull()) {
                     bf.unpinPage(nextPage.getPid(), File.PEOPLE);

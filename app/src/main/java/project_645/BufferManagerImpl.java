@@ -28,6 +28,7 @@ public class BufferManagerImpl extends BufferManager{
     private String movieTitleIndexFileName;
     private String workedOnFileName;
     private String peopleFileName;
+    private long totalIOs;
 
 
     public BufferManagerImpl(int bufferSize, String filepath, String diskFileName, String movieIdIndexFileName,
@@ -53,6 +54,7 @@ public class BufferManagerImpl extends BufferManager{
         this.curTempTableId = 0;
         this.bnlJoin1PageId = 0;
         this.bnlJoin2PageId = 0;
+        this.totalIOs = 0;
     }
 
 //This method gets the page from buffer pool and disk(if not present in buffer pool)
@@ -288,6 +290,7 @@ public class BufferManagerImpl extends BufferManager{
     // This method writes pages to disk
 
     public void writePageToDisk(Page page, File dataFile) throws IOException {
+        this.totalIOs += 1;
         String curDiskFileName = getDataFileName(dataFile);
         long pageId = page.getPid();
         Path curPath = Paths.get( filepath + curDiskFileName).toAbsolutePath();
@@ -349,21 +352,22 @@ public class BufferManagerImpl extends BufferManager{
     // helper method to create row object
     private Row createNewRow(File dataFile) {
         return switch (dataFile) {
-            case File.DISK -> new Row(new byte[9], new byte[30]);
-            case File.MOVIE_ID_IDX -> new Row(new byte[9], new byte[30]);
-            case File.MOVIE_TITLE_IDX -> new Row(new byte[9], new byte[30]);
-            case File.WORKEDON -> new Row(new byte[9], new byte[10], new byte[20]);
-            case File.PEOPLE -> new Row(new byte[10], new byte[105], true);
-            case File.TEMPORARY -> new Row(new byte[9], new byte[10]);
-            case File.BNL1 -> new Row(new byte[9], new byte[30], new byte[10], true);
-            case File.BNL2 -> new Row(new byte[9], new byte[30], new byte[10], new byte[105]);
-            default -> new Row(new byte[9], new byte[30]);
+            case File.DISK -> new Row(new byte[9], new byte[30], null, null, null);
+            case File.MOVIE_ID_IDX -> new Row(new byte[9], new byte[30], null, null, null);
+            case File.MOVIE_TITLE_IDX -> new Row(new byte[9], new byte[30], null, null, null);
+            case File.WORKEDON -> new Row(new byte[9], null, new byte[10], new byte[20], null);
+            case File.PEOPLE -> new Row(null, null, new byte[10], null, new byte[105]);
+            case File.TEMPORARY -> new Row(new byte[9], null, new byte[10], null, null);
+            case File.BNL1 -> new Row(new byte[9], new byte[30], new byte[10], null, null);
+            case File.BNL2 -> new Row(new byte[9], new byte[30], new byte[10], null, new byte[105]);
+            default -> new Row(new byte[9], new byte[30], null, null, null);
         };
     }
 
     // This method loads pages from disk
 
     public Page loadPageFromDisk(long pageId, File dataFile) {
+        this.totalIOs += 1;
         String curDiskFileName = getDataFileName(dataFile);
         Path curPath = Paths.get(filepath + curDiskFileName);
         Charset charset = StandardCharsets.US_ASCII;
@@ -424,7 +428,7 @@ public class BufferManagerImpl extends BufferManager{
 
             for (byte b : curMovieId) {
                 if (b != 0) {
-                    Row curRow = new Row(curMovieId, curMovieTitle);
+                    Row curRow = new Row(curMovieId, curMovieTitle, null, null, null);
                     curPageRows[i] = curRow;
                     break;
                 }
@@ -432,7 +436,7 @@ public class BufferManagerImpl extends BufferManager{
 
             for (byte b : curMovieTitle) {
                 if (b != 0) {
-                    Row curRow = new Row(curMovieId, curMovieTitle);
+                    Row curRow = new Row(curMovieId, curMovieTitle, null, null, null);
                     curPageRows[i] = curRow;
                     break;
                 }
@@ -472,7 +476,7 @@ public class BufferManagerImpl extends BufferManager{
             }
 
             if (nonEmpty) {
-                curPageRows[i] = new Row(curMovieId, curPersonId, curCategory);
+                curPageRows[i] = new Row(curMovieId, null, curPersonId, curCategory, null);
             } else {
                 curPageRows[i] = null; // Optional: you can explicitly set to null
             }
@@ -492,7 +496,7 @@ public class BufferManagerImpl extends BufferManager{
 
             for (byte b : curPersonId) {
                 if (b != 0) {
-                    Row curRow = new Row(curPersonId, curName, true);
+                    Row curRow = new Row(null, null, curPersonId, null, curName);
                     curPageRows[i] = curRow;
                     break;
                 }
@@ -500,7 +504,7 @@ public class BufferManagerImpl extends BufferManager{
 
             for (byte b : curName) {
                 if (b != 0) {
-                    Row curRow = new Row(curPersonId, curName, true);
+                    Row curRow = new Row(null, null, curPersonId, null, curName);
                     curPageRows[i] = curRow;
                     break;
                 }
@@ -519,7 +523,7 @@ public class BufferManagerImpl extends BufferManager{
 
             for (byte b : curMovieId) {
                 if (b != 0) {
-                    Row curRow = new Row(curMovieId, curPersonId, File.TEMPORARY);
+                    Row curRow = new Row(curMovieId, null, curPersonId, null, null);
                     curPageRows[i] = curRow;
                     break;
                 }
@@ -527,7 +531,7 @@ public class BufferManagerImpl extends BufferManager{
 
             for (byte b : curPersonId) {
                 if (b != 0) {
-                    Row curRow = new Row(curMovieId, curPersonId, File.TEMPORARY);
+                    Row curRow = new Row(curMovieId, null, curPersonId, null, null);
                     curPageRows[i] = curRow;
                     break;
                 }
@@ -609,7 +613,7 @@ public class BufferManagerImpl extends BufferManager{
             String[] columns = line.split("\t");
             byte[] title = columns[2].getBytes();
             byte[] movieId = columns[0].getBytes();
-            Row row = new Row(movieId, title);
+            Row row = new Row(movieId, title, null, null, null);
             newPage.insertRow(row);
             i += 1;
             line = reader.readLine();
@@ -620,5 +624,9 @@ public class BufferManagerImpl extends BufferManager{
     // creates buffer pool map descriptors based on the data file containing the page
     public String constructPageIdentifier(long pageId, File dataFile) {
         return dataFile.toString() + "-" + Long.toString(pageId);
+    }
+
+    public long getTotalIOs() {
+        return this.totalIOs;
     }
 }

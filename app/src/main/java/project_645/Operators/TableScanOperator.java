@@ -8,16 +8,14 @@ import java.io.IOException;
 public class TableScanOperator implements Operator {
     private final File tableFile;
     private final BufferManager bufferManager;
-    private final String[] columns;
     private int currentPageIndex = 0;
     private int curRowIndex = 0;
     private Page currentPage;
     private int maxPages;
 
-    public TableScanOperator(BufferManagerImpl bufferManager, File tableName, String[] columns) {
+    public TableScanOperator(BufferManagerImpl bufferManager, File tableName) {
         this.bufferManager = bufferManager;
         this.tableFile = tableName;
-        this.columns = columns;
     }
 
     @Override
@@ -57,6 +55,7 @@ public class TableScanOperator implements Operator {
             // Pass null for personId, category, and name.
             return new Record(row, null, null, null, new Rid(currentPageIndex, curRowIndex));  // Pass null for unused fields (personId, category, name)
         }
+        bufferManager.unpinPage(currentPage.getPid(), tableFile);
     return null;
 }
 
