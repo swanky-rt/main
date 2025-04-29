@@ -21,7 +21,7 @@ public class RunQuery {
             String movieIdIndexFileName = "movieIdIndex.dat";
             String movieTitleIndexFileName = "movieTitleIndex.dat";
             String filePath = System.getProperty("user.dir") + path;
-            String workedFileName = "name.basics.tsv";
+            String workedOnFileName = "name.basics.tsv";
             String peopleFileName = "title.principals.tsv";
 
         // Initialize BufferManagerImpl
@@ -32,7 +32,7 @@ public class RunQuery {
 //                movieIdIndexFileName,
 //                movieTitleIndexFileName
 //        );
-        BufferManagerImpl bufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName);
+        BufferManagerImpl bufferManager = new BufferManagerImpl(1000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
         // Create and run the query
         QueryExecutor executor = new QueryExecutor();

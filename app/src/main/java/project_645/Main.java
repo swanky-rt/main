@@ -7,7 +7,7 @@ public class Main {
     public static void main(String[] args) {
         try {
             // define parameters to our various objects
-            String path = "/app/src/main/java/project_645/DB files/";
+            String path = "/src/main/java/project_645/DB files/";
             String mainFileName = "title.basics.tsv";
             String workedOnTSVFileName = "title.principals.tsv";
             String peopleTSVFileName = "name.basics.tsv";
