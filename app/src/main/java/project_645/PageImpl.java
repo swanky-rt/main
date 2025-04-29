@@ -5,20 +5,42 @@ import java.nio.charset.StandardCharsets;
 
 public class PageImpl implements Page, Serializable {
     static final int PAGE_SIZE = 4096;
-    static final int ROW_SIZE = 39; //column 1 is 9 char, and column 2 is 30 char
-    static final int MAX_TUPLES = PAGE_SIZE/ROW_SIZE;
-    private Row[] rowList = new Row[MAX_TUPLES];
-    static final int bytesToPad = PAGE_SIZE - (MAX_TUPLES * ROW_SIZE);
+    public int ROW_SIZE = 39; //column 1 is 9 char, and column 2 is 30 char
+    public int MAX_TUPLES = PAGE_SIZE/ROW_SIZE;
+    private Row[] rowList;
+    public int bytesToPad;
     private int curRowCount = 0;
     private boolean isDirty = true;
     private String[][] deserializedRows = new String[MAX_TUPLES][2];
-    private int pageId;
+    private long pageId;
     private File dataFile;
     private int pinCount = 0;
 
-    public PageImpl(int pageId, File dataFile){
+    public PageImpl(long pageId, File dataFile){
         this.pageId = pageId;
         this.dataFile = dataFile;
+
+        if (dataFile == File.PEOPLE) {
+            ROW_SIZE = 115;
+            MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
+        }
+        if (dataFile == File.TEMPORARY) {
+            ROW_SIZE = 19;
+            MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
+        }
+        if (dataFile == File.BNL1) {
+            ROW_SIZE = 49;
+            MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
+        }
+
+        if (dataFile == File.BNL2) {
+            ROW_SIZE = 154;
+            MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
+        }
+
+        rowList = new Row[MAX_TUPLES];
+        bytesToPad = PAGE_SIZE - (MAX_TUPLES * ROW_SIZE);
+
     }
 
     //This method gets the row based on the row id (index)
@@ -47,13 +69,13 @@ public class PageImpl implements Page, Serializable {
 
     //This method returns the id of the page
     @Override
-    public int getPid() {
+    public long getPid() {
         return this.pageId;
     }
 
     //This method updates the current id of the page
     @Override
-    public void reassignPageId(int pageId) {
+    public void reassignPageId(long pageId) {
         this.pageId = pageId;
     }
 
@@ -149,5 +171,7 @@ public class PageImpl implements Page, Serializable {
     public File getDataFile() {
         return this.dataFile;
     }
+
+
 
 }

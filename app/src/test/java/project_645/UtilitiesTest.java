@@ -12,14 +12,14 @@ class UtilitiesTest {
     private Utilities utilities;
     private Utilities utilitiesEmptyFile;
     private BufferManagerImpl bufferManager;
-    
+
     @BeforeEach
     void setUp() throws IOException {
         bufferManager = mock(BufferManagerImpl.class);
         utilities = new Utilities("title.basics.tsv", "testdb.dat");
         utilitiesEmptyFile = new Utilities("title.basics.tsv", "testdb2.dat");
     }
-    
+
     @Test
     void testLoadDataset() throws Exception {
         doNothing().when(bufferManager).unpinPage(anyInt(), eq(File.DISK));

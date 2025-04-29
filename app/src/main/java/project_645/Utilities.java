@@ -32,10 +32,10 @@ public class Utilities {
 
     // Loads the buffer manager with the imdb dataset
     public void loadDataset(BufferManager bf, String filepath) throws Exception {
-         Path dbFilePath = Paths.get( filepath + diskFileName).toAbsolutePath();
+        Path dbFilePath = Paths.get( filepath + diskFileName).toAbsolutePath();
         // create page
         Page newPage = bf.createPage(File.DISK);
-        int pageId = newPage.getPid();
+        int pageId = (int)newPage.getPid();
         System.out.print(pageId+ "the page number");
         newPage = bf.getPage(pageId, File.DISK);
         BufferedReader reader = new BufferedReader(new FileReader(filepath + this.filename));
@@ -64,7 +64,7 @@ public class Utilities {
             bf.unpinPage(i, File.DISK);
         }
         //get page back
-        pageId = newPage.getPid();
+        pageId = (int)newPage.getPid();
         newPage = bf.getPage(pageId, File.DISK);
         bf.markDirty(pageId, File.DISK);
 
@@ -80,12 +80,13 @@ public class Utilities {
         bf.unpinPage(pageId, File.DISK);
     }
 
-//This method to perform c1 test
+    //This method to perform c1 test
     public void testC1(boolean populateMovieIdIndexFile, String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
 
         BufferManager c1BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
 
         // Create the indexes
         BTreeImpl bTreeMovieId = new BTreeImpl(c1BufferManager, 51, File.MOVIE_ID_IDX);
@@ -95,11 +96,12 @@ public class Utilities {
         }
     }
 
-//This method to perform c2 test
+    //This method to perform c2 test
     public void testC2(boolean populateMovieTitleIndexFile, String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
         BufferManager c2BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
         BTreeImpl bTreeTitleId = new BTreeImpl(c2BufferManager, 51, File.MOVIE_TITLE_IDX);
 
         if (populateMovieTitleIndexFile) {
@@ -107,12 +109,13 @@ public class Utilities {
         }
     }
 
- //This method to perform c3 test
+    //This method to perform c3 test
     public void testC3(boolean populateMovieIdIndexFile, boolean populateMovieTitleIndexFile, String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
         // Search by one key on b+ tree index:
         BufferManager c3BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
 
         // Create the indexes
         BTreeImpl bTreeMovieId = new BTreeImpl(c3BufferManager, 51, File.MOVIE_ID_IDX);
@@ -157,11 +160,12 @@ public class Utilities {
         System.out.println("The expected movie RIDs were found by traversing the requested index!");
     }
 
-//This method to perform c4 test
+    //This method to perform c4 test
     public void testC4(boolean populateMovieIdIndexFile, boolean populateMovieTitleIndexFile, String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
         BufferManager c4BufferManager = new BufferManagerImpl(5000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
 
         // Create the indexes
         BTreeImpl bTreeMovieId = new BTreeImpl(c4BufferManager, 51, File.MOVIE_ID_IDX);
@@ -208,12 +212,13 @@ public class Utilities {
         System.out.println("All tested RIDs found in range query do fall in the range denoted by the index!");
     }
 
-//This method to perform P1 test
+    //This method to perform P1 test
     public void testP1(String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName, boolean pinPages) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName, boolean pinPages,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
         // initialize buffer manager to perform the range query
         BufferManager p1BufferManager = new BufferManagerImpl(10000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
 
         BTreeImpl bTreeMovieId = new BTreeImpl(p1BufferManager, 51, File.MOVIE_ID_IDX);
 
@@ -303,7 +308,7 @@ public class Utilities {
         plot2.addSeries(ratioSeries);
 
 
-       // QueryPerformancePlot.plotChart(selectivityPercentage, times, endTimeScan - startTimeScan);
+        // QueryPerformancePlot.plotChart(selectivityPercentage, times, endTimeScan - startTimeScan);
 
         JFreeChart chart1 = ChartFactory.createXYLineChart(
                 "Time/Selectivity (Clustered)",
@@ -341,12 +346,13 @@ public class Utilities {
         frame2.setVisible(true);
     }
 
-//This method to perform P2 test
+    //This method to perform P2 test
     public void testP2(String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName, boolean pinPages) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName, boolean pinPages,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
         // initialize buffer manager to perform the range query
         BufferManager p2BufferManager = new BufferManagerImpl(10000*4096, filePath, diskFileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnTableFileName, personTableFileName);
 
         BTreeImpl bTreeMovieId = new BTreeImpl(p2BufferManager, 51, File.MOVIE_TITLE_IDX);
 
@@ -489,10 +495,11 @@ public class Utilities {
     }
 
     public void testP3(String filePath,
-                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) throws Exception {
+                       String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                       String workedOnTableFileName, String personTableFileName) throws Exception {
 
-        testP1(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, true);
-        testP2(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, true);
+        testP1(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, true, workedOnTableFileName, personTableFileName);
+        testP2(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, true, workedOnTableFileName, personTableFileName);
 
     }
 
@@ -534,9 +541,10 @@ public class Utilities {
         }
     }
 
-//This method to delete and recreate the index files as everytime the file limit exceeds thus it is important to delete and create the index-
+    //This method to delete and recreate the index files as everytime the file limit exceeds thus it is important to delete and create the index-
 //file instead of appending and increasing the size of the file.
-    public void deleteAndRecreateIndexFiles(String filePath, String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName) {
+    public void deleteAndRecreateIndexFiles(String filePath, String diskFileName, String movieIdIndexFileName, String movieTitleIndexFileName,
+                                            String workedOnTableFileName, String personTableFileName) {
         Path path = Paths.get(filePath + diskFileName);
         try {
             Files.deleteIfExists(path); // Deletes the file if it exists
@@ -557,6 +565,24 @@ public class Utilities {
         Path movieTitleIndexPath = Paths.get(filePath + movieTitleIndexFileName);
         try {
             Files.deleteIfExists(movieTitleIndexPath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path workedOnFilePath = Paths.get(filePath, workedOnTableFileName);
+        try {
+            Files.deleteIfExists(workedOnFilePath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path peopleTableFilePath = Paths.get(filePath + personTableFileName);
+        try {
+            Files.deleteIfExists(peopleTableFilePath); // Deletes the file if it exists
             System.out.println("File deleted successfully.");
         } catch (IOException e) {
             System.err.println("An error occurred while deleting the file.");
@@ -598,5 +624,97 @@ public class Utilities {
                 e.printStackTrace();
             }
         }
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(workedOnFilePath);
+            System.out.println("File created: " + workedOnFilePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(workedOnFilePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(peopleTableFilePath);
+            System.out.println("File created: " + peopleTableFilePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(peopleTableFilePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void populateAllDiskFiles(String filepath, String titleBasicsTSVReader, String workedOnTSVReader,
+                                     String personTSVReader, BufferManager bf) throws Exception{
+        Path dbFilePath = Paths.get( filepath + titleBasicsTSVReader).toAbsolutePath();
+        Path workedOnTableFilePath = Paths.get(filepath + workedOnTSVReader);
+        Path personTableFilePath = Paths.get(filepath + personTSVReader);
+        // create page
+        BufferedReader diskReader = new BufferedReader(new FileReader(filepath + titleBasicsTSVReader));
+        diskReader.readLine();
+        String curLine;
+        Page nextPage = bf.createPage(File.DISK);
+        // add rows using p.insertRow without filling p up
+        while ((curLine = diskReader.readLine()) != null) {
+            String[] splitLine = curLine.split("\t");
+            byte[] movieId = splitLine[0].getBytes();
+            byte[] titleId = splitLine[2].getBytes();
+            Row row = new Row(movieId, titleId);
+            nextPage.insertRow(row);
+            if (nextPage.isFull()) {
+                bf.unpinPage(nextPage.getPid(), File.DISK);
+                nextPage = bf.createPage(File.DISK);
+            }
+        }
+        bf.unpinPage(nextPage.getPid(), File.DISK);
+        bf.force();
+
+        System.out.println("main disk file populated");
+
+        BufferedReader workedOnTableReader = new BufferedReader(new FileReader(filepath + workedOnTSVReader));
+        workedOnTableReader.readLine();
+        nextPage = bf.createPage(File.WORKEDON);
+        while ((curLine = workedOnTableReader.readLine()) != null) {
+            String[] splitLine = curLine.split("\t");
+            byte[] movieId = splitLine[0].getBytes();
+            byte[] personId = splitLine[2].getBytes();
+            byte[] category = splitLine[3].getBytes();
+            Row row = new Row(movieId, personId, category);
+            nextPage.insertRow(row);
+            if (nextPage.isFull()) {
+                bf.unpinPage(nextPage.getPid(), File.WORKEDON);
+                nextPage = bf.createPage(File.WORKEDON);
+            }
+        }
+        bf.unpinPage(nextPage.getPid(), File.WORKEDON);
+        bf.force();
+
+
+        System.out.println("Worked on table populated");
+
+        BufferedReader peopleTableReader = new BufferedReader(new FileReader(filepath + personTSVReader));
+        peopleTableReader.readLine();
+        nextPage = bf.createPage(File.PEOPLE);
+        while ((curLine = peopleTableReader.readLine()) != null) {
+            String[] splitLine = curLine.split("\t");
+            byte[] personId = splitLine[0].getBytes();
+            byte[] name = splitLine[1].getBytes();
+            Row row = new Row(personId, name, true);
+            nextPage.insertRow(row);
+            if (nextPage.isFull()) {
+                bf.unpinPage(nextPage.getPid(), File.PEOPLE);
+                nextPage = bf.createPage(File.PEOPLE);
+            }
+        }
+        bf.unpinPage(nextPage.getPid(), File.PEOPLE);
+        bf.force();
+
+        System.out.println("Person table populated");
     }
 }
