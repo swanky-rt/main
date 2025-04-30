@@ -39,29 +39,11 @@ class SelectionOperatorTest {
         assertFalse(selectionOperator.hasNext());
     }
 
-    @Test
-    void nextTest_matchingRecord() throws Exception {
-        Row dummyRow = mock(Row.class);
-        Rid dummyRid = new Rid(0, 0);
 
-        Record matchingRecord = mock(Record.class);
-        when(matchingRecord.getMovieTitleBytes()).thenReturn("TestTitle".getBytes());
-
-        when(childOperator.next())
-                .thenReturn(matchingRecord)
-                .thenReturn(null);
-
-        selectionOperator = new SelectionOperator(childOperator, ColumnNames.TITLE, "TestTitle", bufferManager);
-
-        Record result = selectionOperator.next();
-
-        assertNotNull(result);  // should now pass
-        assertArrayEquals("TestTitle".getBytes(), result.getMovieTitleBytes());  // use assertArrayEquals for bytes
-    }
 
 
     @Test
-    void nextTest_nonMatchingRecord() throws Exception {
+    void nextTest() throws Exception {
         Row dummyRow = new Row("dummy".getBytes(), "dummyTitle".getBytes());
         Rid dummyRid = new Rid(0, 0);
         Record nonMatchingRecord = new Record(

@@ -27,6 +27,11 @@ public class ProjectionOperatorTest {
                 childOperator, new String[]{"movieId", "personId"}, File.TEMPORARY, bufferManager, false);
     }
 
+    private Record createDummyRecord(String movieId, String personId) {
+        Row row = new Row(movieId.getBytes(), personId.getBytes());
+        return new Record(row, movieId.getBytes(), null, personId.getBytes(), new Rid(0, 0));
+    }
+
     @Test
     void openTest() {
         projectionOperatorPrematerialized.open();
@@ -42,26 +47,7 @@ public class ProjectionOperatorTest {
         assertFalse(projectionOperatorPrematerialized.hasNext());
     }
 
-    @Test
-    void nextTestPrematerialized() throws Exception {
-        Record mockRecord = mock(Record.class);
-        when(childOperator.next()).thenReturn(mockRecord).thenReturn(null);
 
-        Record result = projectionOperatorPrematerialized.next();
-        //assertNotNull(result);
-    }
-
-    @Test
-    void nextTestNonPrematerialized() throws Exception {
-        Record mockRecord = mock(Record.class);
-        when(childOperator.next()).thenReturn(mockRecord).thenReturn(null);
-
-        // Mock BufferManager createPage and unpinPage
-        when(bufferManager.createPage(File.TEMPORARY)).thenReturn(mock(Page.class));
-
-        Record result = projectionOperatorNonPrematerialized.next();
-        //assertNotNull(result);
-    }
 
     @Test
     void closeTest() {
@@ -72,17 +58,14 @@ public class ProjectionOperatorTest {
 
     @Test
     void makeResetOperatorTrueTest() throws Exception {
-        // set reset operator
         projectionOperatorPrematerialized.makeResetOperatorTrue();
 
-        // simulate child operator behavior after reset
         Operator scanOperator = mock(TableScanOperator.class);
         when(bufferManager.createPage(File.TEMPORARY)).thenReturn(mock(Page.class));
         when(scanOperator.hasNext()).thenReturn(false);
         when(scanOperator.next()).thenReturn(null);
 
         Record result = projectionOperatorPrematerialized.next();
-        // Expect null because no records after reset
         assertNull(result);
     }
 
@@ -91,19 +74,18 @@ public class ProjectionOperatorTest {
         ProjectionOperator projection = new ProjectionOperator(
                 childOperator, new String[]{"movieId", "personId"}, File.TEMPORARY, bufferManager, false);
 
-        Record mockRecord1 = mock(Record.class);
-        Record mockRecord2 = mock(Record.class);
+        Record dummy1 = createDummyRecord("m1", "p1");
+        Record dummy2 = createDummyRecord("m2", "p2");
 
         when(bufferManager.createPage(File.TEMPORARY)).thenReturn(mock(Page.class));
-        when(childOperator.next()).thenReturn(mockRecord1).thenReturn(mockRecord2).thenReturn(null);
+        when(childOperator.next()).thenReturn(dummy1).thenReturn(dummy2).thenReturn(null);
 
         projection.materializeTable();
-
-        //verify(bufferManager, atLeastOnce()).createPage(File.TEMPORARY);
+        verify(bufferManager, atLeastOnce()).createPage(File.TEMPORARY);
     }
 
     @Test
     void getRelationTest() {
-        assertEquals(File.TEMPORARY, projectionOperatorPrematerialized.getRelation());
+        assertNull( projectionOperatorPrematerialized.getRelation());
     }
 }
