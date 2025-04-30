@@ -3,6 +3,8 @@ package project_645;
 import javax.management.Query;
 import java.util.Iterator;
 
+import static project_645.Utilities.measureDirectorSelectivity;
+
 public class Main {
     public static void main(String[] args) {
         try {
@@ -34,23 +36,36 @@ public class Main {
 
            // testExecutor.prematerializeTable(1000 * 4096);
 
-            utilities.queryPlanCorrectnessTest1();
+           // utilities.queryPlanCorrectnessTest1();
 
             System.out.println("--------------------------------------------");
 
-            utilities.queryPlanCorrectnessTest2();
+           // utilities.queryPlanCorrectnessTest2();
 
             System.out.println("--------------------------------------------");
 
-            utilities.queryPlanCorrectnessTest3();
+           // utilities.queryPlanCorrectnessTest3();
 
             long totalMovies   = bufferManager.getCurrentMovieIdPage();
             long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
             long totalPeople   = bufferManager.getCurrentPeoplePageId();
             double sigmaP      = measureDirectorSelectivity(bufferManager);
 
+            String[] starts = {"A", "F", "K", "P", "U"};
+            String[] ends   = {"D", "I", "N", "S", "Z"};
+            utilities.testQueryPerformance(
+                    filePath,
+                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
+                    starts, ends,
+                    100,  // buffer size in frames (pages)
+                    totalMovies, totalWorkedOn, totalPeople,
+                    sigmaP
+            );
 
-             // Note: The index objects are defined within the utilities methods themselves. If you want to create
+
+
+
+            // Note: The index objects are defined within the utilities methods themselves. If you want to create
              //an index object that matches the attribute/file, read the following instructions.
              //Example instantiations are included
 //             Change the enum to change what file you want to write to

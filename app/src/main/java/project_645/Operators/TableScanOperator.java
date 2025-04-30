@@ -12,10 +12,12 @@ public class TableScanOperator implements Operator {
     private int curRowIndex = 0;
     private Page currentPage;
     private int maxPages;
+   // private final String[] columns;
 
-    public TableScanOperator(BufferManagerImpl bufferManager, File tableName) {
+    public TableScanOperator(BufferManagerImpl bufferManager, File tableFile){//String[] columns) {
         this.bufferManager = bufferManager;
-        this.tableFile = tableName;
+        this.tableFile = tableFile;
+       // this.columns = columns;
     }
 
     @Override

@@ -28,7 +28,8 @@ public class BufferManagerImpl extends BufferManager{
     private String movieTitleIndexFileName;
     private String workedOnFileName;
     private String peopleFileName;
-    private long totalIOs;
+    public static long totalIOs=0;
+    public static long resetiocount(){ return totalIOs=0;}
     public long getCurrentMovieIdPage(){ return currentMovieIdPage;}
     public long getCurrentMovieTitlePageId(){ return currentMovieTitlePageId;}
     public long getCurrentWorkedOnPageId(){ return currentWorkedOnPageId;}
@@ -294,7 +295,7 @@ public class BufferManagerImpl extends BufferManager{
     // This method writes pages to disk
 
     public void writePageToDisk(Page page, File dataFile) throws IOException {
-        this.totalIOs += 1;
+        totalIOs += 1;
         String curDiskFileName = getDataFileName(dataFile);
         long pageId = page.getPid();
         Path curPath = Paths.get( filepath + curDiskFileName).toAbsolutePath();
@@ -371,7 +372,7 @@ public class BufferManagerImpl extends BufferManager{
     // This method loads pages from disk
 
     public Page loadPageFromDisk(long pageId, File dataFile) {
-        this.totalIOs += 1;
+        totalIOs += 1;
         String curDiskFileName = getDataFileName(dataFile);
         Path curPath = Paths.get(filepath + curDiskFileName);
         Charset charset = StandardCharsets.US_ASCII;
