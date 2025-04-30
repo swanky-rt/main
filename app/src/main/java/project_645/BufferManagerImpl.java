@@ -29,6 +29,10 @@ public class BufferManagerImpl extends BufferManager{
     private String workedOnFileName;
     private String peopleFileName;
     private long totalIOs;
+    public long getCurrentMovieIdPage(){ return currentMovieIdPage;}
+    public long getCurrentMovieTitlePageId(){ return currentMovieTitlePageId;}
+    public long getCurrentWorkedOnPageId(){ return currentWorkedOnPageId;}
+    public long getCurrentPeoplePageId(){ return currentPeoplePageId;}
 
 
     public BufferManagerImpl(int bufferSize, String filepath, String diskFileName, String movieIdIndexFileName,

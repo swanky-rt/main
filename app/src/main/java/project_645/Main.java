@@ -23,16 +23,16 @@ public class Main {
 //            // IF YOU DO LOSE THE INDEX FILES, PLEASE SEE OUR DOCUMENTATION FOR A LINK TO A BACKUP VERSION WE CREATED
 //
             Utilities utilities = new Utilities(mainFileName, diskFileName);
-            // utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+         //   utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
             BufferManagerImpl bufferManager = new BufferManagerImpl(100000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
             // bufferManager.populateDisk(10000, filePath, "A", "z");
 
-            // utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
+           // utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
 
             QueryExecutor testExecutor = new QueryExecutor();
 
-            // testExecutor.prematerializeTable(1000 * 4096);
+           // testExecutor.prematerializeTable(1000 * 4096);
 
             utilities.queryPlanCorrectnessTest1();
 
@@ -43,6 +43,11 @@ public class Main {
             System.out.println("--------------------------------------------");
 
             utilities.queryPlanCorrectnessTest3();
+
+            long totalMovies   = bufferManager.getCurrentMovieIdPage();
+            long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
+            long totalPeople   = bufferManager.getCurrentPeoplePageId();
+            double sigmaP      = measureDirectorSelectivity(bufferManager);
 
 
              // Note: The index objects are defined within the utilities methods themselves. If you want to create
