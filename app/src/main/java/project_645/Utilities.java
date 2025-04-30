@@ -800,7 +800,8 @@ public class Utilities {
             // 1) reset & run your query
             BufferManagerImpl.resetiocount();
             new QueryExecutor().executeQuery(lo, hi, bufferSize,true);
-            long ioMeas = BufferManagerImpl.totalIOs;
+            long ioMeas = BufferManagerImpl.getTotalIOs();
+            System.out.println("Measured I/O: " + ioMeas);
 
             // 2) re-scan Movies to compute σm
             BufferManagerImpl bm2 = new BufferManagerImpl(5000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
