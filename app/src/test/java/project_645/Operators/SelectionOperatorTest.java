@@ -5,80 +5,141 @@ import org.junit.jupiter.api.Test;
 import project_645.*;
 import project_645.Record;
 
-import java.io.IOException;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class SelectionOperatorTest {
+public class SelectionOperatorTest {
 
     private Operator childOperator;
     private BufferManagerImpl bufferManager;
-    private SelectionOperator selectionOperator;
 
     @BeforeEach
     void setUp() {
         childOperator = mock(Operator.class);
         bufferManager = mock(BufferManagerImpl.class);
-        selectionOperator = new SelectionOperator(childOperator, ColumnNames.TITLE, "TestTitle", bufferManager);
     }
 
     @Test
     void openTest() {
-        doNothing().when(childOperator).open();
+        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.TITLE, "TestTitle", bufferManager);
         selectionOperator.open();
         verify(childOperator, times(1)).open();
     }
 
     @Test
-    void hasNextTest() throws IOException {
-        when(childOperator.hasNext()).thenReturn(true);
+    void hasNextTest() throws Exception {
+        when(childOperator.hasNext()).thenReturn(true, false);
+        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.TITLE, "TestTitle", bufferManager);
         assertTrue(selectionOperator.hasNext());
-
-        when(childOperator.hasNext()).thenReturn(false);
         assertFalse(selectionOperator.hasNext());
     }
 
+    @Test
+    void nextTest_matchingTitle() throws Exception {
+        Row dummyRow = new Row("dummy".getBytes(), "TestTitle".getBytes());
+        Rid dummyRid = new Rid(0, 0);
+        Record matchingRecord = new Record(dummyRow, "id".getBytes(), "TestTitle".getBytes(), "cat".getBytes(), dummyRid);
 
+        when(childOperator.next()).thenReturn(matchingRecord, null);
 
+        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.TITLE, "TestTitle", bufferManager);
+        Record result = selectionOperator.next();
+        assertNotNull(result);
+        assertEquals("TestTitle", new String(result.getMovieTitleBytes()).trim());
+        assertNull(selectionOperator.next()); // second call should return null
+    }
 
     @Test
-    void nextTest() throws Exception {
-        Row dummyRow = new Row("dummy".getBytes(), "dummyTitle".getBytes());
+    void nextTest_nonMatchingMovieId() throws Exception {
+        Row dummyRow = new Row("dummy".getBytes(), "title".getBytes());
         Rid dummyRid = new Rid(0, 0);
-        Record nonMatchingRecord = new Record(
-                dummyRow,
-                "movieId456".getBytes(),
-                "DifferentTitle".getBytes(),
-                "something".getBytes(),
-                dummyRid
-        );
+        Record record = mock(Record.class);
 
-        when(childOperator.next())
-                .thenReturn(nonMatchingRecord)
-                .thenReturn(null);
+        when(record.getMovieIdBytes()).thenReturn("wrongId".getBytes());
+        when(record.getRow()).thenReturn(dummyRow);
+        when(record.getRid()).thenReturn(dummyRid);
 
-        selectionOperator = new SelectionOperator(childOperator, ColumnNames.TITLE, "TestTitle", bufferManager);
+        when(childOperator.next()).thenReturn(record, null);
 
+        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.MOVIEID, "expectedId", bufferManager);
         Record result = selectionOperator.next();
         assertNull(result);
     }
 
+
+
+
     @Test
-    void closeTest() {
-        doNothing().when(childOperator).close();
-        selectionOperator.close();
-        verify(childOperator, times(1)).close();
+    void nextTest_rangeSelectionPersonId() throws Exception {
+        Row dummyRow = new Row("movie123".getBytes(), "SomeTitle".getBytes());
+        Rid dummyRid = new Rid(0, 0);
+        Record record = new Record(dummyRow, "movie123".getBytes(), "SomeTitle".getBytes(), "director".getBytes(), dummyRid) {
+            @Override
+            public byte[] getPersonIdBytes() {
+                return "person150".getBytes();
+            }
+        };
+
+        when(childOperator.next()).thenReturn(record, null);
+
+        SelectionOperator selectionOperator = new SelectionOperator(
+                childOperator, ColumnNames.PERSONID, "person100", "person200", bufferManager
+        );
+
+        Record result = selectionOperator.next();
+        assertNotNull(result);
+    }
+
+
+
+
+
+
+    @Test
+    void nextTest_rangeSelectionName() throws Exception {
+        Row dummyRow = new Row("movie123".getBytes(), "SomeTitle".getBytes());
+        Rid dummyRid = new Rid(0, 0);
+        Record record = new Record(dummyRow, "movie123".getBytes(), "SomeTitle".getBytes(), "director".getBytes(), dummyRid) {
+            @Override
+            public byte[] getNameBytes() {
+                return "Brando".getBytes();
+            }
+        };
+
+        when(childOperator.next()).thenReturn(record, null);
+
+        SelectionOperator selectionOperator = new SelectionOperator(
+                childOperator, ColumnNames.NAME, "A", "Z", bufferManager
+        );
+
+        Record result = selectionOperator.next();
+        assertNotNull(result);
+    }
+
+
+    @Test
+    void nextTest_resetOperatorTrue() throws Exception {
+        TableScanOperator tableScanMock = mock(TableScanOperator.class);
+        when(tableScanMock.next()).thenReturn(null);
+        when(tableScanMock.getRelation()).thenReturn(File.DISK);
+
+        SelectionOperator selectionOperator = new SelectionOperator(tableScanMock, ColumnNames.TITLE, "X", bufferManager);
+        selectionOperator.makeResetOperatorTrue(); // sets flag
+        Record result = selectionOperator.next();
+        assertNull(result); // should not throw
     }
 
     @Test
     void getRelationTest() {
-        when(childOperator.getRelation()).thenReturn(File.DISK);
-        assertEquals(File.DISK, selectionOperator.getRelation());
+        when(childOperator.getRelation()).thenReturn(File.WORKEDON);
+        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.CATEGORY, "director", bufferManager);
+        assertEquals(File.WORKEDON, selectionOperator.getRelation());
     }
 
     @Test
-    void makeResetOperatorTrueTest() {
-        assertDoesNotThrow(() -> selectionOperator.makeResetOperatorTrue());
+    void closeTest() {
+        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.CATEGORY, "director", bufferManager);
+        selectionOperator.close();
+        verify(childOperator).close();
     }
 }
