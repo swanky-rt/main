@@ -28,8 +28,9 @@ public class BufferManagerImpl extends BufferManager{
     private String movieTitleIndexFileName;
     private String workedOnFileName;
     private String peopleFileName;
-    public static long totalIOs=0;
-    public static long resetiocount(){ return totalIOs=0;}
+    public long totalIOs=0;
+    //public long resetiocount(){return this.totalIOs=0;}
+
     public long getCurrentMovieIdPage(){ return currentMovieIdPage;}
     public long getCurrentMovieTitlePageId(){ return currentMovieTitlePageId;}
     public long getCurrentWorkedOnPageId(){ return currentWorkedOnPageId;}
@@ -59,13 +60,14 @@ public class BufferManagerImpl extends BufferManager{
         this.curTempTableId = 0;
         this.bnlJoin1PageId = 0;
         this.bnlJoin2PageId = 0;
-        this.totalIOs = 0;
+        this.totalIOs=0;
     }
 
 //This method gets the page from buffer pool and disk(if not present in buffer pool)
 
     @Override
     public Page getPage(long pageId, File dataFile) throws Exception {
+        //this.totalIOs += 1;
         String pageIdentifier = constructPageIdentifier(pageId, dataFile);
         Page page= null;
         try {
@@ -295,7 +297,7 @@ public class BufferManagerImpl extends BufferManager{
     // This method writes pages to disk
 
     public void writePageToDisk(Page page, File dataFile) throws IOException {
-        totalIOs += 1;
+        this.totalIOs += 1;
         String curDiskFileName = getDataFileName(dataFile);
         long pageId = page.getPid();
         Path curPath = Paths.get( filepath + curDiskFileName).toAbsolutePath();
@@ -372,7 +374,7 @@ public class BufferManagerImpl extends BufferManager{
     // This method loads pages from disk
 
     public Page loadPageFromDisk(long pageId, File dataFile) {
-        totalIOs += 1;
+        this.totalIOs += 1;
         String curDiskFileName = getDataFileName(dataFile);
         Path curPath = Paths.get(filepath + curDiskFileName);
         Charset charset = StandardCharsets.US_ASCII;

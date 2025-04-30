@@ -51,13 +51,13 @@ public class Main {
             long totalPeople   = bufferManager.getCurrentPeoplePageId();
             double sigmaP      = measureDirectorSelectivity(bufferManager);
 
-            String[] starts = {"A", "F", "K", "P", "U"};
-            String[] ends   = {"D", "I", "N", "S", "Z"};
+            String[] starts = {"a"}; //"F", "K", "P", "U"};
+            String[] ends   = {"d"};// "I", "N", "S", "Z"};
             utilities.testQueryPerformance(
                     filePath,
                     diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
                     starts, ends,
-                    100,  // buffer size in frames (pages)
+                    1000*4064,  // buffer size in frames (pages)
                     totalMovies, totalWorkedOn, totalPeople,
                     sigmaP
             );

@@ -796,15 +796,16 @@ public class Utilities {
 
         for (int i = 0; i < starts.length; i++) {
             String lo = starts[i], hi = ends[i];
+            BufferManagerImpl bm2 = new BufferManagerImpl(5000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
 
             // 1) reset & run your query
-            BufferManagerImpl.resetiocount();
-            new QueryExecutor().executeQuery(lo, hi, bufferSize,true);
-            long ioMeas = BufferManagerImpl.getTotalIOs();
+           // BufferManagerImpl.resetiocount();
+           long ioMeas = new QueryExecutor().executeQuery(lo, hi, bufferSize,true);
+            //long ioMeas = bm2.getTotalIOs();
+            //System.out.println("Measured I/O return: " + io);
             System.out.println("Measured I/O: " + ioMeas);
 
             // 2) re-scan Movies to compute σm
-            BufferManagerImpl bm2 = new BufferManagerImpl(5000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
 
             TableScanOperator ms = new TableScanOperator(bm2, File.MOVIE_TITLE_IDX);//new String[]{"movieId","title"});
             ms.open();
