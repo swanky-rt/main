@@ -3,11 +3,13 @@ package project_645;
 import javax.management.Query;
 import java.util.Iterator;
 
+import static project_645.Utilities.measureDirectorSelectivity;
+
 public class Main {
     public static void main(String[] args) {
         try {
             // define parameters to our various objects
-            String path = "/src/main/java/project_645/DB files/";
+            String path = "/app/src/main/java/project_645/DB files/";
             String mainFileName = "title.basics.tsv";
             String workedOnTSVFileName = "title.principals.tsv";
             String peopleTSVFileName = "name.basics.tsv";
@@ -23,25 +25,53 @@ public class Main {
 //            // IF YOU DO LOSE THE INDEX FILES, PLEASE SEE OUR DOCUMENTATION FOR A LINK TO A BACKUP VERSION WE CREATED
 //
             Utilities utilities = new Utilities(mainFileName, diskFileName);
-            // utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+         //   utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
-            BufferManagerImpl bufferManager = new BufferManagerImpl(1000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+            BufferManagerImpl bufferManager = new BufferManagerImpl(100000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
             // bufferManager.populateDisk(10000, filePath, "A", "z");
 
-            //utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
+           // utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
 
             QueryExecutor testExecutor = new QueryExecutor();
 
-            testExecutor.executeQuery("A", "z", 50000 * 4096);
+           // testExecutor.prematerializeTable(1000 * 4096);
+
+           // utilities.queryPlanCorrectnessTest1();
+
+            System.out.println("--------------------------------------------");
+
+           // utilities.queryPlanCorrectnessTest2();
+
+            System.out.println("--------------------------------------------");
+
+           // utilities.queryPlanCorrectnessTest3();
+
+            long totalMovies   = bufferManager.getCurrentMovieIdPage();
+            long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
+            long totalPeople   = bufferManager.getCurrentPeoplePageId();
+            double sigmaP      = measureDirectorSelectivity(bufferManager);
+
+            String[] starts = {"A", "F", "K", "P", "U"};
+            String[] ends   = {"D", "I", "N", "S", "Z"};
+            utilities.testQueryPerformance(
+                    filePath,
+                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
+                    starts, ends,
+                    100,  // buffer size in frames (pages)
+                    totalMovies, totalWorkedOn, totalPeople,
+                    sigmaP
+            );
+
+
 
 
             // Note: The index objects are defined within the utilities methods themselves. If you want to create
-            //an index object that matches the attribute/file, read the following instructions.
-            //Example instantiations are included
+             //an index object that matches the attribute/file, read the following instructions.
+             //Example instantiations are included
 //             Change the enum to change what file you want to write to
 //             The following two lines are an example of how to create the index.
 //             Note that C1 and C2 create the index with order 51, as that is the maximum possible order possible for this index
-//            BTreeImpl testBTreeIndexTitle = new BTreeImpl(bufferManager, 51, File.MOVIE_TITLE_IDX);
+            // BTreeImpl testBTreeIndexTitle = new BTreeImpl(bufferManager, 51, File.MOVIE_TITLE_IDX);
 //
 //            BTreeImpl testBTreeIndexMovieId = new BTreeImpl(bufferManager, 51, File.MOVIE_ID_IDX);
 //

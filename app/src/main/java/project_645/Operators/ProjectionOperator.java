@@ -5,6 +5,8 @@ import project_645.Record;
 
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class ProjectionOperator implements Operator {
     private Operator child;
@@ -15,8 +17,9 @@ public class ProjectionOperator implements Operator {
     private Page currentPage;
     private final boolean prematerialized;
     private boolean resetOperator = false;
+    private ColumnNames[] columnNames;
 
-    public ProjectionOperator(Operator child, String[] columns, File relation, BufferManagerImpl bufferManager, boolean prematerialized) {
+    public ProjectionOperator(Operator child, ColumnNames[] columns, File relation, BufferManagerImpl bufferManager, boolean prematerialized) {
         this.child = child;
         // this.columns = columns;
         this.relation = relation;
@@ -24,10 +27,11 @@ public class ProjectionOperator implements Operator {
         this.firstNext = true;
         this.currentPage = null;
         this.prematerialized = prematerialized;
+        this.columnNames = columns;
     }
 
     @Override
-    public void open() {
+    public void open() throws Exception {
         child.open();
     }
 
@@ -43,10 +47,10 @@ public class ProjectionOperator implements Operator {
             bufferManager.unpinPage(currentPage.getPid(), File.TEMPORARY);
         }
 
-        if (firstNext || resetOperator) {
+        if ((firstNext || resetOperator) && relation == File.TEMPORARY) {
             firstNext = false;
             resetOperator = false;
-            this.child = new TableScanOperator(bufferManager, relation, new String[2]);
+            this.child = new TableScanOperator(bufferManager, relation);
             this.child.open();
         }
         Record input;
@@ -97,36 +101,28 @@ public class ProjectionOperator implements Operator {
         byte[] newName = new byte[105];      // Empty for non-relevant fields
 
         // Loop through the columns being projected
-
-        Row newRow;
-        switch (this.relation) {
-            case File.DISK:
-                newMovieId = input.getMovieIdBytes();
-                newTitle = input.getMovieTitleBytes();
-                newRow = new Row(newMovieId, newTitle);
-                break;
-            case File.WORKEDON:
-                newMovieId = input.getMovieIdBytes();
-                newPersonId = input.getPersonIdBytes();
-                newCategory = input.getCategoryBytes();
-                newRow = new Row(newMovieId, newPersonId, newCategory);
-                break;
-            case File.PEOPLE:
-                newPersonId = input.getPersonIdBytes();
-                newName = input.getNameBytes();
-                newRow = new Row(newPersonId, newName, true);
-                break;
-            case File.TEMPORARY:
-                newMovieId = input.getMovieIdBytes();
-                newPersonId = input.getPersonIdBytes();
-                newRow = new Row(newMovieId, newPersonId, File.TEMPORARY);
-                break;
-            default:
-                throw new Exception();
-        }
-
         // Create Row with the relevant fields (movieId, title) and use dummy values for the others
         // Create Row with movieId and title
+        Row newRow = new Row(null, null, null, null, null);
+
+        List<ColumnNames> columnsList = Arrays.asList(columnNames);
+        if (columnsList.contains(ColumnNames.NAME)) {
+            newRow.name = input.getNameBytes();
+        }
+        if (columnsList.contains(ColumnNames.CATEGORY)) {
+            newRow.category = input.getCategoryBytes();
+        }
+        if (columnsList.contains(ColumnNames.MOVIEID)) {
+            newRow.movieId = input.getMovieIdBytes();
+        }
+        if (columnsList.contains(ColumnNames.PERSONID)) {
+            newRow.personId = input.getPersonIdBytes();
+        }
+        if (columnsList.contains(ColumnNames.TITLE)) {
+            newRow.title = input.getMovieTitleBytes();
+        }
+
+
 
         // Create a Record object and pass the Row along with the other fields (personId, category, name)
         if (relation == File.TEMPORARY && materialize) {

@@ -6,12 +6,14 @@ import project_645.Record;
 import java.io.IOException;
 
 public interface Operator {
-    void open();
+    void open() throws Exception;
 
     boolean hasNext() throws IOException;
 
     Record next() throws Exception;
     void close();
+
     File getRelation();
+
     public void makeResetOperatorTrue();
 }

@@ -168,7 +168,7 @@ public class TATests {
             Page page = bf.createPage(File.DISK);
             // bf.getPage(page.getPid());
             while (! page.isFull()) {
-                Row row = new Row(("Movie " + counter).getBytes(), ("Title " + counter).getBytes());
+                Row row = new Row(("Movie " + counter).getBytes(), ("Title " + counter).getBytes(), null, null, null);
                 page.insertRow(row);
                 counter += 1;
             }
@@ -219,7 +219,7 @@ public class TATests {
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
         long startTime1 = System.nanoTime();
-        bf.getPage(-5, File.DISK);
+        bf.getPage(4, File.DISK);
         long endtime1 = System.nanoTime();
         long duration1 = endtime1 - startTime1;
 
@@ -255,12 +255,12 @@ public class TATests {
         BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName,
                 movieIdIndexFileName, movieIdTitleFileName, workedOnFileName, peopleTableFileName);
         Page page = bf.createPage(File.DISK);
-        page.insertRow(new Row("Movie1".getBytes(StandardCharsets.US_ASCII), "Title1".getBytes(StandardCharsets.US_ASCII)));
+        page.insertRow(new Row("Movie1".getBytes(StandardCharsets.US_ASCII), "Title1".getBytes(StandardCharsets.US_ASCII), null, null, null));
         page.markNotDirty();
         bf.unpinPage(page.getPid(), File.DISK);
         for (int i = 0; i < 5; ++i) {
             Page page1 = bf.createPage(File.DISK);
-            page1.insertRow(new Row("Movie2".getBytes(StandardCharsets.US_ASCII), "Title2".getBytes(StandardCharsets.US_ASCII)));
+            page1.insertRow(new Row("Movie2".getBytes(StandardCharsets.US_ASCII), "Title2".getBytes(StandardCharsets.US_ASCII), null, null, null));
             bf.unpinPage(page1.getPid(), File.DISK);
         }
         byte[] movieIdByteArr = ("Movie2").getBytes(StandardCharsets.US_ASCII);

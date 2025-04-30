@@ -28,6 +28,7 @@ public class PageImpl implements Page, Serializable {
             ROW_SIZE = 19;
             MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
         }
+
         if (dataFile == File.BNL1) {
             ROW_SIZE = 49;
             MAX_TUPLES = PAGE_SIZE / ROW_SIZE;
@@ -171,7 +172,5 @@ public class PageImpl implements Page, Serializable {
     public File getDataFile() {
         return this.dataFile;
     }
-
-
 
 }

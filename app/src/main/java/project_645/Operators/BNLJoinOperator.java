@@ -17,7 +17,7 @@ public class BNLJoinOperator implements Operator {
     private final ColumnNames innerJoinKey;
     private HashMap<String, List<Rid>> hashTable;
     private Page currentOuterBnlPage;
-    private BufferManager bufferManager;
+    private BufferManagerImpl bufferManager;
     File bnlRelation;
     private boolean outerExhausted;
     private int freeBufferPoolFrames;
@@ -41,7 +41,7 @@ public class BNLJoinOperator implements Operator {
     }
 
     @Override
-    public void open() {
+    public void open() throws Exception {
         outer.open();
         inner.open();
     }
@@ -92,7 +92,10 @@ public class BNLJoinOperator implements Operator {
 
                 for (List<Rid> curRids : hashTable.values()) {
                     for (Rid curRid : curRids) {
-                        bufferManager.unpinPage(curRid.getPageId(), bnlRelation);
+                        while (bufferManager.pinnedPages.containsKey(bufferManager.constructPageIdentifier(curRid.getPageId(), bnlRelation))) {
+                            bufferManager.unpinPage(curRid.getPageId(), bnlRelation);
+                        }
+
                     }
                 }
                 inner.makeResetOperatorTrue();
@@ -150,14 +153,15 @@ public class BNLJoinOperator implements Operator {
         int slotId = outerRid.getSlotId();
 
         Page joinRecordPage = bufferManager.getPage(pageId, bnlRelation);
+        bufferManager.unpinPage(joinRecordPage.getPid(), bnlRelation);
         Row curRowRecord = joinRecordPage.getRow(slotId);
         switch (bnlRelation) {
             case BNL1:
-                Row returnRow2 = new Row(curRowRecord.getMovieId(), curRowRecord.getTitle(), innerRecord.getPersonIdBytes(), true);
+                Row returnRow2 = new Row(curRowRecord.getMovieId(), curRowRecord.getTitle(), innerRecord.getPersonIdBytes(), null, null);
                 Record returnRecord2 = new Record(returnRow2, null, null, null, null);
                 return returnRecord2;
             case BNL2:
-                Row returnRow = new Row(curRowRecord.getMovieId(), curRowRecord.getTitle(), curRowRecord.getPersonId(), innerRecord.getNameBytes());
+                Row returnRow = new Row(curRowRecord.getMovieId(), curRowRecord.getTitle(), curRowRecord.getPersonId(), null, innerRecord.getNameBytes());
                 Record returnRecord = new Record(returnRow, null, null, null, null);
                 return returnRecord;
             default:
