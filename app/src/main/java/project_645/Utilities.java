@@ -507,21 +507,21 @@ public class Utilities {
     public void queryPlanCorrectnessTest1() throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("cb", "cbz", 100000*4096, true);
+        long ios = queryExecutor.executeQuery("horrid henry", "horrid henrz", 1000*4096, false);
 
     }
 
     public void queryPlanCorrectnessTest2() throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("x", "y", 100000*4096, true);
+        long ios = queryExecutor.executeQuery("x", "y", 1000*4096, true);
 
     }
 
     public void queryPlanCorrectnessTest3() throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("w", "z", 100000*4096, true);
+        long ios = queryExecutor.executeQuery("w", "z", 1000*4096, true);
 
     }
 
@@ -803,7 +803,7 @@ public class Utilities {
             long ioMeas = BufferManagerImpl.totalIOs;
 
             // 2) re-scan Movies to compute σm
-            BufferManagerImpl bm2 = new BufferManagerImpl(5000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
+            BufferManagerImpl bm2 = new BufferManagerImpl(1000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
 
             TableScanOperator ms = new TableScanOperator(bm2, File.MOVIE_TITLE_IDX);//new String[]{"movieId","title"});
             ms.open();

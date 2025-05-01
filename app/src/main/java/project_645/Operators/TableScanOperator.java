@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class TableScanOperator implements Operator {
     private final File tableFile;
-    private final BufferManager bufferManager;
+    private final BufferManagerImpl bufferManager;
     private int currentPageIndex = 0;
     private int curRowIndex = 0;
     private Page currentPage;
@@ -24,6 +24,7 @@ public class TableScanOperator implements Operator {
     public void open() {
         try {
             currentPageIndex = 0;
+            curRowIndex = 0;
             currentPage = bufferManager.getPage(currentPageIndex, tableFile);  // Correct method: getPage()
 
         } catch (Exception e) {
@@ -46,7 +47,9 @@ public class TableScanOperator implements Operator {
             curRowIndex++;  // Move to the next row
 
             if (curRowIndex >= currentPage.getRowCount()) {
-                bufferManager.unpinPage(currentPageIndex, tableFile);
+                while (bufferManager.pinnedPages.containsKey(bufferManager.constructPageIdentifier(currentPage.getPid(), tableFile))) {
+                    bufferManager.unpinPage(currentPage.getPid(), tableFile);
+                }
                 curRowIndex = 0;
                 ++currentPageIndex;
                 if (hasNext()) {
@@ -57,14 +60,18 @@ public class TableScanOperator implements Operator {
             // Pass null for personId, category, and name.
             return new Record(row, null, null, null, new Rid(currentPageIndex, curRowIndex));  // Pass null for unused fields (personId, category, name)
         }
-        bufferManager.unpinPage(currentPage.getPid(), tableFile);
+        while (bufferManager.pinnedPages.containsKey(bufferManager.constructPageIdentifier(currentPage.getPid(), tableFile))) {
+            bufferManager.unpinPage(currentPage.getPid(), tableFile);
+        }
     return null;
 }
 
     @Override
     public void close() {
         if (currentPage != null) {
-            bufferManager.unpinPage(currentPage.getPid(), tableFile);  //  Safe unpin
+            while (bufferManager.pinnedPages.containsKey(bufferManager.constructPageIdentifier(currentPage.getPid(), tableFile))) {
+                bufferManager.unpinPage(currentPage.getPid(), tableFile);
+            }  //  Safe unpin
         }
         // Close the operator, releasing any resources if needed
         currentPage = null;
@@ -76,7 +83,7 @@ public class TableScanOperator implements Operator {
     }
 
     @Override
-    public void makeResetOperatorTrue() {
+    public void makeResetOperatorTrue() throws Exception {
         return;
     }
 }

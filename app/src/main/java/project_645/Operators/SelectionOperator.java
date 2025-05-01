@@ -71,13 +71,17 @@ public class SelectionOperator implements Operator {
             // Check if the value matches the column for filtering
             switch (this.columnName) {
                 case ColumnNames.TITLE:
+                    if ("wayfarers".compareTo(input.getTitleDeserialized()) == 0
+                    && "tt0754347".compareTo(input.getMovieIdDeserialized()) == 0) {
+                        int breakpoint = 2;
+                }
                     if (Arrays.compare(this.key, input.getMovieTitleBytes()) <= 0 &&
                             Arrays.compare(this.endkey, input.getMovieTitleBytes()) >= 0) {
                         return input;
                     }
                     break;
                 case ColumnNames.MOVIEID:
-                    if (Arrays.compare(this.key, input.getMovieIdBytes()) >= 0 &&
+                    if (Arrays.compare(this.key, input.getMovieIdBytes()) <= 0 &&
                             Arrays.compare(this.endkey, input.getMovieIdBytes()) >= 0) {
                         return input;
                     }
@@ -118,7 +122,7 @@ public class SelectionOperator implements Operator {
     }
 
     @Override
-    public void makeResetOperatorTrue() {
+    public void makeResetOperatorTrue() throws Exception {
         this.resetOperator = true;
     }
 }

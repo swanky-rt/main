@@ -25,12 +25,14 @@ public class Main {
 //            // IF YOU DO LOSE THE INDEX FILES, PLEASE SEE OUR DOCUMENTATION FOR A LINK TO A BACKUP VERSION WE CREATED
 //
             Utilities utilities = new Utilities(mainFileName, diskFileName);
-         //   utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+            // utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
-            BufferManagerImpl bufferManager = new BufferManagerImpl(100000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+            BufferManagerImpl bufferManager = new BufferManagerImpl(1000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+
+            // Creating the index on movie title should take 2-3 hours.
             // bufferManager.populateDisk(10000, filePath, "A", "z");
 
-           // utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
+            // utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
 
             QueryExecutor testExecutor = new QueryExecutor();
 
@@ -38,29 +40,29 @@ public class Main {
 
            // utilities.queryPlanCorrectnessTest1();
 
-            System.out.println("--------------------------------------------");
+//            System.out.println("--------------------------------------------");
 
            // utilities.queryPlanCorrectnessTest2();
 
-            System.out.println("--------------------------------------------");
+//            System.out.println("--------------------------------------------");
 
-           // utilities.queryPlanCorrectnessTest3();
+           utilities.queryPlanCorrectnessTest3();
 
-            long totalMovies   = bufferManager.getCurrentMovieIdPage();
-            long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
-            long totalPeople   = bufferManager.getCurrentPeoplePageId();
-            double sigmaP      = measureDirectorSelectivity(bufferManager);
-
-            String[] starts = {"A", "F", "K", "P", "U"};
-            String[] ends   = {"D", "I", "N", "S", "Z"};
-            utilities.testQueryPerformance(
-                    filePath,
-                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
-                    starts, ends,
-                    100,  // buffer size in frames (pages)
-                    totalMovies, totalWorkedOn, totalPeople,
-                    sigmaP
-            );
+//            long totalMovies   = bufferManager.getCurrentMovieIdPage();
+//            long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
+//            long totalPeople   = bufferManager.getCurrentPeoplePageId();
+//            double sigmaP      = 4167668/ 51040986.0;
+//
+//            String[] starts = {"a", "f", "k", "p", "u"};
+//            String[] ends   = {"d", "i", "n", "s", "z"};
+//            utilities.testQueryPerformance(
+//                    filePath,
+//                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
+//                    starts, ends,
+//                    1000 * 4096,  // buffer size in frames (pages)
+//                    totalMovies, totalWorkedOn, totalPeople,
+//                    sigmaP
+//            );
 
 
 

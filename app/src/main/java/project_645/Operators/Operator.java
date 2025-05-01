@@ -15,5 +15,5 @@ public interface Operator {
 
     File getRelation();
 
-    public void makeResetOperatorTrue();
+    public void makeResetOperatorTrue() throws Exception;
 }
