@@ -10,9 +10,9 @@ public class Main {
         try {
             // define parameters to our various objects
             String path = "/app/src/main/java/project_645/DB files/";
-            String mainFileName = "title.basics.tsv";
-            String workedOnTSVFileName = "title.principals.tsv";
-            String peopleTSVFileName = "name.basics.tsv";
+            String mainFileName = "title.basics.csv";
+            String workedOnTSVFileName = "title.principals.csv";
+            String peopleTSVFileName = "name.basics.csv";
             String diskFileName = "testdb.dat";
             String movieIdIndexFileName = "movieIdIndex.dat";
             String movieTitleIndexFileName = "movieTitleIndex.dat";
@@ -46,7 +46,7 @@ public class Main {
 
 //            System.out.println("--------------------------------------------");
 
-           utilities.queryPlanCorrectnessTest3();
+           utilities.queryPlanCorrectnessTest3(filePath);
 
 //            long totalMovies   = bufferManager.getCurrentMovieIdPage();
 //            long totalWorkedOn = bufferManager.getNextWorkedOnPageId();

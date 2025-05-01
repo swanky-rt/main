@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 public class Utilities {
@@ -507,22 +509,53 @@ public class Utilities {
     public void queryPlanCorrectnessTest1() throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("horrid henry", "horrid henrz", 1000*4096, false);
+        long ios = queryExecutor.executeQuery("horrid henry", "horrid henrz", 1000*4096, true, "C1results.csv");
 
     }
 
     public void queryPlanCorrectnessTest2() throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("x", "y", 1000*4096, true);
+        long ios = queryExecutor.executeQuery("x", "y", 1000*4096, true, "C2results.csv");
 
     }
 
-    public void queryPlanCorrectnessTest3() throws Exception {
+    public void queryPlanCorrectnessTest3(String filepath) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("x", "y", 1000*4096, true);
+        // long ios = queryExecutor.executeQuery("x", "y", 1000*4096, true, "C3results.csv");
 
+        ArrayList<String> file1Strings = new ArrayList<>();
+        ArrayList<String> file2Strings = new ArrayList<>();
+
+        BufferedReader workedOnTableReader = new BufferedReader(new FileReader(filepath + "C3results.csv"));
+        String curLine;
+        while ((curLine = workedOnTableReader.readLine()) != null) {
+            file1Strings.add(curLine);
+        }
+
+        BufferedReader workedOnTableReaderPostgres = new BufferedReader(new FileReader(filepath + "x-to-y-query.csv"));
+        while ((curLine = workedOnTableReaderPostgres.readLine()) != null) {
+            file2Strings.add(curLine);
+        }
+
+        Collections.sort(file1Strings);
+
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            String postgresResultsTitle = file2Strings.get(i).split(",")[0];
+            String postgresResultsName = file2Strings.get(i).split(",")[1];
+            String PostgresResultsSubstring = postgresResultsTitle.substring(0, Math.min(postgresResultsTitle.length(), 30)).trim();
+            String str2 = PostgresResultsSubstring+ "," + postgresResultsName;
+            file2Strings.set(i, str2);
+        }
+        Collections.sort(file2Strings);
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            if (!file1Strings.get(i).equals(file2Strings.get(i))) {
+                String str1 = file1Strings.get(i);
+                String str2 = file2Strings.get(i);
+                int breakpoint = 2;
+            }
+        }
     }
 
 
@@ -686,12 +719,15 @@ public class Utilities {
             Page nextPage = bf.createPage(File.DISK);
             // add rows using p.insertRow without filling p up
             while ((curLine = diskReader.readLine()) != null) {
-                String[] splitLine = curLine.split("\t");
+                String[] splitLine = curLine.split(",");
+                if (splitLine.length == 1) {
+                    continue;
+                }
                 byte[] movieId = splitLine[0].toLowerCase().getBytes();
                 if (movieId.length > 9) {
                     continue;
                 }
-                byte[] titleId = splitLine[2].toLowerCase().getBytes();
+                byte[] titleId = splitLine[1].toLowerCase().getBytes();
                 Row row = new Row(movieId, titleId, null, null, null);
                 nextPage.insertRow(row);
                 if (nextPage.isFull()) {
@@ -708,10 +744,13 @@ public class Utilities {
             workedOnTableReader.readLine();
             nextPage = bf.createPage(File.WORKEDON);
             while ((curLine = workedOnTableReader.readLine()) != null) {
-                String[] splitLine = curLine.split("\t");
+                String[] splitLine = curLine.split(",");
+                if (splitLine.length == 1) {
+                    continue;
+                }
                 byte[] movieId = splitLine[0].toLowerCase().getBytes();
-                byte[] personId = splitLine[2].toLowerCase().getBytes();
-                byte[] category = splitLine[3].toLowerCase().getBytes();
+                byte[] personId = splitLine[1].toLowerCase().getBytes();
+                byte[] category = splitLine[2].toLowerCase().getBytes();
                 if (movieId.length > 9) {
                     continue;
                 }
@@ -732,7 +771,10 @@ public class Utilities {
             peopleTableReader.readLine();
             nextPage = bf.createPage(File.PEOPLE);
             while ((curLine = peopleTableReader.readLine()) != null) {
-                String[] splitLine = curLine.split("\t");
+                String[] splitLine = curLine.split(",");
+                if (splitLine.length == 1) {
+                    continue;
+                }
                 byte[] personId = splitLine[0].toLowerCase().getBytes();
                 byte[] name = splitLine[1].toLowerCase().getBytes();
                 Row row = new Row(null, null, personId, null, name);
@@ -799,7 +841,7 @@ public class Utilities {
 
             // 1) reset & run your query
             BufferManagerImpl.resetiocount();
-            new QueryExecutor().executeQuery(lo, hi, bufferSize,true);
+            new QueryExecutor().executeQuery(lo, hi, bufferSize,true, null);
             long ioMeas = BufferManagerImpl.totalIOs;
 
             // 2) re-scan Movies to compute σm
