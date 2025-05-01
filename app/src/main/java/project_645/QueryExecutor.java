@@ -37,7 +37,7 @@ public class QueryExecutor {
         TableScanOperator moviesScan = new TableScanOperator(bufferManager, File.DISK);
 
         // Step 2: Selection on operator from chosen range
-        SelectionOperator testRangeSelection = new SelectionOperator(moviesScan, ColumnNames.TITLE, startRange, endRange, bufferManager);
+        SelectionOperator testRangeSelection = new SelectionOperator(moviesScan, ColumnNames.TITLE, startRange, endRange, bufferManager, false);
 
         // Step 3: workedOnScan operator
         TableScanOperator workedOnScan = new TableScanOperator(bufferManager, File.WORKEDON);
@@ -51,7 +51,8 @@ public class QueryExecutor {
                 workedOnScan,
                 ColumnNames.CATEGORY,
                 "director",  // Filtering based on category being "director"
-                bufferManager
+                bufferManager,
+                false
         );
 
 //        // Step 6: WorkedOn projection (keep only movieId and personId)
@@ -60,35 +61,55 @@ public class QueryExecutor {
                 new ColumnNames[] {ColumnNames.MOVIEID, ColumnNames.PERSONID},
                 File.TEMPORARY,
                 bufferManager,
-                true
+                usePrematerializedTempTable
         );
 
+
+//        workedOnProject.open();
+//        while (workedOnProject.next() != null) {
+//           continue;
+//        }
         // Step 7: join on materialized table and outer relation
         BNLJoinOperator bnlJoinOperator = new BNLJoinOperator(testRangeSelection, workedOnProject,
                 ColumnNames.MOVIEID, ColumnNames.MOVIEID, bufferManager, File.BNL1);
 
-        // Step 8: join on
+
+        // bnlJoinOperator.open();
+
+//        Record curRecord;
+//        while ((curRecord = bnlJoinOperator.next()) != null) {
+//            System.out.println(curRecord.getTitleDeserialized() + "," + curRecord.getPersonIdDeserialized() + "," + curRecord.getMovieIdDeserialized());
+//        }
+//        // Step 8: join on
          BNLJoinOperator bnlJoinOperator2 = new BNLJoinOperator(bnlJoinOperator, peopleScan,
                  ColumnNames.PERSONID, ColumnNames.PERSONID, bufferManager, File.BNL2);
-//
-        // Step 7: Final projection: title, name
-        ProjectionOperator finalProjection = new ProjectionOperator(
-                bnlJoinOperator2,
-                new ColumnNames[] {ColumnNames.TITLE, ColumnNames.NAME},
-                File.BNL2,
-                bufferManager,
-                usePrematerializedTempTable
-        );
 
-        // Step 8: Execute the plan and output the result
-        finalProjection.open();
-        Record result;
-        while ((result = finalProjection.next()) != null) {
-            System.out.println(result.getTitleDeserialized() + "," + result.getName());  // CSV format without spaces
-        }
-        if (!usePrematerializedTempTable) {
-             finalProjection.close();
-        }
+         bnlJoinOperator2.open();
+         Record curRecord;
+         while ((curRecord = bnlJoinOperator2.next()) != null) {
+             System.out.println(curRecord.getTitleDeserialized() + "," + curRecord.getPersonIdDeserialized() + "," + curRecord.getMovieIdDeserialized());
+
+         }
+
+////
+//        // Step 7: Final projection: title, name
+//        ProjectionOperator finalProjection = new ProjectionOperator(
+//                bnlJoinOperator2,
+//                new ColumnNames[] {ColumnNames.TITLE, ColumnNames.NAME},
+//                File.BNL2,
+//                bufferManager,
+//                true
+//        );
+//
+//        // Step 8: Execute the plan and output the result
+//        finalProjection.open();
+//        Record result;
+//        while ((result = finalProjection.next()) != null) {
+//            System.out.println(result.getTitleDeserialized() + "," + result.getName());  // CSV format without spaces
+//        }
+//        if (!usePrematerializedTempTable) {
+//             finalProjection.close();
+//        }
         return bufferManager.getTotalIOs();
     }
 
@@ -111,7 +132,8 @@ public class QueryExecutor {
                 workedOnScan,
                 ColumnNames.CATEGORY,
                 "director",  // Filtering based on category being "director"
-                bufferManager
+                bufferManager,
+                false
         );
         ProjectionOperator workedOnProject = new ProjectionOperator(
                 workedOnSelection,

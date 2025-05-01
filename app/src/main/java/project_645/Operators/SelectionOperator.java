@@ -15,6 +15,7 @@ public class SelectionOperator implements Operator {
     private byte[] key;
     private byte[] endkey;
     private BufferManagerImpl bufferManager;
+    private final boolean useIndex;
     private HashMap<ColumnNames, Integer> sizeMap = new HashMap<>() {{
         put(ColumnNames.MOVIEID, 9);
         put(ColumnNames.TITLE, 30);
@@ -25,7 +26,7 @@ public class SelectionOperator implements Operator {
 
     private boolean resetOperator = false;
 
-    public SelectionOperator(Operator child, ColumnNames columnName, String value, BufferManagerImpl bufferManager) {
+    public SelectionOperator(Operator child, ColumnNames columnName, String value, BufferManagerImpl bufferManager, boolean useIndex) {
         this.child = child;
         this.columnName = columnName;
         this.value = value;
@@ -34,9 +35,10 @@ public class SelectionOperator implements Operator {
         System.arraycopy(value.getBytes(), 0, this.key, 0, Math.min(value.length(), this.key.length));
         System.arraycopy(value.getBytes(), 0, this.endkey, 0, Math.min(value.length(), this.endkey.length));
         this.bufferManager = bufferManager;
+        this.useIndex = useIndex;
     }
 
-    public SelectionOperator(Operator child, ColumnNames columnName, String value, String endkey, BufferManagerImpl bufferManager) {
+    public SelectionOperator(Operator child, ColumnNames columnName, String value, String endkey, BufferManagerImpl bufferManager, boolean useIndex) {
         this.child = child;
         this.columnName = columnName;
         this.value = value;
@@ -44,6 +46,7 @@ public class SelectionOperator implements Operator {
         this.endkey = new byte[sizeMap.get(columnName)];
         System.arraycopy(value.getBytes(), 0, this.key, 0, Math.min(value.length(), this.key.length));
         System.arraycopy(endkey.getBytes(), 0, this.endkey, 0, Math.min(endkey.length(), this.endkey.length));
+        this.useIndex = useIndex;
     }
 
     @Override
@@ -71,13 +74,17 @@ public class SelectionOperator implements Operator {
             // Check if the value matches the column for filtering
             switch (this.columnName) {
                 case ColumnNames.TITLE:
+                    if ("wayfarers".compareTo(input.getTitleDeserialized()) == 0
+                    && "tt0754347".compareTo(input.getMovieIdDeserialized()) == 0) {
+                        int breakpoint = 2;
+                }
                     if (Arrays.compare(this.key, input.getMovieTitleBytes()) <= 0 &&
                             Arrays.compare(this.endkey, input.getMovieTitleBytes()) >= 0) {
                         return input;
                     }
                     break;
                 case ColumnNames.MOVIEID:
-                    if (Arrays.compare(this.key, input.getMovieIdBytes()) >= 0 &&
+                    if (Arrays.compare(this.key, input.getMovieIdBytes()) <= 0 &&
                             Arrays.compare(this.endkey, input.getMovieIdBytes()) >= 0) {
                         return input;
                     }
@@ -118,7 +125,8 @@ public class SelectionOperator implements Operator {
     }
 
     @Override
-    public void makeResetOperatorTrue() {
+    public void makeResetOperatorTrue() throws Exception {
         this.resetOperator = true;
+        child.makeResetOperatorTrue();
     }
 }

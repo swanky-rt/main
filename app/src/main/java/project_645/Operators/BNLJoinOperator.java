@@ -65,12 +65,10 @@ public class BNLJoinOperator implements Operator {
                 if (getNextOuterBlock) {
                     getNextOuterBlock();
                     getNextOuterBlock = false;
+                    getNextRecord = true;
                 }
                 if (getNextRecord) {
                     curInnerCount = curInnerCount + 1;
-//                    if (curInnerCount % 500000 == 0) {
-//                        System.out.println(curInnerCount);
-//                    }
                     curInnerRecord = inner.next();
                     getNextRecord = false;
                 }
@@ -81,6 +79,9 @@ public class BNLJoinOperator implements Operator {
                     if (curInnerRids == null || curListIdx == curInnerRids.size() || curRid == null) {
                         getNextRecord = true;
                         curListIdx = 0;
+                    }
+                    if (curInnerRids != null) {
+                        int breakpoint = 2;
                     }
                     if (curRid == null) {
                         continue;
@@ -105,6 +106,9 @@ public class BNLJoinOperator implements Operator {
             }
         }
         outerExhausted = true;
+        if (bnlRelation == File.BNL2) {
+            int breakpoint = 2;
+        }
         return null;
 
     }
@@ -128,9 +132,13 @@ public class BNLJoinOperator implements Operator {
                 curPage = bufferManager.createPage(bnlRelation);
                 createPage = false;
             }
+            if (nextOuterRecord.getMovieIdDeserialized().compareTo("tt0754347") == 0) {
+                int test = 2;
+            }
             Row curRow = nextOuterRecord.getRow();
             int curRecordCount = curPage.getRowCount();
             String key = new String(getRecordKey(nextOuterRecord, outerJoinKey)).trim();
+            // System.out.println(key);
             Rid curRid = new Rid(curPage.getPid(), curRecordCount);
             curPage.insertRow(curRow);
             curPage.markNotDirty();
@@ -145,7 +153,7 @@ public class BNLJoinOperator implements Operator {
                 createPage = true;
             }
         }
-        this.currentOuterBnlPage = bufferManager.createPage(bnlRelation);
+        int test = 2;
     }
 
     private Record createJoinedRecord(Record innerRecord, Rid outerRid) throws Exception {
