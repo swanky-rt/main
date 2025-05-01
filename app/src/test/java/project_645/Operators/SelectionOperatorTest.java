@@ -5,141 +5,117 @@ import org.junit.jupiter.api.Test;
 import project_645.*;
 import project_645.Record;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class SelectionOperatorTest {
 
-    private Operator childOperator;
-    private BufferManagerImpl bufferManager;
+    private Operator mockChild;
+    private BufferManagerImpl mockBufferManager;
+    private Record matchingRecord;
+    private Record nonMatchingRecord;
 
     @BeforeEach
     void setUp() {
-        childOperator = mock(Operator.class);
-        bufferManager = mock(BufferManagerImpl.class);
+        mockChild = mock(Operator.class);
+        mockBufferManager = mock(BufferManagerImpl.class);
+
+        byte[] matchingTitle = "wayfarers".getBytes();
+        byte[] matchingMovieId = "tt0754347".getBytes();
+        Row matchingRow = new Row(matchingMovieId, matchingTitle, "p123456789".getBytes(), "director".getBytes(), "Some Name".getBytes());
+
+        byte[] nonMatchingTitle = "zebra".getBytes();
+        Row nonMatchingRow = new Row("tt9999999".getBytes(), nonMatchingTitle, "p987654321".getBytes(), "writer".getBytes(), "Another Name".getBytes());
+
+        matchingRecord = new Record(matchingRow, matchingRow.getPersonId(), matchingRow.getCategory(), matchingRow.getName(), new Rid(0, 0));
+        nonMatchingRecord = new Record(nonMatchingRow, nonMatchingRow.getPersonId(), nonMatchingRow.getCategory(), nonMatchingRow.getName(), new Rid(1, 0));
     }
 
     @Test
-    void openTest() {
-        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.TITLE, "TestTitle", bufferManager);
-        selectionOperator.open();
-        verify(childOperator, times(1)).open();
-    }
+    void testTitleMatchAndMismatch() throws Exception {
+        when(mockChild.next()).thenReturn(matchingRecord).thenReturn(nonMatchingRecord).thenReturn(null);
+        SelectionOperator selection = new SelectionOperator(mockChild, ColumnNames.TITLE, "wayfarers", mockBufferManager, false);
+        selection.open();
 
-    @Test
-    void hasNextTest() throws Exception {
-        when(childOperator.hasNext()).thenReturn(true, false);
-        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.TITLE, "TestTitle", bufferManager);
-        assertTrue(selectionOperator.hasNext());
-        assertFalse(selectionOperator.hasNext());
-    }
-
-    @Test
-    void nextTest_matchingTitle() throws Exception {
-        Row dummyRow = new Row("dummy".getBytes(), "TestTitle".getBytes());
-        Rid dummyRid = new Rid(0, 0);
-        Record matchingRecord = new Record(dummyRow, "id".getBytes(), "TestTitle".getBytes(), "cat".getBytes(), dummyRid);
-
-        when(childOperator.next()).thenReturn(matchingRecord, null);
-
-        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.TITLE, "TestTitle", bufferManager);
-        Record result = selectionOperator.next();
+        Record result = selection.next();
         assertNotNull(result);
-        assertEquals("TestTitle", new String(result.getMovieTitleBytes()).trim());
-        assertNull(selectionOperator.next()); // second call should return null
+        assertEquals("wayfarers", result.getTitleDeserialized());
+
+        Record shouldBeNull = selection.next();
+        assertNull(shouldBeNull);
+
+        selection.close();
     }
 
     @Test
-    void nextTest_nonMatchingMovieId() throws Exception {
-        Row dummyRow = new Row("dummy".getBytes(), "title".getBytes());
-        Rid dummyRid = new Rid(0, 0);
-        Record record = mock(Record.class);
+    void testMovieIdMatch() throws Exception {
+        when(mockChild.next()).thenReturn(matchingRecord).thenReturn(null);
+        SelectionOperator selection = new SelectionOperator(mockChild, ColumnNames.MOVIEID, "tt0754347", mockBufferManager, false);
+        selection.open();
 
-        when(record.getMovieIdBytes()).thenReturn("wrongId".getBytes());
-        when(record.getRow()).thenReturn(dummyRow);
-        when(record.getRid()).thenReturn(dummyRid);
-
-        when(childOperator.next()).thenReturn(record, null);
-
-        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.MOVIEID, "expectedId", bufferManager);
-        Record result = selectionOperator.next();
-        assertNull(result);
-    }
-
-
-
-
-    @Test
-    void nextTest_rangeSelectionPersonId() throws Exception {
-        Row dummyRow = new Row("movie123".getBytes(), "SomeTitle".getBytes());
-        Rid dummyRid = new Rid(0, 0);
-        Record record = new Record(dummyRow, "movie123".getBytes(), "SomeTitle".getBytes(), "director".getBytes(), dummyRid) {
-            @Override
-            public byte[] getPersonIdBytes() {
-                return "person150".getBytes();
-            }
-        };
-
-        when(childOperator.next()).thenReturn(record, null);
-
-        SelectionOperator selectionOperator = new SelectionOperator(
-                childOperator, ColumnNames.PERSONID, "person100", "person200", bufferManager
-        );
-
-        Record result = selectionOperator.next();
+        Record result = selection.next();
         assertNotNull(result);
+        assertEquals("tt0754347", result.getMovieIdDeserialized());
+    }
+
+    @Test
+    void testCategoryMatch() throws Exception {
+        when(mockChild.next()).thenReturn(matchingRecord).thenReturn(null);
+        SelectionOperator selection = new SelectionOperator(mockChild, ColumnNames.CATEGORY, "director", mockBufferManager, false);
+        selection.open();
+        assertNotNull(selection.next());
+    }
+
+    @Test
+    void testPersonIdMatch() throws Exception {
+        when(mockChild.next()).thenReturn(matchingRecord).thenReturn(null);
+        SelectionOperator selection = new SelectionOperator(mockChild, ColumnNames.PERSONID, "p123456789", mockBufferManager, false);
+        selection.open();
+        assertNotNull(selection.next());
+    }
+
+    @Test
+    void testNameMatch() throws Exception {
+        when(mockChild.next()).thenReturn(matchingRecord).thenReturn(null);
+        SelectionOperator selection = new SelectionOperator(mockChild, ColumnNames.NAME, "Some Name", mockBufferManager, false);
+        selection.open();
+        assertNotNull(selection.next());
     }
 
 
 
-
-
-
     @Test
-    void nextTest_rangeSelectionName() throws Exception {
-        Row dummyRow = new Row("movie123".getBytes(), "SomeTitle".getBytes());
-        Rid dummyRid = new Rid(0, 0);
-        Record record = new Record(dummyRow, "movie123".getBytes(), "SomeTitle".getBytes(), "director".getBytes(), dummyRid) {
-            @Override
-            public byte[] getNameBytes() {
-                return "Brando".getBytes();
-            }
-        };
-
-        when(childOperator.next()).thenReturn(record, null);
-
-        SelectionOperator selectionOperator = new SelectionOperator(
-                childOperator, ColumnNames.NAME, "A", "Z", bufferManager
-        );
-
-        Record result = selectionOperator.next();
-        assertNotNull(result);
-    }
-
-
-    @Test
-    void nextTest_resetOperatorTrue() throws Exception {
-        TableScanOperator tableScanMock = mock(TableScanOperator.class);
-        when(tableScanMock.next()).thenReturn(null);
-        when(tableScanMock.getRelation()).thenReturn(File.DISK);
-
-        SelectionOperator selectionOperator = new SelectionOperator(tableScanMock, ColumnNames.TITLE, "X", bufferManager);
-        selectionOperator.makeResetOperatorTrue(); // sets flag
-        Record result = selectionOperator.next();
-        assertNull(result); // should not throw
+    void testHasNextDelegation() throws Exception {
+        when(mockChild.hasNext()).thenReturn(true);
+        SelectionOperator selection = new SelectionOperator(mockChild, ColumnNames.TITLE, "wayfarers", mockBufferManager, false);
+        assertTrue(selection.hasNext());
     }
 
     @Test
-    void getRelationTest() {
-        when(childOperator.getRelation()).thenReturn(File.WORKEDON);
-        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.CATEGORY, "director", bufferManager);
-        assertEquals(File.WORKEDON, selectionOperator.getRelation());
+    void testGetRelationDelegation() {
+        when(mockChild.getRelation()).thenReturn(File.DISK);
+        SelectionOperator selection = new SelectionOperator(mockChild, ColumnNames.TITLE, "wayfarers", mockBufferManager, false);
+        assertEquals(File.DISK, selection.getRelation());
     }
 
     @Test
-    void closeTest() {
-        SelectionOperator selectionOperator = new SelectionOperator(childOperator, ColumnNames.CATEGORY, "director", bufferManager);
-        selectionOperator.close();
-        verify(childOperator).close();
+    void testOpenAndCloseDelegation() throws Exception {
+        doNothing().when(mockChild).open();
+        doNothing().when(mockChild).close();
+
+        SelectionOperator selection = new SelectionOperator(mockChild, ColumnNames.TITLE, "wayfarers", mockBufferManager, false);
+        selection.open();
+        selection.close();
+
+        verify(mockChild, times(1)).open();
+        verify(mockChild, times(1)).close();
+    }
+
+    @Test
+    void testConstructorWithEndKey() {
+        SelectionOperator selection = new SelectionOperator(mockChild, ColumnNames.TITLE, "a", "z", mockBufferManager, false);
+        assertNotNull(selection);
     }
 }

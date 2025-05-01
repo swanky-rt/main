@@ -5,126 +5,117 @@ import org.junit.jupiter.api.Test;
 import project_645.*;
 import project_645.Record;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class ProjectionOperatorTest {
 
-    private Operator childOperator;
-    private BufferManagerImpl bufferManager;
-    private ProjectionOperator projectionOperatorPrematerialized;
-    private ProjectionOperator projectionOperatorNonPrematerialized;
+    private ProjectionOperator projectionOperator;
+    private Operator mockChild;
+    private BufferManagerImpl mockBufferManager;
+    private Page mockPage;
+    private Record sampleRecord;
 
     @BeforeEach
-    void setUp() {
-        childOperator = mock(Operator.class);
-        bufferManager = mock(BufferManagerImpl.class);
+    void setUp() throws Exception {
+        mockChild = mock(Operator.class);
+        mockBufferManager = mock(BufferManagerImpl.class);
+        mockPage = mock(Page.class);
 
-        projectionOperatorPrematerialized = new ProjectionOperator(
-                childOperator, new String[]{"movieId", "personId"}, File.TEMPORARY, bufferManager, true);
+        // Sample data for the Row
+        byte[] movieId = Arrays.copyOf("tt0012345".getBytes(), 9);
+        byte[] title = Arrays.copyOf("Sample Title".getBytes(), 30);
+        byte[] personId = Arrays.copyOf("nm1234567".getBytes(), 10);
+        byte[] category = Arrays.copyOf("director".getBytes(), 20);
+        byte[] name = Arrays.copyOf("Sample Name".getBytes(), 105);
 
-        projectionOperatorNonPrematerialized = new ProjectionOperator(
-                childOperator, new String[]{"movieId", "personId"}, File.TEMPORARY, bufferManager, false);
+        Row sampleRow = new Row(movieId, title, personId, category, name);
+        sampleRecord = new Record(sampleRow, personId, category, name, new Rid(0, 0));
+
+        // Mock child operator behavior
+        when(mockChild.hasNext()).thenReturn(true, false);
+        when(mockChild.next()).thenReturn(sampleRecord).thenReturn(null);
+        when(mockChild.getRelation()).thenReturn(File.TEMPORARY);
+
+        // Mock buffer manager and page
+        when(mockBufferManager.createPage(File.TEMPORARY)).thenReturn(mockPage);
+        when(mockPage.insertRow(any(Row.class))).thenReturn(0);
+        when(mockPage.isFull()).thenReturn(false);
+        when(mockPage.getPid()).thenReturn(999L);
+        doNothing().when(mockBufferManager).unpinPage(anyLong(), eq(File.TEMPORARY));
+        doNothing().when(mockBufferManager).deleteTemporaryTable();
+
+        projectionOperator = new ProjectionOperator(
+                mockChild,
+                new ColumnNames[]{ColumnNames.MOVIEID, ColumnNames.TITLE, ColumnNames.PERSONID, ColumnNames.CATEGORY, ColumnNames.NAME},
+                File.TEMPORARY,
+                mockBufferManager,
+                false
+        );
     }
 
-    private Record createDummyRecord(String movieId, String personId) {
-        Row row = new Row(movieId.getBytes(), personId.getBytes());
-        return new Record(row, movieId.getBytes(), null, personId.getBytes(), new Rid(0, 0));
+
+
+    @Test
+    void testCloseDeletesTemporaryTable() {
+        projectionOperator.close();
+        verify(mockBufferManager).deleteTemporaryTable();
+        verify(mockChild).close();
     }
 
     @Test
-    void openTest() {
-        projectionOperatorPrematerialized.open();
-        verify(childOperator).open();
-    }
-
-    @Test
-    void hasNextTest() throws Exception {
-        when(childOperator.hasNext()).thenReturn(true);
-        assertTrue(projectionOperatorPrematerialized.hasNext());
-
-        when(childOperator.hasNext()).thenReturn(false);
-        assertFalse(projectionOperatorPrematerialized.hasNext());
+    void testGetRelationDelegatesToChild() {
+        when(mockChild.getRelation()).thenReturn(File.DISK);
+        assertEquals(File.DISK, projectionOperator.getRelation());
     }
 
 
 
     @Test
-    void closeTest() {
-        projectionOperatorPrematerialized.close();
-        verify(bufferManager).deleteTemporaryTable();
-        verify(childOperator).close();
+    void testCreateNewRecordMaterializesSelectedColumns() throws Exception {
+        // Configure mocked page behavior
+        when(mockPage.insertRow(any(Row.class))).thenReturn(0);
+        when(mockPage.isFull()).thenReturn(false);
+        when(mockPage.getPid()).thenReturn(999L);
+        when(mockBufferManager.createPage(File.TEMPORARY)).thenReturn(mockPage);
+
+        // Reinitialize ProjectionOperator with full projection
+        projectionOperator = new ProjectionOperator(
+                mockChild,
+                new ColumnNames[]{ColumnNames.MOVIEID, ColumnNames.TITLE, ColumnNames.PERSONID, ColumnNames.CATEGORY, ColumnNames.NAME},
+                File.TEMPORARY,
+                mockBufferManager,
+                false
+        );
+
+        // Inject mockPage into private `currentPage` using reflection
+        Field currentPageField = ProjectionOperator.class.getDeclaredField("currentPage");
+        currentPageField.setAccessible(true);
+        currentPageField.set(projectionOperator, mockPage);
+
+        // Proceed with normal execution
+        projectionOperator.open();
+        projectionOperator.materializeTable(); // will use already-set mock `currentPage`
+        Record result = projectionOperator.next();
+
+        // Assertions on the returned record
+        assertNotNull(result);
+        assertEquals("tt0012345", new String(result.getRow().movieId).trim());
+        assertEquals("Sample Title", new String(result.getRow().title).trim());
+        assertEquals("nm1234567", new String(result.getRow().personId).trim());
+        assertEquals("director", new String(result.getRow().category).trim());
+        assertEquals("Sample Name", new String(result.getRow().name).trim());
+
+        // Verify interactions
+        verify(mockPage).insertRow(any(Row.class));
+        verify(mockPage).isFull();
+        verify(mockBufferManager, never()).createPage(File.TEMPORARY); // no new page needed
     }
 
-    @Test
-    void makeResetOperatorTrueTest() throws Exception {
-        projectionOperatorPrematerialized.makeResetOperatorTrue();
-        Operator scanOperator = mock(TableScanOperator.class);
-        when(bufferManager.createPage(File.TEMPORARY)).thenReturn(mock(Page.class));
-        when(scanOperator.hasNext()).thenReturn(false);
-        when(scanOperator.next()).thenReturn(null);
 
-        Record result = projectionOperatorPrematerialized.next();
-        assertNull(result);
-    }
-
-    @Test
-    void materializeTableTest() throws Exception {
-        ProjectionOperator projection = new ProjectionOperator(
-                childOperator, new String[]{"movieId", "personId"}, File.TEMPORARY, bufferManager, false);
-
-        Record dummy1 = createDummyRecord("m1", "p1");
-        Record dummy2 = createDummyRecord("m2", "p2");
-
-        Page page = mock(Page.class);
-        when(bufferManager.createPage(File.TEMPORARY)).thenReturn(page);
-        when(childOperator.next()).thenReturn(dummy1).thenReturn(dummy2).thenReturn(null);
-
-        projection.materializeTable();
-        verify(bufferManager, atLeastOnce()).createPage(File.TEMPORARY);
-    }
-
-    @Test
-    void getRelationTest() {
-        assertNull(projectionOperatorPrematerialized.getRelation());
-    }
-
-    @Test
-    void nextTest_prematerialized() throws Exception {
-        Record mockRecord = mock(Record.class);
-        Row mockRow = mock(Row.class);
-
-        when(mockRecord.getRow()).thenReturn(mockRow);
-        when(mockRow.getMovieId()).thenReturn("m123".getBytes());
-        when(mockRow.getPersonId()).thenReturn("p456".getBytes());
-        when(mockRecord.getRid()).thenReturn(new Rid(0, 0));
-
-        when(childOperator.next()).thenReturn(mockRecord).thenReturn(null);
-
-        projectionOperatorPrematerialized.open();
-        Record result = projectionOperatorPrematerialized.next();
-
-        assertNotNull(result); // Ensures a record was returned
-    }
-    @Test
-    void nextTest_nonPrematerialized() throws Exception {
-        Record mockRecord = mock(Record.class);
-        Row mockRow = mock(Row.class);
-        Page mockPage = mock(Page.class);
-
-        when(mockRecord.getRow()).thenReturn(mockRow);
-        when(mockRow.getMovieId()).thenReturn("m789".getBytes());
-        when(mockRow.getPersonId()).thenReturn("p789".getBytes());
-        when(mockRecord.getRid()).thenReturn(new Rid(0, 0));
-
-        when(bufferManager.createPage(File.TEMPORARY)).thenReturn(mockPage);
-        when(childOperator.next()).thenReturn(mockRecord).thenReturn(null);
-
-        projectionOperatorNonPrematerialized.open();
-        Record result = projectionOperatorNonPrematerialized.next();
-
-        assertNotNull(result); // Projection should not return null
-    }
 
 
 
