@@ -799,7 +799,7 @@ public class Utilities {
             BufferManagerImpl bm2 = new BufferManagerImpl(5000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
 
             // 1) reset & run your query
-           // BufferManagerImpl.resetiocount();
+            bm2.resetiocount();
            long ioMeas = new QueryExecutor().executeQuery(lo, hi, bufferSize,true);
             //long ioMeas = bm2.getTotalIOs();
             //System.out.println("Measured I/O return: " + io);
@@ -807,7 +807,7 @@ public class Utilities {
 
             // 2) re-scan Movies to compute σm
 
-            TableScanOperator ms = new TableScanOperator(bm2, File.MOVIE_TITLE_IDX);//new String[]{"movieId","title"});
+            TableScanOperator ms = new TableScanOperator(bm2,File.DISK);//new String[]{"movieId","title"});
             ms.open();
             long pass = 0;
             Record rec;
@@ -843,6 +843,71 @@ public class Utilities {
         JFrame frame = new JFrame("Performance");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(800,600);
+        frame.add(new ChartPanel(chart));
+        frame.setVisible(true);
+    }
+
+    public void testSingleQueryPerformance(String filePath,
+                                           String diskFile, String movieIdIndexFileName, String movieTitleIndexFileName,
+                                           String workedOnIndexFileName, String peopleIndexFileName,
+                                           String start, String end,
+                                           int bufferSize,
+                                           long totalMovies, long totalWorkedOn, long totalPeople,
+                                           double sigmaP) throws Exception
+    {
+        final int C = 2;  // reserve 2 frames
+
+        XYSeries measured = new XYSeries("Measured I/O");
+        XYSeries predicted = new XYSeries("Predicted I/O");
+
+        String lo = start, hi = end;
+
+        // Initialize buffer manager for I/O counting
+        BufferManagerImpl bm2 = new BufferManagerImpl(5000 * 4096, filePath, diskFile, movieIdIndexFileName, movieTitleIndexFileName, workedOnIndexFileName, peopleIndexFileName);
+        bm2.resetiocount();
+
+        // 1) Run the query and measure I/O
+        long ioMeas = new QueryExecutor().executeQuery(lo, hi, bufferSize, true);
+        System.out.println("Measured I/O: " + ioMeas);
+
+        // 2) Re-scan Movies to compute σm
+        TableScanOperator ms = new TableScanOperator(bm2, File.DISK);
+        ms.open();
+        long pass = 0;
+        Record rec;
+        while ((rec = ms.next()) != null) {
+            String t = rec.getTitleDeserialized();
+            if (t != null && t.compareTo(lo) >= 0 && t.compareTo(hi) <= 0) {
+                pass++;
+            }
+        }
+        ms.close();
+        double sigmaM = (double) pass / totalMovies;
+        System.out.println("Sigma M (selectivity): " + sigmaM);
+
+        // 3) Predict I/O using formula
+        long ioPred = computePredictedIO(bufferSize, C, totalMovies, totalWorkedOn, totalPeople, sigmaP, sigmaM);
+        System.out.printf("range=[%s,%s] σm=%.4f measured=%d predicted=%d%n", lo, hi, sigmaM, ioMeas, ioPred);
+
+        // 4) Add single point to chart
+        measured.add(sigmaM, ioMeas);
+        predicted.add(sigmaM, ioPred);
+
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(measured);
+        dataset.addSeries(predicted);
+
+        // 5) Show chart
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                "Lab3 I/O: Measured vs Predicted",
+                "Title‐selectivity",
+                "I/O ops",
+                dataset
+        );
+
+        JFrame frame = new JFrame("Performance");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(800, 600);
         frame.add(new ChartPanel(chart));
         frame.setVisible(true);
     }
