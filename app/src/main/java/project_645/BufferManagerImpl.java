@@ -413,6 +413,7 @@ public class BufferManagerImpl extends BufferManager{
             curRowCount = reader.read();
             pageToPopulate.setAllRows(curPageRows);
             pageToPopulate.setRowCount(curRowCount);
+            reader.close();
         } catch (Exception e) {
             System.out.println("Writing to the disk is failing due to this error" + e.getMessage());
             return null;

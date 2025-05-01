@@ -521,7 +521,7 @@ public class Utilities {
     public void queryPlanCorrectnessTest3() throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("w", "z", 1000*4096, true);
+        long ios = queryExecutor.executeQuery("x", "y", 1000*4096, true);
 
     }
 

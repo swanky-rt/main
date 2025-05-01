@@ -37,7 +37,7 @@ public class QueryExecutor {
         TableScanOperator moviesScan = new TableScanOperator(bufferManager, File.DISK);
 
         // Step 2: Selection on operator from chosen range
-        SelectionOperator testRangeSelection = new SelectionOperator(moviesScan, ColumnNames.TITLE, startRange, endRange, bufferManager);
+        SelectionOperator testRangeSelection = new SelectionOperator(moviesScan, ColumnNames.TITLE, startRange, endRange, bufferManager, false);
 
         // Step 3: workedOnScan operator
         TableScanOperator workedOnScan = new TableScanOperator(bufferManager, File.WORKEDON);
@@ -51,7 +51,8 @@ public class QueryExecutor {
                 workedOnScan,
                 ColumnNames.CATEGORY,
                 "director",  // Filtering based on category being "director"
-                bufferManager
+                bufferManager,
+                false
         );
 
 //        // Step 6: WorkedOn projection (keep only movieId and personId)
@@ -131,7 +132,8 @@ public class QueryExecutor {
                 workedOnScan,
                 ColumnNames.CATEGORY,
                 "director",  // Filtering based on category being "director"
-                bufferManager
+                bufferManager,
+                false
         );
         ProjectionOperator workedOnProject = new ProjectionOperator(
                 workedOnSelection,

@@ -106,8 +106,6 @@ public class BNLJoinOperator implements Operator {
                     }
                 }
                 inner.makeResetOperatorTrue();
-                inner.close();
-                inner.open();
             }
             else {
                 break;

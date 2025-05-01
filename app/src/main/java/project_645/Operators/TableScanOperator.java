@@ -68,11 +68,6 @@ public class TableScanOperator implements Operator {
 
     @Override
     public void close() {
-        if (currentPage != null) {
-            while (bufferManager.pinnedPages.containsKey(bufferManager.constructPageIdentifier(currentPage.getPid(), tableFile))) {
-                bufferManager.unpinPage(currentPage.getPid(), tableFile);
-            }  //  Safe unpin
-        }
         // Close the operator, releasing any resources if needed
         currentPage = null;
     }
@@ -84,6 +79,14 @@ public class TableScanOperator implements Operator {
 
     @Override
     public void makeResetOperatorTrue() throws Exception {
+        if (currentPage != null) {
+            while (bufferManager.pinnedPages.containsKey(bufferManager.constructPageIdentifier(currentPage.getPid(), tableFile))) {
+                bufferManager.unpinPage(currentPage.getPid(), tableFile);
+            }  //  Safe unpin
+        }
+        currentPageIndex = 0;
+        curRowIndex = 0;
+        currentPage = bufferManager.loadPageFromDisk(currentPageIndex, tableFile);
         return;
     }
 }
