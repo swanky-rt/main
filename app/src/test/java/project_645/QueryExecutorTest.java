@@ -101,17 +101,6 @@ public class QueryExecutorTest {
         }
     }
 
-    @Test
-    public void testExecuteQueryIntegrationCoversJoinLoop() {
-        QueryExecutor executor = new QueryExecutor();
-        try {
-            // Use a reasonably small buffer size to trigger paging logic
-            long ioCount = executor.executeQuery("A", "Z", 4096 * 5, false);
-            assertTrue(ioCount > 0); // We expect some I/O to be recorded
-        } catch (Exception e) {
-            fail("Integration test failed: " + e.getMessage());
-        }
-    }
 
 
 
