@@ -83,9 +83,12 @@ public class QueryExecutor {
         // Step 8: Execute the plan and output the result
         finalProjection.open();
         Record result;
+        int cntrec = 0;
         while ((result = finalProjection.next()) != null) {
-            System.out.println(result.getTitleDeserialized() + "," + result.getName());  // CSV format without spaces
+            //System.out.println(result.getTitleDeserialized() + "," + result.getName());  // CSV format without spaces
+            cntrec++;
         }
+        System.out.println(cntrec);
         if (!usePrematerializedTempTable) {
              finalProjection.close();
         }
