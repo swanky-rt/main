@@ -86,7 +86,7 @@ public class TableScanOperator implements Operator {
         }
         currentPageIndex = 0;
         curRowIndex = 0;
-        currentPage = bufferManager.loadPageFromDisk(currentPageIndex, tableFile);
+        currentPage = bufferManager.getPage(currentPageIndex, tableFile);
         return;
     }
 }

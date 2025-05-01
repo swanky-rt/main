@@ -69,9 +69,6 @@ public class BNLJoinOperator implements Operator {
                 }
                 if (getNextRecord) {
                     curInnerCount = curInnerCount + 1;
-//                    if (curInnerCount % 500000 == 0) {
-//                        System.out.println(curInnerCount);
-//                    }
                     curInnerRecord = inner.next();
                     getNextRecord = false;
                 }
@@ -79,9 +76,6 @@ public class BNLJoinOperator implements Operator {
                     String key = new String(getRecordKey(curInnerRecord, innerJoinKey)).trim();
                     List<Rid> curInnerRids = hashTable.getOrDefault(key, null);
                     Rid curRid = curInnerRids != null ? curInnerRids.get(curListIdx++) : null;
-                    if (curInnerRecord.getMovieIdDeserialized().compareTo("tt0754347") == 0) {
-                        int test = 2;
-                    }
                     if (curInnerRids == null || curListIdx == curInnerRids.size() || curRid == null) {
                         getNextRecord = true;
                         curListIdx = 0;
@@ -144,6 +138,7 @@ public class BNLJoinOperator implements Operator {
             Row curRow = nextOuterRecord.getRow();
             int curRecordCount = curPage.getRowCount();
             String key = new String(getRecordKey(nextOuterRecord, outerJoinKey)).trim();
+            // System.out.println(key);
             Rid curRid = new Rid(curPage.getPid(), curRecordCount);
             curPage.insertRow(curRow);
             curPage.markNotDirty();
