@@ -24,7 +24,6 @@ $nameAttribute = "primaryname"
 
 Write-Host "Running query: $Query"
 
-# Fixing query to properly escape and interpolate, ensuring no unnecessary characters
 $Query = @"
 SELECT $schemaName.$titleBasicsTableName.$movieTitleAttribute,
        $schemaName.$nameBasicsTableName.$nameAttribute
@@ -37,10 +36,8 @@ WHERE $movieTitleAttribute >= '$StartRange' AND $movieTitleAttribute <= '$EndRan
   AND category = 'director'
 "@
 
-# Ensure the query is passed as a single string to psql
 $escapedQuery = $Query -replace '"', '""'
 
-# Correctly pass the query to psql, escaping double quotes inside the query
 psql -v client_encoding=UTF8 -d "$database" -h "$dbHost" -p "$port" -U "$user" -c "\copy ($escapedQuery) TO '$csvPath' WITH CSV HEADER ENCODING 'UTF8'"
 
 

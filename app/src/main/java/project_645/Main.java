@@ -59,6 +59,7 @@ public class Main {
                     "anal initiation",
                     "arri arri tatanet"};
             double[] selectivity = {1.0, 2.0, 3.0, 4.0, 5.0};
+
             utilities.testQueryPerformance(
                     filePath,
                     diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
@@ -79,6 +80,7 @@ public class Main {
                     selectivity,
                     true
             );
+
             utilities.testQueryPerformance(
                     filePath,
                     diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,

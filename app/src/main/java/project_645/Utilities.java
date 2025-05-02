@@ -506,18 +506,98 @@ public class Utilities {
 
     }
 
-    public void queryPlanCorrectnessTest1() throws Exception {
+    public void queryPlanCorrectnessTest1(String filepath) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("horrid henry", "horrid henrz", 1000*4096, true, "C1results.csv", false);
+        long ios = queryExecutor.executeQuery("cbs", "cbsz", 1000*4096, true, "C1results.csv", false);
 
+        ArrayList<String> file1Strings = new ArrayList<>();
+        ArrayList<String> file2Strings = new ArrayList<>();
+
+        BufferedReader workedOnTableReader = new BufferedReader(new FileReader(filepath + "C2results.csv"));
+        String curLine;
+        while ((curLine = workedOnTableReader.readLine()) != null) {
+            file1Strings.add(curLine);
+        }
+
+        BufferedReader workedOnTableReaderPostgres = new BufferedReader(new FileReader(filepath + "cbs-to-cbz-query.csv"));
+        while ((curLine = workedOnTableReaderPostgres.readLine()) != null) {
+            file2Strings.add(curLine);
+        }
+
+        Collections.sort(file1Strings);
+
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            String postgresResultsTitle = file2Strings.get(i).split(",")[0];
+            String postgresResultsName = file2Strings.get(i).split(",")[1];
+            String PostgresResultsSubstring = postgresResultsTitle.substring(0, Math.min(postgresResultsTitle.length(), 30)).trim();
+            String str2 = PostgresResultsSubstring+ "," + postgresResultsName;
+            file2Strings.set(i, str2);
+        }
+        Collections.sort(file2Strings);
+
+        int incorrectCounter = 0;
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            if (!file1Strings.get(i).equals(file2Strings.get(i))) {
+                incorrectCounter += 1;
+                String str1 = file1Strings.get(i);
+                String str2 = file2Strings.get(i);
+                System.out.println(str1 + ", " + str2 + " combination is incorrect");
+            }
+        }
+        if (incorrectCounter == 0) {
+            System.out.println("No records incorrect");
+        }
+        else {
+            System.out.println(incorrectCounter + " records incorrect");
+        }
     }
 
-    public void queryPlanCorrectnessTest2() throws Exception {
+    public void queryPlanCorrectnessTest2(String filepath) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("w", "z", 1000*4096, true, "C2results.csv", false);
+        long ios = queryExecutor.executeQuery("ab", "abc", 1000*4096, true, "C2results.csv", false);
 
+        ArrayList<String> file1Strings = new ArrayList<>();
+        ArrayList<String> file2Strings = new ArrayList<>();
+
+        BufferedReader workedOnTableReader = new BufferedReader(new FileReader(filepath + "C2results.csv"));
+        String curLine;
+        while ((curLine = workedOnTableReader.readLine()) != null) {
+            file1Strings.add(curLine);
+        }
+
+        BufferedReader workedOnTableReaderPostgres = new BufferedReader(new FileReader(filepath + "ab-to-abc-query.csv"));
+        while ((curLine = workedOnTableReaderPostgres.readLine()) != null) {
+            file2Strings.add(curLine);
+        }
+
+        Collections.sort(file1Strings);
+
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            String postgresResultsTitle = file2Strings.get(i).split(",")[0];
+            String postgresResultsName = file2Strings.get(i).split(",")[1];
+            String PostgresResultsSubstring = postgresResultsTitle.substring(0, Math.min(postgresResultsTitle.length(), 30)).trim();
+            String str2 = PostgresResultsSubstring+ "," + postgresResultsName;
+            file2Strings.set(i, str2);
+        }
+        Collections.sort(file2Strings);
+
+        int incorrectCounter = 0;
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            if (!file1Strings.get(i).equals(file2Strings.get(i))) {
+                incorrectCounter += 1;
+                String str1 = file1Strings.get(i);
+                String str2 = file2Strings.get(i);
+                System.out.println(str1 + ", " + str2 + " combination is incorrect");
+            }
+        }
+        if (incorrectCounter == 0) {
+            System.out.println("No records incorrect");
+        }
+        else {
+            System.out.println(incorrectCounter + " records incorrect");
+        }
     }
 
     public void queryPlanCorrectnessTest3(String filepath) throws Exception {
@@ -589,9 +669,8 @@ public class Utilities {
 
             // 1) reset & run your query
             BufferManagerImpl.resetiocount();
-            long testIOCount = new QueryExecutor().executeQuery(lo, hi, bufferSize,true, null, false);
+            new QueryExecutor().executeQuery(lo, hi, bufferSize,true, null, false);
             long ioMeas = BufferManagerImpl.totalIOs;
-            System.out.println(testIOCount == ioMeas);
 
             // 2) re-scan Movies to compute σm
             BufferManagerImpl bm2 = new BufferManagerImpl(1000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
@@ -611,7 +690,7 @@ public class Utilities {
 
             // 3) predict
             long ioPred = computePredictedIO(
-                    bufferSize, C, totalMovies, totalWorkedOn, totalPeople, sigmaP, sigmaM
+                    bufferSize / 4096, C, totalMovies, totalWorkedOn, totalPeople, sigmaP, sigmaM
             );
             ioMeas = prematerialized ? ioMeas + 505490 : ioMeas;
             System.out.printf("range=[%s,%s] σm=%.4f measured=%d predicted=%d%n",
@@ -626,7 +705,7 @@ public class Utilities {
         dataset.addSeries(measured);
         dataset.addSeries(predicted);
         JFreeChart chart = ChartFactory.createXYLineChart(
-                "Lab3 I/O: Measured vs Predicted: " + bufferSize + " buffer frames", "Title‐selectivity", "I/O ops",
+                "Lab3 I/O: Measured vs Predicted: " + bufferSize / 4096 + " buffer frames", "Title‐selectivity", "I/O ops",
                 dataset
         );
 
@@ -902,7 +981,9 @@ public class Utilities {
         // expected output of output pages is max pages times product of reduction factors
         // in this case, we have the explicit selectivities, which serve as our reduction factors
         // divide by block and multiply by P for the same reasons above.
-        long term5 = (long)Math.ceil((sigmaM * sigmaP * M * W) / block) * P; // join2
+        // input cardinality based on the assumption of only one director per movie.
+        // Thus, the previous join will have sigmaM * M pages
+        long term5 = (long)Math.ceil((sigmaM * (double)M) / block) * P; // join2
 
         return term1 + term2 + term3 + term4 + term5;
     }
