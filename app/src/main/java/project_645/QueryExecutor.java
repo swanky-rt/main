@@ -28,20 +28,20 @@ public class QueryExecutor {
             Path csvFilePath = Paths.get(filePath + csvFileName);
             try {
                 Files.deleteIfExists(csvFilePath); // Deletes the file if it exists
-                System.out.println("File deleted successfully.");
+                // System.out.println("File deleted successfully.");
             } catch (IOException e) {
-                System.err.println("An error occurred while deleting the file.");
+                // System.err.println("An error occurred while deleting the file.");
                 e.printStackTrace();
             }
             try {
                 // Create an empty file if it doesn't exist
                 Files.createFile(csvFilePath);
-                System.out.println("File created: " + csvFilePath.toAbsolutePath());
+                // System.out.println("File created: " + csvFilePath.toAbsolutePath());
             } catch (IOException e) {
                 if (Files.exists(csvFilePath)) {
-                    System.out.println("File already exists.");
+                    // System.out.println("File already exists.");
                 } else {
-                    System.err.println("An error occurred while creating the file.");
+                    // System.err.println("An error occurred while creating the file.");
                     e.printStackTrace();
                 }
             }
@@ -180,7 +180,7 @@ public class QueryExecutor {
         bufferManager.force();
 
         // minus 1 for scan operator
-        System.out.println("All records were materialized in " + (bufferManager.getTotalIOs() - 1) + " I/Os");
+        // System.out.println("All records were materialized in " + (bufferManager.getTotalIOs() - 1) + " I/Os");
         return bufferManager.getTotalIOs() - 1;
     }
 }

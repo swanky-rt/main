@@ -46,7 +46,7 @@ public class Main {
 
 //            System.out.println("--------------------------------------------");
 
-           utilities.queryPlanCorrectnessTest3(filePath);
+           // utilities.queryPlanCorrectnessTest3(filePath);
 
 //            long totalMovies   = bufferManager.getCurrentMovieIdPage();
 //            long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
@@ -84,7 +84,7 @@ public class Main {
 //            // comment out the following lines to not create/populate the two index files.
 //            utilities.testC1(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 //            System.out.println("Successfully bulk loaded the movie ID index with all records on disk");
-//            // Creating the index on movie title should take 2-3 hours.
+            // Creating the index on movie title should take 2-3 hours.
 //            utilities.testC2(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 //            System.out.println("Successfully created the index on movie title");
 //
