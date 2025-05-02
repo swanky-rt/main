@@ -516,14 +516,14 @@ public class Utilities {
     public void queryPlanCorrectnessTest2() throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("x", "y", 1000*4096, true, "C2results.csv");
+        long ios = queryExecutor.executeQuery("w", "z", 1000*4096, true, "C2results.csv");
 
     }
 
     public void queryPlanCorrectnessTest3(String filepath) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        // long ios = queryExecutor.executeQuery("x", "y", 1000*4096, true, "C3results.csv");
+        // long ios = queryExecutor.executeQuery("w", "z", 1000*4096, true, "C3results.csv");
 
         ArrayList<String> file1Strings = new ArrayList<>();
         ArrayList<String> file2Strings = new ArrayList<>();
@@ -534,7 +534,7 @@ public class Utilities {
             file1Strings.add(curLine);
         }
 
-        BufferedReader workedOnTableReaderPostgres = new BufferedReader(new FileReader(filepath + "x-to-y-query.csv"));
+        BufferedReader workedOnTableReaderPostgres = new BufferedReader(new FileReader(filepath + "w-to-z-query.csv"));
         while ((curLine = workedOnTableReaderPostgres.readLine()) != null) {
             file2Strings.add(curLine);
         }
@@ -549,12 +549,21 @@ public class Utilities {
             file2Strings.set(i, str2);
         }
         Collections.sort(file2Strings);
+
+        int incorrectCounter = 0;
         for (int i = 0; i < file2Strings.size(); ++i) {
             if (!file1Strings.get(i).equals(file2Strings.get(i))) {
+                incorrectCounter += 1;
                 String str1 = file1Strings.get(i);
                 String str2 = file2Strings.get(i);
-                int breakpoint = 2;
+                System.out.println(str1 + ", " + str2 + " combination is incorrect");
             }
+        }
+        if (incorrectCounter == 0) {
+            System.out.println("No records incorrect");
+        }
+        else {
+            System.out.println(incorrectCounter + " records incorrect");
         }
     }
 
