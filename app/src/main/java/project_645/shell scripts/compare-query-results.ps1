@@ -3,28 +3,27 @@ param (
     [string]$EndRange
 )
 
-$env:PGPASSWORD = "5DC6QF6e61MeDCa6jZly"
+$env:PGPASSWORD = "PostgreSQL password goes in these quotes"
 
-$database = "my test database"
-$user = "postgres"
-$dbHost = "localhost"
-$port = "5432"
+$database = "Database password goes in these quotes"
+$user = "postgres user goes in these quotes"
+$dbHost = "host goes in these quotes (likely localhost)"
+$port = "port number goes here (likely 5432)"
 
-$csvPath = "C:\Users\Zelda\CS645\repos\main\app\src\main\java\project_645\shell scripts\postgres_output.csv"
+$csvPath = "Absolute path to CSV (including the filename itself)"
 
-$schemaName = """my test schema"""
-$titleBasicsTableName = "title_basics_import"
-$titlePrinciplesTableName = "title_principals_import"
-$nameBasicsTableName = "name_basics_import"
+$schemaName = "schema name goes in these quotes"
+$titleBasicsTableName = "title basics table name goes in these quotes"
+$titlePrinciplesTableName = "title principles table name goes in these quotes"
+$nameBasicsTableName = "name basics table name goes in these quotes"
 
-$movieIdAttribute = "tconst"
-$movieTitleAttribute = "primarytitle"
-$personIdAttribute = "nconst"
-$nameAttribute = "primaryname"
+$movieIdAttribute = "attribute name of movie ID (assumed to be the same for both titlebasics, and title principles)"
+$movieTitleAttribute = "title attribute name from titlebasics"
+$personIdAttribute = "personId attribute name (assumed to be the same across both titlePrimciples, and nameBasics)"
+$nameAttribute = "name attribute of nameBasics"
 
 Write-Host "Running query: $Query"
 
-# Fixing query to properly escape and interpolate, ensuring no unnecessary characters
 $Query = @"
 SELECT $schemaName.$titleBasicsTableName.$movieTitleAttribute,
        $schemaName.$nameBasicsTableName.$nameAttribute
@@ -37,10 +36,8 @@ WHERE $movieTitleAttribute >= '$StartRange' AND $movieTitleAttribute <= '$EndRan
   AND category = 'director'
 "@
 
-# Ensure the query is passed as a single string to psql
 $escapedQuery = $Query -replace '"', '""'
 
-# Correctly pass the query to psql, escaping double quotes inside the query
 psql -v client_encoding=UTF8 -d "$database" -h "$dbHost" -p "$port" -U "$user" -c "\copy ($escapedQuery) TO '$csvPath' WITH CSV HEADER ENCODING 'UTF8'"
 
 
