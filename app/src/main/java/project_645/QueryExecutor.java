@@ -1,9 +1,6 @@
 package project_645;
 
-import project_645.Operators.BNLJoinOperator;
-import project_645.Operators.ProjectionOperator;
-import project_645.Operators.SelectionOperator;
-import project_645.Operators.TableScanOperator;
+import project_645.Operators.*;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -20,7 +17,7 @@ public class QueryExecutor {
     String peopleTableFileName = "peopleTable.dat";
 
     // Returns the total number of I/Os made by the buffer manager
-    public long executeQuery(String startRange, String endRange, int bufferSize, boolean usePrematerializedTempTable, String csvFileName) throws Exception {
+    public long executeQuery(String startRange, String endRange, int bufferSize, boolean usePrematerializedTempTable, String csvFileName, boolean isMovieIndex) throws Exception {
         // File paths (based on your structure and Utilities.java)
 
         if (csvFileName != null) {
@@ -46,8 +43,6 @@ public class QueryExecutor {
                 }
             }
         }
-
-
         // Initialize BufferManagerImpl with the correct paths
         BufferManagerImpl bufferManager = new BufferManagerImpl(
                 bufferSize,
@@ -58,13 +53,18 @@ public class QueryExecutor {
                 workedOnTableFileName,
                 peopleTableFileName
         );
-
-        // Step 1: Movies scan + title range selection
-        TableScanOperator moviesScan = new TableScanOperator(bufferManager, File.DISK);
-
-        // Step 2: Selection on operator from chosen range
-        SelectionOperator testRangeSelection = new SelectionOperator(moviesScan, ColumnNames.TITLE, startRange, endRange, bufferManager, false);
-
+        SelectionOperator testRangeSelection;
+        // Step 1: Range selection on movie index file
+        if(isMovieIndex){
+            MovieIndex movieIndex = new MovieIndex(bufferManager, File.DISK, startRange, endRange);
+            testRangeSelection = new SelectionOperator(movieIndex, ColumnNames.TITLE, startRange, endRange, bufferManager, false);
+            }
+        else{
+            // Step 1: Movies scan + title range selection
+            TableScanOperator moviesScan = new TableScanOperator(bufferManager, File.DISK);
+            // Step 2: Selection on operator from chosen range
+            testRangeSelection = new SelectionOperator(moviesScan, ColumnNames.TITLE, startRange, endRange, bufferManager, false);
+        }
         // Step 3: workedOnScan operator
         TableScanOperator workedOnScan = new TableScanOperator(bufferManager, File.WORKEDON);
 
