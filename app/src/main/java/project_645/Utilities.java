@@ -669,7 +669,7 @@ public class Utilities {
 
             // 1) reset & run your query
             BufferManagerImpl.resetiocount();
-            new QueryExecutor().executeQuery(lo, hi, bufferSize,true, null, false);
+            new QueryExecutor().executeQuery(lo, hi, bufferSize,prematerialized, null, false);
             long ioMeas = BufferManagerImpl.totalIOs;
 
             // 2) re-scan Movies to compute σm
