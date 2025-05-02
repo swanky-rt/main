@@ -20,32 +20,33 @@ public class Main {
             String peopleFileName = "peopleTable.dat";
             String filePath = System.getProperty("user.dir") + path;
 //
-//            // NOTE: RUNNING MAIN WILL DELETE AND RECREATE THE INDEX FILES SO THAT ALL TESTS CAN BE RUN IN SUCCESSION
-//            // PLEASE MAKE SURE TO SAVE THE INDEX FILES BEFORE RUNNING MAIN.
+//            // NOTE: RUNNING MAIN WILL DELETE AND RECREATE THE INDEX AND DISK FILES SO THAT ALL TESTS CAN BE RUN IN SUCCESSION
+//            // PLEASE MAKE SURE TO SAVE THE INDEX AND DISK FILES BEFORE RUNNING MAIN.
 //            // IF YOU DO LOSE THE INDEX FILES, PLEASE SEE OUR DOCUMENTATION FOR A LINK TO A BACKUP VERSION WE CREATED
 //
             Utilities utilities = new Utilities(mainFileName, diskFileName);
-            // utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+            utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
             BufferManagerImpl bufferManager = new BufferManagerImpl(1000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
-            // Creating the index on movie title should take 2-3 hours.
-            // bufferManager.populateDisk(10000, filePath, "A", "z");
+            utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
 
-            // utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
+            // Run the following to populate the movie title index, if you choose to execute subsequent queries with this index
+            utilities.testC2(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
             QueryExecutor testExecutor = new QueryExecutor();
 
+            // uncomment the following line if you want to prematerialize the table.
             // testExecutor.prematerializeTable(1000 * 4096);
-           // utilities.queryPlanCorrectnessTest1();
+            utilities.queryPlanCorrectnessTest1(filePath, false);
 
 //            System.out.println("--------------------------------------------");
 
-           // utilities.queryPlanCorrectnessTest2();
+            utilities.queryPlanCorrectnessTest2(filePath, false);
 
 //            System.out.println("--------------------------------------------");
 
-//           utilities.queryPlanCorrectnessTest3(filePath);
+            utilities.queryPlanCorrectnessTest3(filePath, false);
 //
             long totalMovies   = bufferManager.getCurrentMovieIdPage();
             long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
@@ -68,7 +69,7 @@ public class Main {
                     totalMovies, totalWorkedOn, totalPeople,
                     sigmaP,
                     selectivity,
-                    true
+                    false
             );
             utilities.testQueryPerformance(
                     filePath,
@@ -78,7 +79,7 @@ public class Main {
                     totalMovies, totalWorkedOn, totalPeople,
                     sigmaP,
                     selectivity,
-                    true
+                    false
             );
 
             utilities.testQueryPerformance(
@@ -89,7 +90,7 @@ public class Main {
                     totalMovies, totalWorkedOn, totalPeople,
                     sigmaP,
                     selectivity,
-                    true
+                    false
             );
 
 
@@ -113,8 +114,7 @@ public class Main {
 //            utilities.testC1(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 //            System.out.println("Successfully bulk loaded the movie ID index with all records on disk");
             // Creating the index on movie title should take 2-3 hours.
-//            utilities.testC2(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
-//            System.out.println("Successfully created the index on movie title");
+
 //
 //             // search and range search
 //             utilities.testC3(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);

@@ -506,10 +506,10 @@ public class Utilities {
 
     }
 
-    public void queryPlanCorrectnessTest1(String filepath) throws Exception {
+    public void queryPlanCorrectnessTest1(String filepath, boolean prematerialized) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("cbs", "cbsz", 1000*4096, true, "C1results.csv", false);
+        long ios = queryExecutor.executeQuery("cbs", "cbsz", 1000*4096, prematerialized, "C1results.csv", false);
 
         ArrayList<String> file1Strings = new ArrayList<>();
         ArrayList<String> file2Strings = new ArrayList<>();
@@ -553,10 +553,10 @@ public class Utilities {
         }
     }
 
-    public void queryPlanCorrectnessTest2(String filepath) throws Exception {
+    public void queryPlanCorrectnessTest2(String filepath, boolean prematerialized) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("ab", "abc", 1000*4096, true, "C2results.csv", false);
+        long ios = queryExecutor.executeQuery("ab", "abc", 1000*4096, prematerialized, "C2results.csv", false);
 
         ArrayList<String> file1Strings = new ArrayList<>();
         ArrayList<String> file2Strings = new ArrayList<>();
@@ -600,10 +600,10 @@ public class Utilities {
         }
     }
 
-    public void queryPlanCorrectnessTest3(String filepath) throws Exception {
+    public void queryPlanCorrectnessTest3(String filepath, boolean prematerialized) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("w", "z", 1000*4096, true, "C3results.csv", false);
+        long ios = queryExecutor.executeQuery("w", "z", 1000*4096, prematerialized, "C3results.csv", false);
 
         ArrayList<String> file1Strings = new ArrayList<>();
         ArrayList<String> file2Strings = new ArrayList<>();
