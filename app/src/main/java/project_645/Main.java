@@ -10,9 +10,9 @@ public class Main {
         try {
             // define parameters to our various objects
             String path = "/app/src/main/java/project_645/DB files/";
-            String mainFileName = "title.basics.tsv";
-            String workedOnTSVFileName = "title.principals.tsv";
-            String peopleTSVFileName = "name.basics.tsv";
+            String mainFileName = "title.basics.csv";
+            String workedOnTSVFileName = "title.principals.csv";
+            String peopleTSVFileName = "name.basics.csv";
             String diskFileName = "testdb.dat";
             String movieIdIndexFileName = "movieIdIndex.dat";
             String movieTitleIndexFileName = "movieTitleIndex.dat";
@@ -20,49 +20,78 @@ public class Main {
             String peopleFileName = "peopleTable.dat";
             String filePath = System.getProperty("user.dir") + path;
 //
-//            // NOTE: RUNNING MAIN WILL DELETE AND RECREATE THE INDEX FILES SO THAT ALL TESTS CAN BE RUN IN SUCCESSION
-//            // PLEASE MAKE SURE TO SAVE THE INDEX FILES BEFORE RUNNING MAIN.
+//            // NOTE: RUNNING MAIN WILL DELETE AND RECREATE THE INDEX AND DISK FILES SO THAT ALL TESTS CAN BE RUN IN SUCCESSION
+//            // PLEASE MAKE SURE TO SAVE THE INDEX AND DISK FILES BEFORE RUNNING MAIN.
 //            // IF YOU DO LOSE THE INDEX FILES, PLEASE SEE OUR DOCUMENTATION FOR A LINK TO A BACKUP VERSION WE CREATED
 //
             Utilities utilities = new Utilities(mainFileName, diskFileName);
-            // utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+            utilities.deleteAndRecreateIndexFiles(filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
             BufferManagerImpl bufferManager = new BufferManagerImpl(1000 * 4096, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
-            // Creating the index on movie title should take 2-3 hours.
-            // bufferManager.populateDisk(10000, filePath, "A", "z");
+            utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
 
-            // utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
+            // Run the following to populate the movie title index, if you choose to execute subsequent queries with this index
+            utilities.testC2(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
             QueryExecutor testExecutor = new QueryExecutor();
 
-           // testExecutor.prematerializeTable(1000 * 4096);
-
-           // utilities.queryPlanCorrectnessTest1();
-
-//            System.out.println("--------------------------------------------");
-
-           // utilities.queryPlanCorrectnessTest2();
+            // uncomment the following line if you want to prematerialize the table.
+            // testExecutor.prematerializeTable(1000 * 4096);
+            utilities.queryPlanCorrectnessTest1(filePath, false);
 
 //            System.out.println("--------------------------------------------");
 
-           utilities.queryPlanCorrectnessTest3();
+            utilities.queryPlanCorrectnessTest2(filePath, false);
 
-//            long totalMovies   = bufferManager.getCurrentMovieIdPage();
-//            long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
-//            long totalPeople   = bufferManager.getCurrentPeoplePageId();
-//            double sigmaP      = 4167668/ 51040986.0;
+//            System.out.println("--------------------------------------------");
+
+            utilities.queryPlanCorrectnessTest3(filePath, false);
 //
-//            String[] starts = {"a", "f", "k", "p", "u"};
-//            String[] ends   = {"d", "i", "n", "s", "z"};
-//            utilities.testQueryPerformance(
-//                    filePath,
-//                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
-//                    starts, ends,
-//                    1000 * 4096,  // buffer size in frames (pages)
-//                    totalMovies, totalWorkedOn, totalPeople,
-//                    sigmaP
-//            );
+            long totalMovies   = bufferManager.getCurrentMovieIdPage();
+            long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
+            long totalPeople   = bufferManager.getCurrentPeoplePageId();
+            double sigmaP      = 7936128.0 / 92201673.0;
+
+            String[] starts = {"a", "a", "a", "a", "a"};
+            String[] ends   = {"a pirate arrives: loyal guidance",
+                    "addicted to plastic surgery",
+                    "alibreze",
+                    "anal initiation",
+                    "arri arri tatanet"};
+            double[] selectivity = {1.0, 2.0, 3.0, 4.0, 5.0};
+
+            utilities.testQueryPerformance(
+                    filePath,
+                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
+                    starts, ends,
+                    500 * 4096,  // buffer size in frames (pages)
+                    totalMovies, totalWorkedOn, totalPeople,
+                    sigmaP,
+                    selectivity,
+                    false
+            );
+            utilities.testQueryPerformance(
+                    filePath,
+                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
+                    starts, ends,
+                    1000 * 4096,  // buffer size in frames (pages)
+                    totalMovies, totalWorkedOn, totalPeople,
+                    sigmaP,
+                    selectivity,
+                    false
+            );
+
+            utilities.testQueryPerformance(
+                    filePath,
+                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
+                    starts, ends,
+                    5000 * 4096,  // buffer size in frames (pages)
+                    totalMovies, totalWorkedOn, totalPeople,
+                    sigmaP,
+                    selectivity,
+                    false
+            );
 
 
 
@@ -84,9 +113,8 @@ public class Main {
 //            // comment out the following lines to not create/populate the two index files.
 //            utilities.testC1(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 //            System.out.println("Successfully bulk loaded the movie ID index with all records on disk");
-//            // Creating the index on movie title should take 2-3 hours.
-//            utilities.testC2(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
-//            System.out.println("Successfully created the index on movie title");
+            // Creating the index on movie title should take 2-3 hours.
+
 //
 //             // search and range search
 //             utilities.testC3(false, false, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);

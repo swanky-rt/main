@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 public class Utilities {
@@ -504,27 +506,216 @@ public class Utilities {
 
     }
 
-    public void queryPlanCorrectnessTest1() throws Exception {
+    public void queryPlanCorrectnessTest1(String filepath, boolean prematerialized) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("horrid henry", "horrid henrz", 1000*4096, false);
+        long ios = queryExecutor.executeQuery("cbs", "cbsz", 1000*4096, prematerialized, "C1results.csv", false);
 
+        ArrayList<String> file1Strings = new ArrayList<>();
+        ArrayList<String> file2Strings = new ArrayList<>();
+
+        BufferedReader workedOnTableReader = new BufferedReader(new FileReader(filepath + "C2results.csv"));
+        String curLine;
+        while ((curLine = workedOnTableReader.readLine()) != null) {
+            file1Strings.add(curLine);
+        }
+
+        BufferedReader workedOnTableReaderPostgres = new BufferedReader(new FileReader(filepath + "cbs-to-cbz-query.csv"));
+        while ((curLine = workedOnTableReaderPostgres.readLine()) != null) {
+            file2Strings.add(curLine);
+        }
+
+        Collections.sort(file1Strings);
+
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            String postgresResultsTitle = file2Strings.get(i).split(",")[0];
+            String postgresResultsName = file2Strings.get(i).split(",")[1];
+            String PostgresResultsSubstring = postgresResultsTitle.substring(0, Math.min(postgresResultsTitle.length(), 30)).trim();
+            String str2 = PostgresResultsSubstring+ "," + postgresResultsName;
+            file2Strings.set(i, str2);
+        }
+        Collections.sort(file2Strings);
+
+        int incorrectCounter = 0;
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            if (!file1Strings.get(i).equals(file2Strings.get(i))) {
+                incorrectCounter += 1;
+                String str1 = file1Strings.get(i);
+                String str2 = file2Strings.get(i);
+                System.out.println(str1 + ", " + str2 + " combination is incorrect");
+            }
+        }
+        if (incorrectCounter == 0) {
+            System.out.println("No records incorrect");
+        }
+        else {
+            System.out.println(incorrectCounter + " records incorrect");
+        }
     }
 
-    public void queryPlanCorrectnessTest2() throws Exception {
+    public void queryPlanCorrectnessTest2(String filepath, boolean prematerialized) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("x", "y", 1000*4096, true);
+        long ios = queryExecutor.executeQuery("ab", "abc", 1000*4096, prematerialized, "C2results.csv", false);
 
+        ArrayList<String> file1Strings = new ArrayList<>();
+        ArrayList<String> file2Strings = new ArrayList<>();
+
+        BufferedReader workedOnTableReader = new BufferedReader(new FileReader(filepath + "C2results.csv"));
+        String curLine;
+        while ((curLine = workedOnTableReader.readLine()) != null) {
+            file1Strings.add(curLine);
+        }
+
+        BufferedReader workedOnTableReaderPostgres = new BufferedReader(new FileReader(filepath + "ab-to-abc-query.csv"));
+        while ((curLine = workedOnTableReaderPostgres.readLine()) != null) {
+            file2Strings.add(curLine);
+        }
+
+        Collections.sort(file1Strings);
+
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            String postgresResultsTitle = file2Strings.get(i).split(",")[0];
+            String postgresResultsName = file2Strings.get(i).split(",")[1];
+            String PostgresResultsSubstring = postgresResultsTitle.substring(0, Math.min(postgresResultsTitle.length(), 30)).trim();
+            String str2 = PostgresResultsSubstring+ "," + postgresResultsName;
+            file2Strings.set(i, str2);
+        }
+        Collections.sort(file2Strings);
+
+        int incorrectCounter = 0;
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            if (!file1Strings.get(i).equals(file2Strings.get(i))) {
+                incorrectCounter += 1;
+                String str1 = file1Strings.get(i);
+                String str2 = file2Strings.get(i);
+                System.out.println(str1 + ", " + str2 + " combination is incorrect");
+            }
+        }
+        if (incorrectCounter == 0) {
+            System.out.println("No records incorrect");
+        }
+        else {
+            System.out.println(incorrectCounter + " records incorrect");
+        }
     }
 
-    public void queryPlanCorrectnessTest3() throws Exception {
+    public void queryPlanCorrectnessTest3(String filepath, boolean prematerialized) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("x", "y", 1000*4096, true);
+        long ios = queryExecutor.executeQuery("w", "z", 1000*4096, prematerialized, "C3results.csv", false);
 
+        ArrayList<String> file1Strings = new ArrayList<>();
+        ArrayList<String> file2Strings = new ArrayList<>();
+
+        BufferedReader workedOnTableReader = new BufferedReader(new FileReader(filepath + "C3results.csv"));
+        String curLine;
+        while ((curLine = workedOnTableReader.readLine()) != null) {
+            file1Strings.add(curLine);
+        }
+
+        BufferedReader workedOnTableReaderPostgres = new BufferedReader(new FileReader(filepath + "w-to-z-query.csv"));
+        while ((curLine = workedOnTableReaderPostgres.readLine()) != null) {
+            file2Strings.add(curLine);
+        }
+
+        Collections.sort(file1Strings);
+
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            String postgresResultsTitle = file2Strings.get(i).split(",")[0];
+            String postgresResultsName = file2Strings.get(i).split(",")[1];
+            String PostgresResultsSubstring = postgresResultsTitle.substring(0, Math.min(postgresResultsTitle.length(), 30)).trim();
+            String str2 = PostgresResultsSubstring+ "," + postgresResultsName;
+            file2Strings.set(i, str2);
+        }
+        Collections.sort(file2Strings);
+
+        int incorrectCounter = 0;
+        for (int i = 0; i < file2Strings.size(); ++i) {
+            if (!file1Strings.get(i).equals(file2Strings.get(i))) {
+                incorrectCounter += 1;
+                String str1 = file1Strings.get(i);
+                String str2 = file2Strings.get(i);
+                System.out.println(str1 + ", " + str2 + " combination is incorrect");
+            }
+        }
+        if (incorrectCounter == 0) {
+            System.out.println("No records incorrect");
+        }
+        else {
+            System.out.println(incorrectCounter + " records incorrect");
+        }
     }
 
+    /**
+     * Runs query over several (start,end) ranges,
+     * measures I/O, predicts I/O, and pops up a chart.
+     */
+    public void testQueryPerformance(String filePath,
+                                     String diskFile, String movieIdIndexFileName, String movieTitleIndexFileName,String workedOnIndexFileName, String peopleIndexFileName,
+                                     String[] starts, String[] ends,
+                                     int bufferSize,
+                                     long totalMovies, long totalWorkedOn, long totalPeople,
+                                     double sigmaP,
+                                     double[] selectivities,
+                                     boolean prematerialized) throws Exception
+    {
+        final int C = 100;  // reserve 2 frames
+        XYSeries measured = new XYSeries("Measured I/O");
+        XYSeries predicted = new XYSeries("Predicted I/O");
+
+        for (int i = 0; i < starts.length; i++) {
+            String lo = starts[i], hi = ends[i];
+
+            // 1) reset & run your query
+            BufferManagerImpl.resetiocount();
+            new QueryExecutor().executeQuery(lo, hi, bufferSize,prematerialized, null, false);
+            long ioMeas = BufferManagerImpl.totalIOs;
+
+            // 2) re-scan Movies to compute σm
+            BufferManagerImpl bm2 = new BufferManagerImpl(1000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
+
+//            TableScanOperator ms = new TableScanOperator(bm2, File.MOVIE_TITLE_IDX);//new String[]{"movieId","title"});
+//            ms.open();
+//            long pass = 0;
+//            Record rec;
+//            while ((rec = ms.next()) != null) {
+//                String t = rec.getTitleDeserialized();
+//                if (t != null && t.compareTo(lo) >= 0 && t.compareTo(hi) <= 0) pass++;
+//            }
+//            ms.close();
+//            double sigmaM = (double)pass / totalMovies;
+            // hardcoded selectivity for movie scan range
+            double sigmaM = selectivities[i] / 100.0;
+
+            // 3) predict
+            long ioPred = computePredictedIO(
+                    bufferSize / 4096, C, totalMovies, totalWorkedOn, totalPeople, sigmaP, sigmaM
+            );
+            ioMeas = prematerialized ? ioMeas + 505490 : ioMeas;
+            System.out.printf("range=[%s,%s] σm=%.4f measured=%d predicted=%d%n",
+                    lo, hi, sigmaM, ioMeas, ioPred);
+
+            measured.add(sigmaM, ioMeas);
+            predicted.add(sigmaM, ioPred);
+        }
+
+        // 4) build chart
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(measured);
+        dataset.addSeries(predicted);
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                "Lab3 I/O: Measured vs Predicted: " + bufferSize / 4096 + " buffer frames", "Title‐selectivity", "I/O ops",
+                dataset
+        );
+
+        // 5) show chart
+        JFrame frame = new JFrame("Performance");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(800,600);
+        frame.add(new ChartPanel(chart));
+        frame.setVisible(true);
+    }
 
 
     // Helper method for P3
@@ -686,12 +877,15 @@ public class Utilities {
             Page nextPage = bf.createPage(File.DISK);
             // add rows using p.insertRow without filling p up
             while ((curLine = diskReader.readLine()) != null) {
-                String[] splitLine = curLine.split("\t");
+                String[] splitLine = curLine.split(",");
+                if (splitLine.length == 1) {
+                    continue;
+                }
                 byte[] movieId = splitLine[0].toLowerCase().getBytes();
                 if (movieId.length > 9) {
                     continue;
                 }
-                byte[] titleId = splitLine[2].toLowerCase().getBytes();
+                byte[] titleId = splitLine[1].toLowerCase().getBytes();
                 Row row = new Row(movieId, titleId, null, null, null);
                 nextPage.insertRow(row);
                 if (nextPage.isFull()) {
@@ -708,10 +902,13 @@ public class Utilities {
             workedOnTableReader.readLine();
             nextPage = bf.createPage(File.WORKEDON);
             while ((curLine = workedOnTableReader.readLine()) != null) {
-                String[] splitLine = curLine.split("\t");
+                String[] splitLine = curLine.split(",");
+                if (splitLine.length == 1) {
+                    continue;
+                }
                 byte[] movieId = splitLine[0].toLowerCase().getBytes();
-                byte[] personId = splitLine[2].toLowerCase().getBytes();
-                byte[] category = splitLine[3].toLowerCase().getBytes();
+                byte[] personId = splitLine[1].toLowerCase().getBytes();
+                byte[] category = splitLine[2].toLowerCase().getBytes();
                 if (movieId.length > 9) {
                     continue;
                 }
@@ -732,7 +929,10 @@ public class Utilities {
             peopleTableReader.readLine();
             nextPage = bf.createPage(File.PEOPLE);
             while ((curLine = peopleTableReader.readLine()) != null) {
-                String[] splitLine = curLine.split("\t");
+                String[] splitLine = curLine.split(",");
+                if (splitLine.length == 1) {
+                    continue;
+                }
                 byte[] personId = splitLine[0].toLowerCase().getBytes();
                 byte[] name = splitLine[1].toLowerCase().getBytes();
                 Row row = new Row(null, null, personId, null, name);
@@ -773,77 +973,22 @@ public class Utilities {
         long term1 = M;                    // scan Movies
         long term2 = W + Nt;               // scan WorkedOn + write temp
         long term3 = Nt;                   // read temp back
-        long term4 = (long)Math.ceil((double)M / block) * Nt;   // join1
-        long term5 = (long)Math.ceil((sigmaM * M) / block) * P; // join2
+        // M * selectivity of M is a rough estimation for the output pages
+        // these pages / block size is the number of necessary blocks
+        // each of these are multiplied by the number of pages in the other table
+        long term4 = (long)Math.ceil((double)M*sigmaM / block) * Nt;   // join1
+
+        // expected output of output pages is max pages times product of reduction factors
+        // in this case, we have the explicit selectivities, which serve as our reduction factors
+        // divide by block and multiply by P for the same reasons above.
+        // input cardinality based on the assumption of only one director per movie.
+        // Thus, the previous join will have sigmaM * M pages
+        long term5 = (long)Math.ceil((sigmaM * (double)M) / block) * P; // join2
 
         return term1 + term2 + term3 + term4 + term5;
     }
 
-    /**
-     * Runs query over several (start,end) ranges,
-     * measures I/O, predicts I/O, and pops up a chart.
-     */
-    public void testQueryPerformance(String filePath,
-                                     String diskFile, String movieIdIndexFileName, String movieTitleIndexFileName,String workedOnIndexFileName, String peopleIndexFileName,
-                                     String[] starts, String[] ends,
-                                     int bufferSize,
-                                     long totalMovies, long totalWorkedOn, long totalPeople,
-                                     double sigmaP) throws Exception
-    {
-        final int C = 2;  // reserve 2 frames
-        XYSeries measured = new XYSeries("Measured I/O");
-        XYSeries predicted = new XYSeries("Predicted I/O");
 
-        for (int i = 0; i < starts.length; i++) {
-            String lo = starts[i], hi = ends[i];
-
-            // 1) reset & run your query
-            BufferManagerImpl.resetiocount();
-            new QueryExecutor().executeQuery(lo, hi, bufferSize,true);
-            long ioMeas = BufferManagerImpl.totalIOs;
-
-            // 2) re-scan Movies to compute σm
-            BufferManagerImpl bm2 = new BufferManagerImpl(1000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
-
-            TableScanOperator ms = new TableScanOperator(bm2, File.MOVIE_TITLE_IDX);//new String[]{"movieId","title"});
-            ms.open();
-            long pass = 0;
-            Record rec;
-            while ((rec = ms.next()) != null) {
-                String t = rec.getTitleDeserialized();
-                if (t != null && t.compareTo(lo) >= 0 && t.compareTo(hi) <= 0) pass++;
-            }
-            ms.close();
-            double sigmaM = (double)pass / totalMovies;
-
-            // 3) predict
-            long ioPred = computePredictedIO(
-                    bufferSize, C, totalMovies, totalWorkedOn, totalPeople, sigmaP, sigmaM
-            );
-
-            System.out.printf("range=[%s,%s] σm=%.4f measured=%d predicted=%d%n",
-                    lo, hi, sigmaM, ioMeas, ioPred);
-
-            measured.add(sigmaM, ioMeas);
-            predicted.add(sigmaM, ioPred);
-        }
-
-        // 4) build chart
-        XYSeriesCollection dataset = new XYSeriesCollection();
-        dataset.addSeries(measured);
-        dataset.addSeries(predicted);
-        JFreeChart chart = ChartFactory.createXYLineChart(
-                "Lab3 I/O: Measured vs Predicted", "Title‐selectivity", "I/O ops",
-                dataset
-        );
-
-        // 5) show chart
-        JFrame frame = new JFrame("Performance");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800,600);
-        frame.add(new ChartPanel(chart));
-        frame.setVisible(true);
-    }
 
 
 }

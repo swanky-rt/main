@@ -16,12 +16,10 @@ public class QueryExecutorTest {
         queryExecutor = new QueryExecutor();
     }
 
-
-
     @Test
     public void testExecuteQueryRange() {
         assertThrows(Exception.class, () ->
-                queryExecutor.executeQuery("Z", "A", 4096 * 4, true)
+                queryExecutor.executeQuery("Z", "A", 4096 * 4, true, null, false)
         );
     }
 
@@ -31,9 +29,6 @@ public class QueryExecutorTest {
                 queryExecutor.prematerializeTable(4096 * 8)
         );
     }
-
-
-
 
     @Test
     public void testPrematerializeTableCoversForceAndReturnLines() {
@@ -48,10 +43,4 @@ public class QueryExecutorTest {
 
         }
     }
-
-
-
-
-
-
 }

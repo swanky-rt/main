@@ -120,7 +120,7 @@ public class ProjectionOperatorTest {
         assertEquals(256, result);
     }
 
-    /*@Test
+    @Test
     void testCreateNewRecordMaterializesSelectedColumns() throws Exception {
         projectionOperator.open();
         projectionOperator.materializeTable();
@@ -135,20 +135,13 @@ public class ProjectionOperatorTest {
 
         verify(mockPage, atLeastOnce()).insertRow(any(Row.class));
         verify(mockPage, atLeastOnce()).isFull();
-    }*/
+    }
 
-   /* @Test
+   @Test
     void testNextReturnsNullAfterExhaustion() throws Exception {
         projectionOperator.open();
         projectionOperator.materializeTable();
         projectionOperator.next();
         assertNull(projectionOperator.next());
-    }*/
-
-
-
-
-
-
-
+    }
 }

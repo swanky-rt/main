@@ -81,9 +81,9 @@ public class ProjectionOperator implements Operator {
         while ((input = child.next()) != null) {
             createNewRecord(input, true);
             curMaterializedRecord += 1;
-            if (curMaterializedRecord % 100000 == 0) {
-                System.out.println("" + curMaterializedRecord + " records materialized");
-            }
+//            if (curMaterializedRecord % 100000 == 0) {
+//                // System.out.println("" + curMaterializedRecord + " records materialized");
+//            }
         }
         if (relation == File.TEMPORARY) {
             bufferManager.unpinPage(currentPage.getPid(), File.TEMPORARY);

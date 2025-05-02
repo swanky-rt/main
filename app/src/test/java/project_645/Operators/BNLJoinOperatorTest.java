@@ -284,10 +284,4 @@ public class BNLJoinOperatorTest {
 
         assertNotNull(result);
     }
-
-    
-
-
-
-
 }
