@@ -69,7 +69,7 @@ public class BTreeImpl implements BTree<String, Rid> {
     }
 
 
-//method to insert the key and rid
+    //method to insert the key and rid
     @Override
     public void insert(String key, Rid rid) {
         int leafPid = findLeafPageId(key.getBytes());
@@ -79,7 +79,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         insertIntoLeaf(leafPid, padByteArrayToLength(key.getBytes(), 30), arrRid);
     }
 
-//method to search the key and rid
+    //method to search the key and rid
     @Override
     public Iterator<Rid> search(String key) {
         List<Rid> results = new ArrayList<>();
@@ -95,7 +95,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         return results.iterator();
     }
 
-//Method to do the range search for start key and end key
+    //Method to do the range search for start key and end key
     @Override
     public Iterator<Rid> rangeSearch(String startKey, String endKey) {
         List<Rid> results = new ArrayList<>();
@@ -127,7 +127,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         return results.iterator();
     }
 
-//method to insert key and corresponding rid into leaf page
+    //method to insert key and corresponding rid into leaf page
     private Page insertIntoLeaf(int leafPid, byte[] key, byte[] rid) {
         try {
             List<byte[]> keys = new ArrayList<>();
@@ -184,7 +184,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         return null;
     }
 
-//method to create new root if insertion is splitting the page
+    //method to create new root if insertion is splitting the page
     private void createNewRoot(int oldRootPid, int siblingPid, byte[] splitKey) throws Exception {
         Page newRootPage = bufferMgr.createPage(dataFile);
         int newRootPid = (int)newRootPage.getPid();
@@ -203,7 +203,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         bufferMgr.unpinPage(newRootPid, dataFile);
     }
 
-//method to insert into parent
+    //method to insert into parent
     private void insertInParent(int leftPid, int rightPid, byte[] splitKey) throws Exception {
         int parentPid = getParentId(leftPid);
         if (parentPid == -1) {
@@ -264,7 +264,7 @@ public class BTreeImpl implements BTree<String, Rid> {
     }
 
 
-//method to find leaf page using key
+    //method to find leaf page using key
     private int findLeafPageId(byte[] key) {
         int currentPid = metadata.rootPageId;
         while (true) {
@@ -291,7 +291,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
     }
 
-//method to search in leaf page using leaf id and key byte
+    //method to search in leaf page using leaf id and key byte
     private List<Rid> searchInLeaf(int leafPid, byte[] key) {
         List<byte[]> keys = new ArrayList<>();
         List<byte[]> rids = new ArrayList<>();
@@ -320,7 +320,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         p.insertRow(metaRow); // row 0 stores metadata
     }
 
-//method to read leaf page using leaf id and list of bytes
+    //method to read leaf page using leaf id and list of bytes
     private void readLeafNode(int pageId, List<byte[]> keysOut, List<byte[]> ridsOut) {
         try {
             Page page = bufferMgr.getPage(pageId, dataFile);
@@ -344,7 +344,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
     }
 
-//method to write leaf page using page id and list of bytes of keys and rids
+    //method to write leaf page using page id and list of bytes of keys and rids
     private void writeLeafKeysAndRids(int pageId, List<byte[]> keys, List<byte[]> rids) {
         try {
             Page page = bufferMgr.getPage(pageId, dataFile);
@@ -439,7 +439,7 @@ public class BTreeImpl implements BTree<String, Rid> {
     }
 
 
-//method to check whether a node is leaf or not
+    //method to check whether a node is leaf or not
     private boolean isLeafNode(int pageId) {
         try {
             Page page = bufferMgr.getPage(pageId, dataFile);
@@ -453,7 +453,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
     }
 
-//method to get parent id from page id
+    //method to get parent id from page id
     private int getParentId(int pageId) {
         try {
             Page page = bufferMgr.getPage(pageId, dataFile);
@@ -467,7 +467,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         }
     }
 
-//method to set parent id using page id and parent id
+    //method to set parent id using page id and parent id
     private void setParentId(int pageId, int parentId) {
         try {
             Page page = bufferMgr.getPage(pageId, dataFile);
@@ -558,7 +558,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         return returnArr;
     }
 
-//method to find root
+    //method to find root
     public int findRoot(int curPid) {
         int parentPid = getParentId(curPid);
         if (parentPid == -1) {
@@ -567,7 +567,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         return findRoot(parentPid);
     }
 
-//method to populate movie id index and movie title index.
+    //method to populate movie id index and movie title index.
     public String populateIndex() throws Exception {
         int numPages = bufferMgr.getNumPagesOnDisk();
         for (int curPageIdx = 0; curPageIdx < numPages; ++curPageIdx) {
@@ -584,7 +584,7 @@ public class BTreeImpl implements BTree<String, Rid> {
         return "Successfully populated " + dataFile.toString();
     }
 
- // method to do bulk-loading for movieId index
+    // method to do bulk-loading for movieId index
     public String bulkLoad() throws Exception {
         Page curLeafPage = bufferMgr.getPage(metadata.rootPageId, File.MOVIE_ID_IDX);
         int numPages = bufferMgr.getNumPagesOnDisk();

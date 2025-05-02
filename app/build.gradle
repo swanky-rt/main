@@ -82,6 +82,12 @@ application {
 
 }
 
+task runQuery(type: JavaExec) {
+    main = 'project_645.RunQuery'
+    classpath = sourceSets.main.runtimeClasspath
+    args 'startRange', 'endRange', 'bufferSize'  // Replace with actual values or use dynamic arguments
+}
+
 dependencies {
     implementation 'org.jfree:jfreechart:1.5.3'
 }

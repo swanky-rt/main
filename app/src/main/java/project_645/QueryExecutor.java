@@ -12,7 +12,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class QueryExecutor {
-    String filePath = System.getProperty("user.dir") + "/app/src/main/java/project_645/DB files/"; // Correct path to your DB files
+    String filePath = System.getProperty("user.dir") + "/src/main/java/project_645/DB files/"; // Correct path to your DB files
     String diskFileName = "testdb.dat";  // Assuming your disk file is named testdb.dat
     String movieIdIndexFileName = "movieIdIndex.dat";  // Movie ID index file
     String movieTitleIndexFileName = "movieTitleIndex.dat"; // Movie Title index file
