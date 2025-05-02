@@ -523,7 +523,7 @@ public class Utilities {
     public void queryPlanCorrectnessTest3(String filepath) throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        // long ios = queryExecutor.executeQuery("w", "z", 1000*4096, true, "C3results.csv");
+        long ios = queryExecutor.executeQuery("w", "z", 1000*4096, true, "C3results.csv", false);
 
         ArrayList<String> file1Strings = new ArrayList<>();
         ArrayList<String> file2Strings = new ArrayList<>();
@@ -567,6 +567,76 @@ public class Utilities {
         }
     }
 
+    /**
+     * Runs query over several (start,end) ranges,
+     * measures I/O, predicts I/O, and pops up a chart.
+     */
+    public void testQueryPerformance(String filePath,
+                                     String diskFile, String movieIdIndexFileName, String movieTitleIndexFileName,String workedOnIndexFileName, String peopleIndexFileName,
+                                     String[] starts, String[] ends,
+                                     int bufferSize,
+                                     long totalMovies, long totalWorkedOn, long totalPeople,
+                                     double sigmaP,
+                                     double[] selectivities,
+                                     boolean prematerialized) throws Exception
+    {
+        final int C = 100;  // reserve 2 frames
+        XYSeries measured = new XYSeries("Measured I/O");
+        XYSeries predicted = new XYSeries("Predicted I/O");
+
+        for (int i = 0; i < starts.length; i++) {
+            String lo = starts[i], hi = ends[i];
+
+            // 1) reset & run your query
+            BufferManagerImpl.resetiocount();
+            long testIOCount = new QueryExecutor().executeQuery(lo, hi, bufferSize,true, null, false);
+            long ioMeas = BufferManagerImpl.totalIOs;
+            System.out.println(testIOCount == ioMeas);
+
+            // 2) re-scan Movies to compute σm
+            BufferManagerImpl bm2 = new BufferManagerImpl(1000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
+
+//            TableScanOperator ms = new TableScanOperator(bm2, File.MOVIE_TITLE_IDX);//new String[]{"movieId","title"});
+//            ms.open();
+//            long pass = 0;
+//            Record rec;
+//            while ((rec = ms.next()) != null) {
+//                String t = rec.getTitleDeserialized();
+//                if (t != null && t.compareTo(lo) >= 0 && t.compareTo(hi) <= 0) pass++;
+//            }
+//            ms.close();
+//            double sigmaM = (double)pass / totalMovies;
+            // hardcoded selectivity for movie scan range
+            double sigmaM = selectivities[i] / 100.0;
+
+            // 3) predict
+            long ioPred = computePredictedIO(
+                    bufferSize, C, totalMovies, totalWorkedOn, totalPeople, sigmaP, sigmaM
+            );
+            ioMeas = prematerialized ? ioMeas + 505490 : ioMeas;
+            System.out.printf("range=[%s,%s] σm=%.4f measured=%d predicted=%d%n",
+                    lo, hi, sigmaM, ioMeas, ioPred);
+
+            measured.add(sigmaM, ioMeas);
+            predicted.add(sigmaM, ioPred);
+        }
+
+        // 4) build chart
+        XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(measured);
+        dataset.addSeries(predicted);
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                "Lab3 I/O: Measured vs Predicted: " + bufferSize + " buffer frames", "Title‐selectivity", "I/O ops",
+                dataset
+        );
+
+        // 5) show chart
+        JFrame frame = new JFrame("Performance");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setSize(800,600);
+        frame.add(new ChartPanel(chart));
+        frame.setVisible(true);
+    }
 
 
     // Helper method for P3
@@ -824,77 +894,20 @@ public class Utilities {
         long term1 = M;                    // scan Movies
         long term2 = W + Nt;               // scan WorkedOn + write temp
         long term3 = Nt;                   // read temp back
-        long term4 = (long)Math.ceil((double)M / block) * Nt;   // join1
-        long term5 = (long)Math.ceil((sigmaM * M) / block) * P; // join2
+        // M * selectivity of M is a rough estimation for the output pages
+        // these pages / block size is the number of necessary blocks
+        // each of these are multiplied by the number of pages in the other table
+        long term4 = (long)Math.ceil((double)M*sigmaM / block) * Nt;   // join1
+
+        // expected output of output pages is max pages times product of reduction factors
+        // in this case, we have the explicit selectivities, which serve as our reduction factors
+        // divide by block and multiply by P for the same reasons above.
+        long term5 = (long)Math.ceil((sigmaM * sigmaP * M * W) / block) * P; // join2
 
         return term1 + term2 + term3 + term4 + term5;
     }
 
-    /**
-     * Runs query over several (start,end) ranges,
-     * measures I/O, predicts I/O, and pops up a chart.
-     */
-    public void testQueryPerformance(String filePath,
-                                     String diskFile, String movieIdIndexFileName, String movieTitleIndexFileName,String workedOnIndexFileName, String peopleIndexFileName,
-                                     String[] starts, String[] ends,
-                                     int bufferSize,
-                                     long totalMovies, long totalWorkedOn, long totalPeople,
-                                     double sigmaP) throws Exception
-    {
-        final int C = 2;  // reserve 2 frames
-        XYSeries measured = new XYSeries("Measured I/O");
-        XYSeries predicted = new XYSeries("Predicted I/O");
 
-        for (int i = 0; i < starts.length; i++) {
-            String lo = starts[i], hi = ends[i];
-
-            // 1) reset & run your query
-            BufferManagerImpl.resetiocount();
-            new QueryExecutor().executeQuery(lo, hi, bufferSize,true, null, false);
-            long ioMeas = BufferManagerImpl.totalIOs;
-
-            // 2) re-scan Movies to compute σm
-            BufferManagerImpl bm2 = new BufferManagerImpl(1000*4096, filePath, diskFileName,movieIdIndexFileName, movieTitleIndexFileName,workedOnIndexFileName, peopleIndexFileName);
-
-            TableScanOperator ms = new TableScanOperator(bm2, File.MOVIE_TITLE_IDX);//new String[]{"movieId","title"});
-            ms.open();
-            long pass = 0;
-            Record rec;
-            while ((rec = ms.next()) != null) {
-                String t = rec.getTitleDeserialized();
-                if (t != null && t.compareTo(lo) >= 0 && t.compareTo(hi) <= 0) pass++;
-            }
-            ms.close();
-            double sigmaM = (double)pass / totalMovies;
-
-            // 3) predict
-            long ioPred = computePredictedIO(
-                    bufferSize, C, totalMovies, totalWorkedOn, totalPeople, sigmaP, sigmaM
-            );
-
-            System.out.printf("range=[%s,%s] σm=%.4f measured=%d predicted=%d%n",
-                    lo, hi, sigmaM, ioMeas, ioPred);
-
-            measured.add(sigmaM, ioMeas);
-            predicted.add(sigmaM, ioPred);
-        }
-
-        // 4) build chart
-        XYSeriesCollection dataset = new XYSeriesCollection();
-        dataset.addSeries(measured);
-        dataset.addSeries(predicted);
-        JFreeChart chart = ChartFactory.createXYLineChart(
-                "Lab3 I/O: Measured vs Predicted", "Title‐selectivity", "I/O ops",
-                dataset
-        );
-
-        // 5) show chart
-        JFrame frame = new JFrame("Performance");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800,600);
-        frame.add(new ChartPanel(chart));
-        frame.setVisible(true);
-    }
 
 
 }

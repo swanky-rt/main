@@ -30,6 +30,7 @@ public class BufferManagerImpl extends BufferManager{
     private String peopleFileName;
     public static long totalIOs=0;
     public static long resetiocount(){ return totalIOs=0;}
+    private long ioCount = 0;
     public long getCurrentMovieIdPage(){ return currentMovieIdPage;}
     public long getCurrentMovieTitlePageId(){ return currentMovieTitlePageId;}
     public long getCurrentWorkedOnPageId(){ return currentWorkedOnPageId;}
@@ -66,6 +67,10 @@ public class BufferManagerImpl extends BufferManager{
 
     @Override
     public Page getPage(long pageId, File dataFile) throws Exception {
+        if (dataFile != File.BNL1 && dataFile != File.BNL2) {
+            this.totalIOs += 1;
+            ioCount += 1;
+        }
         String pageIdentifier = constructPageIdentifier(pageId, dataFile);
         Page page= null;
         try {
@@ -151,6 +156,10 @@ public class BufferManagerImpl extends BufferManager{
 
     @Override
     public Page createPage(File dataFile){
+        if (dataFile != File.BNL2 && dataFile != File.BNL1) {
+            this.totalIOs += 1;
+            this.ioCount += 1;
+        }
         Page page = null;
         if (dataFile == File.TEMPORARY) {
             String fileName = getDataFileName(File.TEMPORARY);
@@ -295,7 +304,6 @@ public class BufferManagerImpl extends BufferManager{
     // This method writes pages to disk
 
     public void writePageToDisk(Page page, File dataFile) throws IOException {
-        totalIOs += 1;
         String curDiskFileName = getDataFileName(dataFile);
         long pageId = page.getPid();
         Path curPath = Paths.get( filepath + curDiskFileName).toAbsolutePath();
@@ -372,7 +380,6 @@ public class BufferManagerImpl extends BufferManager{
     // This method loads pages from disk
 
     public Page loadPageFromDisk(long pageId, File dataFile) {
-        totalIOs += 1;
         String curDiskFileName = getDataFileName(dataFile);
         Path curPath = Paths.get(filepath + curDiskFileName);
         Charset charset = StandardCharsets.US_ASCII;
@@ -634,5 +641,9 @@ public class BufferManagerImpl extends BufferManager{
 
     public long getTotalIOs() {
         return this.totalIOs;
+    }
+
+    public long getTestIOs() {
+        return this.ioCount;
     }
 }

@@ -36,8 +36,7 @@ public class Main {
 
             QueryExecutor testExecutor = new QueryExecutor();
 
-           // testExecutor.prematerializeTable(1000 * 4096);
-
+            // testExecutor.prematerializeTable(1000 * 4096);
            // utilities.queryPlanCorrectnessTest1();
 
 //            System.out.println("--------------------------------------------");
@@ -46,23 +45,50 @@ public class Main {
 
 //            System.out.println("--------------------------------------------");
 
-           // utilities.queryPlanCorrectnessTest3(filePath);
-
-//            long totalMovies   = bufferManager.getCurrentMovieIdPage();
-//            long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
-//            long totalPeople   = bufferManager.getCurrentPeoplePageId();
-//            double sigmaP      = 4167668/ 51040986.0;
+//           utilities.queryPlanCorrectnessTest3(filePath);
 //
-//            String[] starts = {"a", "f", "k", "p", "u"};
-//            String[] ends   = {"d", "i", "n", "s", "z"};
-//            utilities.testQueryPerformance(
-//                    filePath,
-//                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
-//                    starts, ends,
-//                    1000 * 4096,  // buffer size in frames (pages)
-//                    totalMovies, totalWorkedOn, totalPeople,
-//                    sigmaP
-//            );
+            long totalMovies   = bufferManager.getCurrentMovieIdPage();
+            long totalWorkedOn = bufferManager.getNextWorkedOnPageId();
+            long totalPeople   = bufferManager.getCurrentPeoplePageId();
+            double sigmaP      = 7936128.0 / 92201673.0;
+
+            String[] starts = {"a", "a", "a", "a", "a"};
+            String[] ends   = {"a pirate arrives: loyal guidance",
+                    "addicted to plastic surgery",
+                    "alibreze",
+                    "anal initiation",
+                    "arri arri tatanet"};
+            double[] selectivity = {1.0, 2.0, 3.0, 4.0, 5.0};
+            utilities.testQueryPerformance(
+                    filePath,
+                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
+                    starts, ends,
+                    500 * 4096,  // buffer size in frames (pages)
+                    totalMovies, totalWorkedOn, totalPeople,
+                    sigmaP,
+                    selectivity,
+                    true
+            );
+            utilities.testQueryPerformance(
+                    filePath,
+                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
+                    starts, ends,
+                    1000 * 4096,  // buffer size in frames (pages)
+                    totalMovies, totalWorkedOn, totalPeople,
+                    sigmaP,
+                    selectivity,
+                    true
+            );
+            utilities.testQueryPerformance(
+                    filePath,
+                    diskFileName, movieIdIndexFileName, movieTitleIndexFileName,workedOnFileName,peopleFileName,
+                    starts, ends,
+                    5000 * 4096,  // buffer size in frames (pages)
+                    totalMovies, totalWorkedOn, totalPeople,
+                    sigmaP,
+                    selectivity,
+                    true
+            );
 
 
 
