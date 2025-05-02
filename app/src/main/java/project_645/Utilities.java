@@ -509,14 +509,14 @@ public class Utilities {
     public void queryPlanCorrectnessTest1() throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("horrid henry", "horrid henrz", 1000*4096, true, "C1results.csv");
+        long ios = queryExecutor.executeQuery("horrid henry", "horrid henrz", 1000*4096, true, "C1results.csv", false);
 
     }
 
     public void queryPlanCorrectnessTest2() throws Exception {
 
         QueryExecutor queryExecutor = new QueryExecutor();
-        long ios = queryExecutor.executeQuery("w", "z", 1000*4096, true, "C2results.csv");
+        long ios = queryExecutor.executeQuery("w", "z", 1000*4096, true, "C2results.csv", false);
 
     }
 
@@ -850,7 +850,7 @@ public class Utilities {
 
             // 1) reset & run your query
             BufferManagerImpl.resetiocount();
-            new QueryExecutor().executeQuery(lo, hi, bufferSize,true, null);
+            new QueryExecutor().executeQuery(lo, hi, bufferSize,true, null, false);
             long ioMeas = BufferManagerImpl.totalIOs;
 
             // 2) re-scan Movies to compute σm
