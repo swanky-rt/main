@@ -32,7 +32,7 @@ public class Main {
             utilities.populateAllDiskFiles(filePath, mainFileName, workedOnTSVFileName, peopleTSVFileName, bufferManager);
 
             // Run the following to populate the movie title index, if you choose to execute subsequent queries with this index
-            utilities.testC2(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
+            // utilities.testC2(true, filePath, diskFileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleFileName);
 
             QueryExecutor testExecutor = new QueryExecutor();
 

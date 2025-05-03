@@ -514,13 +514,13 @@ public class Utilities {
         ArrayList<String> file1Strings = new ArrayList<>();
         ArrayList<String> file2Strings = new ArrayList<>();
 
-        BufferedReader workedOnTableReader = new BufferedReader(new FileReader(filepath + "C2results.csv"));
+        BufferedReader workedOnTableReader = new BufferedReader(new FileReader(filepath + "C1results.csv"));
         String curLine;
         while ((curLine = workedOnTableReader.readLine()) != null) {
             file1Strings.add(curLine);
         }
 
-        BufferedReader workedOnTableReaderPostgres = new BufferedReader(new FileReader(filepath + "cbs-to-cbz-query.csv"));
+        BufferedReader workedOnTableReaderPostgres = new BufferedReader(new FileReader(filepath + "cbs-to-cbsz-query.csv"));
         while ((curLine = workedOnTableReaderPostgres.readLine()) != null) {
             file2Strings.add(curLine);
         }
