@@ -1,15 +1,15 @@
    package project_645;
 
    public class Rid {
-       private int pageId;
+       private long pageId;
        private int slotId;
 
-       public Rid(int pageId, int slotId) {
+       public Rid(long pageId, int slotId) {
            this.pageId = pageId;
            this.slotId = slotId;
        }
 
-       public int getPageId() {
+       public long getPageId() {
            return pageId;
        }
 

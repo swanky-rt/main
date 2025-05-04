@@ -24,6 +24,8 @@ public class BufferImplTest {
     String diskFileName = "testdb.dat";
     String movieIdIndexFileName = "movieIdIndex.dat";
     String movieTitleIndexFileName = "movieTitleIndex.dat";
+    String workedOnFileName = "workedOnTable.dat";
+    String peopleTableFileName = "peopleTable.dat";
     String filePath = System.getProperty("user.dir") + path;
 
     String workingDirectory = System.getProperty("user.dir");
@@ -55,6 +57,24 @@ public class BufferImplTest {
         Path movieTitleIndexPath = Paths.get(workingDirectory + testFileDirectory + movieTitleIndexFileName);
         try {
             Files.deleteIfExists(movieTitleIndexPath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path workedOnFilePath = Paths.get(workingDirectory, testFileDirectory, workedOnFileName);
+        try {
+            Files.deleteIfExists(workedOnFilePath); // Deletes the file if it exists
+            System.out.println("File deleted successfully.");
+        } catch (IOException e) {
+            System.err.println("An error occurred while deleting the file.");
+            e.printStackTrace();
+        }
+
+        Path peopleTableFilePath = Paths.get(workingDirectory, testFileDirectory, peopleTableFileName);
+        try {
+            Files.deleteIfExists(peopleTableFilePath); // Deletes the file if it exists
             System.out.println("File deleted successfully.");
         } catch (IOException e) {
             System.err.println("An error occurred while deleting the file.");
@@ -111,7 +131,35 @@ public class BufferImplTest {
             }
         }
 
-        bufferManager = new BufferManagerImpl(2, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName);
+        Path workedOnFilePath = Paths.get(workingDirectory + testFileDirectory + workedOnFileName);
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(workedOnFilePath);
+            System.out.println("File created: " + workedOnFilePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(workedOnFilePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+
+        Path peopleTablePath = Paths.get(workingDirectory + testFileDirectory + peopleTableFileName);
+        try {
+            // Create an empty file if it doesn't exist
+            Files.createFile(peopleTablePath);
+            System.out.println("File created: " + peopleTablePath.toAbsolutePath());
+        } catch (IOException e) {
+            if (Files.exists(peopleTablePath)) {
+                System.out.println("File already exists.");
+            } else {
+                System.err.println("An error occurred while creating the file.");
+                e.printStackTrace();
+            }
+        }
+
+        bufferManager = new BufferManagerImpl(2, testFilePath, fileName, movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleTableFileName);
 
     }
 
@@ -162,9 +210,9 @@ public class BufferImplTest {
 
     @Test
     public void testgetNextPageId(){
-        int nextPageId = bufferManager.getNextPageId();
+        int nextPageId = (int)bufferManager.getNextPageId();
         assertEquals(0, nextPageId);
-        nextPageId = bufferManager.getNextPageId();
+        nextPageId = (int)bufferManager.getNextPageId();
         assertEquals(1, nextPageId);
 
     }
@@ -179,12 +227,12 @@ public class BufferImplTest {
     @Test
     void testWritePageToDiskAndLoadPageFromDisk() throws IOException {
         BufferManagerImpl bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleTableFileName);
         Page page1 = new PageImpl(5, File.DISK);
         // populate the page
-        page1.insertRow(new Row("movie 1".getBytes(), "movie title 1".getBytes()));
-        page1.insertRow(new Row("movie 2".getBytes(), "movie title 2".getBytes()));
-        page1.insertRow(new Row("movie 3".getBytes(), "movie title 3".getBytes()));
+        page1.insertRow(new Row("movie 1".getBytes(), "movie title 1".getBytes(), null, null, null));
+        page1.insertRow(new Row("movie 2".getBytes(), "movie title 2".getBytes(), null, null, null));
+        page1.insertRow(new Row("movie 3".getBytes(), "movie title 3".getBytes(), null, null, null));
 
         // attempt to write the page to disk, should throw an exception as page with id 5 isn't
         // the next available free space on disk. This should now write 4 blank pages before writing the 5th.
@@ -212,9 +260,9 @@ public class BufferImplTest {
         Page page4 = new PageImpl(3, File.DISK);
 
         // populate page3 with records
-        page3.insertRow(new Row("3movie 1".getBytes(), "3movie title 1".getBytes()));
-        page3.insertRow(new Row("3movie 2".getBytes(), "3movie title 2".getBytes()));
-        page3.insertRow(new Row("3movie 3".getBytes(), "3movie title 3".getBytes()));
+        page3.insertRow(new Row("3movie 1".getBytes(), "3movie title 1".getBytes(), null, null, null));
+        page3.insertRow(new Row("3movie 2".getBytes(), "3movie title 2".getBytes(), null, null, null));
+        page3.insertRow(new Row("3movie 3".getBytes(), "3movie title 3".getBytes(), null, null, null));
 
         // write to disk
         assertDoesNotThrow(() -> bf.writePageToDisk(page2, File.DISK));
@@ -231,14 +279,14 @@ public class BufferImplTest {
     @Test
     void testGetPageEvictPageAndCreatePage() throws Exception {
         BufferManager bf = new BufferManagerImpl(4 * 4096, workingDirectory + testFileDirectory, fileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleTableFileName);
         Path path = Paths.get(workingDirectory + testFileDirectory + fileName);
         // First, attempt to get a page with ID that does not appear on disk or in the buffer manager
         assertNull(bf.getPage(0, File.DISK));
 
         // now, create a page in the buffer manager.
         Page page1 = bf.createPage(File.DISK);
-        int page1Id = page1.getPid();
+        int page1Id = (int)page1.getPid();
         // check that the page is returned by getPage()
         Page retreivedPage = bf.getPage(page1.getPid(), File.DISK);
         // at this point should be the same reference since it was never evicted from the buffer pool
@@ -247,7 +295,7 @@ public class BufferImplTest {
         bf.unpinPage(page1.getPid(), File.DISK);
         // fill the buffer pool with only pinned pages
         Page page2 = bf.createPage(File.DISK);
-        int page2Id = page2.getPid();
+        int page2Id = (int)page2.getPid();
         Page page3 = bf.createPage(File.DISK);
         Page page4 = bf.createPage(File.DISK);
         // Now, attempting to create a new page should return null. There is no space in the buffer pool,
@@ -300,7 +348,7 @@ public class BufferImplTest {
     @Test
     void testMarkDirty2() throws Exception {
         BufferManager bf = new BufferManagerImpl(4096, workingDirectory + testFileDirectory, fileName,
-                movieIdIndexFileName, movieTitleIndexFileName);
+                movieIdIndexFileName, movieTitleIndexFileName, workedOnFileName, peopleTableFileName);
 
         Page page1 = bf.createPage(File.DISK);
 
