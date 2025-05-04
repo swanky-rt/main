@@ -48,7 +48,6 @@ public class CompareFiles {
                 String curStr1 = file1Strings.get(i);
                 String curStr2 = file2Strings.get(i);
                 System.out.println("Record " + i + " does not match. ");
-                // return;
             }
         }
 

@@ -90,22 +90,10 @@ public class QueryExecutor {
                 usePrematerializedTempTable
         );
 
-
-//        workedOnProject.open();
-//        while (workedOnProject.next() != null) {
-//           continue;
-//        }
         // Step 7: join on materialized table and outer relation
         BNLJoinOperator bnlJoinOperator = new BNLJoinOperator(testRangeSelection, workedOnProject,
                 ColumnNames.MOVIEID, ColumnNames.MOVIEID, bufferManager, File.BNL1);
 
-
-        // bnlJoinOperator.open();
-
-//        Record curRecord;
-//        while ((curRecord = bnlJoinOperator.next()) != null) {
-//            System.out.println(curRecord.getTitleDeserialized() + "," + curRecord.getPersonIdDeserialized() + "," + curRecord.getMovieIdDeserialized());
-//        }
 //        // Step 8: join on
          BNLJoinOperator bnlJoinOperator2 = new BNLJoinOperator(bnlJoinOperator, peopleScan,
                  ColumnNames.PERSONID, ColumnNames.PERSONID, bufferManager, File.BNL2);

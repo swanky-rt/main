@@ -10,7 +10,6 @@ import java.util.List;
 
 public class ProjectionOperator implements Operator {
     private Operator child;
-    // private final String[] columns;
     private final File relation;
     private final BufferManagerImpl bufferManager;
     private boolean firstNext;
@@ -21,7 +20,6 @@ public class ProjectionOperator implements Operator {
 
     public ProjectionOperator(Operator child, ColumnNames[] columns, File relation, BufferManagerImpl bufferManager, boolean prematerialized) {
         this.child = child;
-        // this.columns = columns;
         this.relation = relation;
         this.bufferManager = bufferManager;
         this.firstNext = true;
@@ -96,9 +94,9 @@ public class ProjectionOperator implements Operator {
         byte[] newTitle = new byte[30];
 
         // Optional fields (set to empty or null)
-        byte[] newPersonId = new byte[10];   // Empty for non-relevant fields
-        byte[] newCategory = new byte[20];   // Empty for non-relevant fields
-        byte[] newName = new byte[105];      // Empty for non-relevant fields
+        byte[] newPersonId = new byte[10];
+        byte[] newCategory = new byte[20];
+        byte[] newName = new byte[105];
 
         // Loop through the columns being projected
         // Create Row with the relevant fields (movieId, title) and use dummy values for the others
