@@ -262,4 +262,3 @@ public class PageImplTest {
         assertEquals(page.getPinCount(), 0);
     }
 }
-
